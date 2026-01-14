@@ -15,7 +15,7 @@
     "chromadb": "npm:chromadb@^1.8.0",
     "drizzle-orm": "npm:drizzle-orm@^0.36.0",
     "drizzle-kit": "npm:drizzle-kit@^0.28.0",
-    "fresh": "https://deno.land/x/fresh@2.0.0-alpha.22/mod.ts",
+    "fresh": "jsr:@fresh/core@2.0.0-alpha.26",
     "preact": "https://esm.sh/preact@10.19.6",
     "preact/": "https://esm.sh/preact@10.19.6/",
     "@preact/signals": "https://esm.sh/*@preact/signals@1.2.2",
@@ -42,5 +42,8 @@
       "tags": ["recommended"]
     }
   },
-  "nodeModulesDir": true
+  "nodeModulesDir": "auto",
+  "exports": {
+    ".": "./main.ts"
+  }
 }
