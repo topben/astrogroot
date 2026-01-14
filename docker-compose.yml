@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: astrogroot-chromadb
+    ports:
+      - "8000:8000"
+    environment:
+      - CHROMA_SERVER_AUTH_CREDENTIALS_PROVIDER=chromadb.auth.token_authn.TokenAuthenticationServerProvider
+      - CHROMA_SERVER_AUTH_TOKEN_TRANSPORT_HEADER=X-Chroma-Token
+      - CHROMA_SERVER_AUTH_CREDENTIALS=${CHROMA_AUTH_TOKEN:-astrogroot-token}
+    volumes:
+      - chromadb-data:/chroma/chroma
+    restart: unless-stopped
+    networks:
+      - astrogroot-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: astrogroot-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - astrogroot-network
+    command: redis-server --appendonly yes
+
+volumes:
+  chromadb-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  astrogroot-network:
+    driver: bridge

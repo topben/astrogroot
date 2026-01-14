@@ -1,0 +1,46 @@
+{
+  "name": "@astrogroot/research-library",
+  "version": "1.0.0",
+  "tasks": {
+    "dev": "deno run --allow-all --watch main.ts",
+    "start": "deno run --allow-all main.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "worker": "deno run --allow-all workers/crawler.ts"
+  },
+  "imports": {
+    "@anthropic-ai/sdk": "npm:@anthropic-ai/sdk@^0.32.0",
+    "@libsql/client": "npm:@libsql/client@^0.14.0",
+    "chromadb": "npm:chromadb@^1.8.0",
+    "drizzle-orm": "npm:drizzle-orm@^0.36.0",
+    "drizzle-kit": "npm:drizzle-kit@^0.28.0",
+    "fresh": "https://deno.land/x/fresh@2.0.0-alpha.22/mod.ts",
+    "preact": "https://esm.sh/preact@10.19.6",
+    "preact/": "https://esm.sh/preact@10.19.6/",
+    "@preact/signals": "https://esm.sh/*@preact/signals@1.2.2",
+    "youtube-transcript": "npm:youtube-transcript@^1.2.1",
+    "xml2js": "npm:xml2js@^0.6.2",
+    "zod": "npm:zod@^3.23.0"
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "lib": ["deno.window", "dom", "dom.iterable"],
+    "strict": true
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 100,
+    "indentWidth": 2,
+    "semiColons": true,
+    "singleQuote": false,
+    "proseWrap": "preserve"
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "nodeModulesDir": true
+}
