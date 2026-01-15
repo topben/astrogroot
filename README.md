@@ -1,4 +1,5 @@
-# 🌌 AstroGroot
+# <img width="566" height="494" alt="image" src="https://github.com/user-attachments/assets/12645467-3140-4537-9f3d-5206358aafc1" />
+ AstroGroot
 
 **An automated astronomy research library powered by AI**
 
