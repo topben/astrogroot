@@ -37,17 +37,12 @@ AstroGroot collects, processes, and indexes astronomy content from multiple sour
 │       ├── arxiv.ts         # arXiv API integration
 │       └── youtube.ts       # YouTube transcript extraction
 │
-├── routes/                  # Fresh Framework Web Server
-│   ├── index.tsx            # Dashboard
-│   ├── search.tsx           # Search interface
+├── routes/                  # Hono HTTP handlers
 │   └── api/
 │       └── mcp.ts           # MCP Server endpoint
 │
-├── workers/                 # Background Processing
-│   └── crawler.ts           # Automated data collection worker
-│
-└── components/              # UI Components
-    └── SearchBar.tsx        # Search interface component
+└── workers/                 # Background Processing
+    └── crawler.ts           # Automated data collection worker
 ```
 
 ## 🚀 Quick Start
@@ -127,7 +122,7 @@ deno cache --reload deno.json
 
 ### Running the Web Server
 
-Start the Fresh development server:
+Start the Hono development server:
 
 ```bash
 deno task dev
@@ -206,7 +201,7 @@ deno task db:studio
 - **Database Layer**: Drizzle ORM with Turso (LibSQL)
 - **Vector Store**: ChromaDB for semantic search
 - **AI Processing**: Anthropic Claude for summarization
-- **Web Framework**: Fresh 2.0 (Deno-native React framework)
+- **Web Framework**: Hono (Deno-native web framework)
 - **Background Workers**: Deno native with scheduled execution
 
 ### Adding New Data Sources
@@ -293,4 +288,4 @@ For issues, questions, or contributions:
 
 ---
 
-**Built with ❤️ using Deno, Fresh, Claude AI, and open astronomy data**
+**Built with ❤️ using Deno, Hono, Claude AI, and open astronomy data**

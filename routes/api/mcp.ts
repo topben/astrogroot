@@ -1,56 +1,40 @@
-import type { FreshContext } from "fresh";
+import type { Context } from "hono";
 
 // MCP (Model Context Protocol) Server for Claude Desktop Integration
-export default async function handler(
-  req: Request,
-  _ctx: FreshContext,
-): Promise<Response> {
-  if (req.method === "POST") {
+export async function mcpHandler(c: Context): Promise<Response> {
+  if (c.req.method === "POST") {
     try {
-      const request = await req.json();
+      const request = await c.req.json();
       const response = await handleMCPRequest(request);
 
-      return new Response(JSON.stringify(response), {
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
+      return c.json(response, 200, {
+        "Access-Control-Allow-Origin": "*",
       });
     } catch (error) {
-      return new Response(
-        JSON.stringify({
+      return c.json(
+        {
           error: {
             code: -32603,
             message: `Internal error: ${error}`,
           },
-        }),
-        {
-          status: 500,
-          headers: {
-            "Content-Type": "application/json",
-          },
         },
+        500,
       );
     }
   }
 
-  if (req.method === "GET") {
-    const url = new URL(req.url);
-    const method = url.searchParams.get("method");
+  if (c.req.method === "GET") {
+    const method = c.req.query("method");
 
     if (!method) {
-      return new Response("Method parameter required", { status: 400 });
+      return c.text("Method parameter required", 400);
     }
 
     const result = await handleMCPRequest({ method });
-    return new Response(JSON.stringify(result), {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    return c.json(result);
   }
 
-  return new Response("Method not allowed", { status: 405 });
+  return c.text("Method not allowed", 405);
 }
 
 interface MCPRequest {

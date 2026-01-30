@@ -15,20 +15,12 @@
     "chromadb": "npm:chromadb@^1.8.0",
     "drizzle-orm": "npm:drizzle-orm@^0.36.0",
     "drizzle-kit": "npm:drizzle-kit@^0.28.0",
-    "fresh": "jsr:@fresh/core@2.0.0-alpha.26",
-    "preact": "npm:preact@^10.19.6",
-    "preact/hooks": "npm:preact@^10.19.6/hooks",
-    "preact/jsx-runtime": "npm:preact@^10.19.6/jsx-runtime",
-    "preact/jsx-dev-runtime": "npm:preact@^10.19.6/jsx-dev-runtime",
-    "@preact/signals": "npm:@preact/signals@^1.2.2",
-    "@preact/signals-core": "npm:@preact/signals-core@^1.5.1",
+    "hono": "jsr:@hono/hono@^4.6.10",
     "youtube-transcript": "npm:youtube-transcript@^1.2.1",
     "xml2js": "npm:xml2js@^0.6.2",
     "zod": "npm:zod@^3.23.0"
   },
   "compilerOptions": {
-    "jsx": "react-jsx",
-    "jsxImportSource": "preact",
     "lib": ["deno.window", "dom", "dom.iterable"],
     "strict": true
   },
