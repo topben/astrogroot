@@ -115,18 +115,34 @@ export async function searchArxiv(params: {
   url.searchParams.set("sortOrder", sortOrder);
   url.searchParams.set("start", start.toString());
 
-  try {
-    const response = await fetch(url.toString());
-    if (!response.ok) {
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const response = await fetch(url.toString());
+      if (response.ok) {
+        const xml = await response.text();
+        return await parseArxivXml(xml);
+      }
+      if (response.status >= 500 && attempt < maxAttempts) {
+        const delay = attempt * 2000;
+        console.warn(
+          `arXiv API ${response.status}, retrying in ${delay / 1000}s (attempt ${attempt}/${maxAttempts})...`,
+        );
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
       throw new Error(`arXiv API error: ${response.statusText}`);
+    } catch (error) {
+      if (attempt === maxAttempts) {
+        console.error("Error searching arXiv:", error);
+        throw error;
+      }
+      const delay = attempt * 2000;
+      console.warn(`arXiv request failed, retrying in ${delay / 1000}s...`);
+      await new Promise((r) => setTimeout(r, delay));
     }
-
-    const xml = await response.text();
-    return await parseArxivXml(xml);
-  } catch (error) {
-    console.error("Error searching arXiv:", error);
-    throw error;
   }
+  return [];
 }
 
 // Get papers by specific arXiv IDs
@@ -157,7 +173,8 @@ export async function getRecentArxivPapers(params: {
   maxResults?: number;
   daysBack?: number;
 }): Promise<ArxivEntry[]> {
-  const { categories, maxResults = 50, daysBack = 7 } = params;
+  const { categories, maxResults = 30, daysBack = 7 } = params;
+  const capped = Math.min(maxResults, 30);
 
   // Calculate date range
   const endDate = new Date();
@@ -171,7 +188,7 @@ export async function getRecentArxivPapers(params: {
 
   return searchArxiv({
     query,
-    maxResults,
+    maxResults: capped,
     sortBy: "submittedDate",
     sortOrder: "descending",
   });
@@ -195,7 +212,7 @@ export async function collectAstronomyPapers(params: {
   daysBack?: number;
   includeAllCategories?: boolean;
 }): Promise<ArxivEntry[]> {
-  const { maxResults = 50, daysBack = 7, includeAllCategories = true } = params;
+  const { maxResults = 30, daysBack = 7, includeAllCategories = true } = params;
 
   const categories = includeAllCategories
     ? ASTRO_CATEGORIES
