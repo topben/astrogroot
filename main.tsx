@@ -98,32 +98,40 @@ app.get("/api/mcp", async (c) => {
 // 404
 app.notFound((c) => c.html(<NotFoundPage />, 404));
 
-console.log("AstroGroot Research Library starting...");
+export { app };
+
+// Deno Deploy: no port binding; platform invokes the handler
+const isDeploy = typeof Deno.env.get("DENO_DEPLOYMENT_ID") === "string";
 
 if (import.meta.main) {
-  for (let attempt = 0; attempt < maxPortAttempts; attempt++) {
-    const p = defaultPort + attempt;
-    try {
-      const listener = Deno.listen({ port: p });
-      listener.close();
-      Deno.serve({ port: p, handler: app.fetch });
-      console.log(`Server running on http://localhost:${p}`);
-      if (attempt > 0) {
-        console.log(`(Port ${defaultPort} was in use)`);
+  if (isDeploy) {
+    Deno.serve(app.fetch);
+  } else {
+    console.log("AstroGroot Research Library starting...");
+    for (let attempt = 0; attempt < maxPortAttempts; attempt++) {
+      const p = defaultPort + attempt;
+      try {
+        const listener = Deno.listen({ port: p });
+        listener.close();
+        Deno.serve({ port: p, handler: app.fetch });
+        console.log(`Server running on http://localhost:${p}`);
+        if (attempt > 0) {
+          console.log(`(Port ${defaultPort} was in use)`);
+        }
+        break;
+      } catch (err) {
+        const code = err && typeof err === "object" && "code" in err ? (err as { code: unknown }).code : null;
+        const name = err instanceof Error ? err.name : "";
+        const msg = err instanceof Error ? err.message : String(err);
+        const addrInUse =
+          name === "AddrInUse" ||
+          code === "AddrInUse" ||
+          code === 48 ||
+          code === "48" ||
+          /address already in use|addrinuse/i.test(msg);
+        if (addrInUse && attempt < maxPortAttempts - 1) continue;
+        throw err;
       }
-      break;
-    } catch (err) {
-      const code = err && typeof err === "object" && "code" in err ? (err as { code: unknown }).code : null;
-      const name = err instanceof Error ? err.name : "";
-      const msg = err instanceof Error ? err.message : String(err);
-      const addrInUse =
-        name === "AddrInUse" ||
-        code === "AddrInUse" ||
-        code === 48 ||
-        code === "48" ||
-        /address already in use|addrinuse/i.test(msg);
-      if (addrInUse && attempt < maxPortAttempts - 1) continue;
-      throw err;
     }
   }
 }

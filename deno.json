@@ -4,6 +4,7 @@
   "tasks": {
     "dev": "deno run --allow-all --env --watch main.tsx",
     "start": "deno run --allow-all --env main.tsx",
+    "deploy": "deno run --allow-all --env main.tsx",
     "test": "deno test --allow-all --env",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",

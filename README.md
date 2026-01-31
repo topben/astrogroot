@@ -202,6 +202,31 @@ curl -X POST http://localhost:8000/api/mcp \
   }'
 ```
 
+## 🚀 Deploying to Deno Deploy
+
+The web app is ready for [Deno Deploy](https://deno.com/deploy). On Deploy, the app uses `Deno.serve(app.fetch)` (no port binding); locally it binds to `PORT` or 8000.
+
+**1. Create a project on [Deno Deploy](https://deno.com/deploy)** and connect your GitHub repo.
+
+**2. Configure the build:**
+- **Entrypoint:** `main.tsx`
+- **Root directory:** (leave default, or set if in a subdirectory)
+
+**3. Set environment variables** in the Deploy dashboard (Project → Settings → Environment Variables):
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `TURSO_DATABASE_URL` | Yes | Turso database URL (e.g. `libsql://your-db.turso.io`) |
+| `TURSO_AUTH_TOKEN` | Yes | Turso auth token |
+| `CHROMA_HOST` | For search | ChromaDB URL (e.g. a remote Chroma instance). If unset, search may fail. |
+| `CHROMA_AUTH_TOKEN` | Optional | If your Chroma server uses auth |
+| `NASA_API_KEY` | Optional | NASA API key (defaults to DEMO_KEY) |
+| `ANTHROPIC_API_KEY` | Optional | Only if you add AI features that call Claude from the server |
+
+**4. Deploy.** The dashboard, search page, and API routes will be served. The **crawler/worker** does not run on Deploy (serverless); run it elsewhere (e.g. cron + `deno task worker`) to populate the database and Chroma.
+
+**5. Optional:** Use a remote ChromaDB (e.g. [Chroma Cloud](https://www.trychroma.com/) or a VPS) and set `CHROMA_HOST` so `/api/search` works on Deploy.
+
 ## 🧪 Development
 
 ### Database Management
