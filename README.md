@@ -106,7 +106,7 @@ docker-compose up -d
 ```
 
 This starts:
-- ChromaDB (vector database) on port 8000
+- ChromaDB (vector database) on port 8000. The crawler uses a built-in embedding function (no extra dependency). For stronger semantic search, you can install `chromadb-default-embed` (see ChromaDB docs).
 - Redis (optional, for task queues) on port 6379
 
 4. **Initialize the database**

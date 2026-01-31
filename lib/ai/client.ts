@@ -10,9 +10,9 @@ export const anthropic = new Anthropic({
   apiKey,
 });
 
-// Use ANTHROPIC_MODEL in .env to override (e.g. claude-3-5-sonnet-20240620)
+// Use ANTHROPIC_MODEL in .env to override. If 404, try claude-3-5-sonnet-20240620
 export const DEFAULT_MODEL =
-  Deno.env.get("ANTHROPIC_MODEL") || "claude-3-5-sonnet-20240620";
+  Deno.env.get("ANTHROPIC_MODEL") || "claude-3-5-sonnet-latest";
 export const MAX_TOKENS = 4096;
 
 export type Message = {

@@ -1,7 +1,7 @@
 import { parseString } from "xml2js";
 import { z } from "zod";
 
-const ARXIV_API_BASE = "http://export.arxiv.org/api/query";
+const ARXIV_API_BASE = "https://export.arxiv.org/api/query";
 
 // arXiv entry schema
 const ArxivEntrySchema = z.object({
@@ -21,20 +21,20 @@ export type ArxivEntry = z.infer<typeof ArxivEntrySchema>;
 // Parse XML response from arXiv
 async function parseArxivXml(xml: string): Promise<ArxivEntry[]> {
   return new Promise((resolve, reject) => {
-    parseString(xml, (err, result) => {
+    parseString(xml, (err: unknown, result: unknown) => {
       if (err) {
         reject(err);
         return;
       }
 
       try {
-        const entries = result.feed?.entry || [];
+        const entries = (result as { feed?: { entry?: unknown } })?.feed?.entry || [];
         if (!Array.isArray(entries)) {
           resolve([]);
           return;
         }
 
-        const parsed = entries.map((entry: {
+        type ArxivRawEntry = {
           id?: string[];
           title?: string[];
           summary?: string[];
@@ -43,7 +43,8 @@ async function parseArxivXml(xml: string): Promise<ArxivEntry[]> {
           updated?: string[];
           category?: Array<{ $?: { term?: string } }>;
           link?: Array<{ $?: { title?: string; href?: string } }>;
-        }) => {
+        };
+        const parsed = (entries as ArxivRawEntry[]).map((entry: ArxivRawEntry) => {
           // Extract ID (remove version info)
           const fullId = entry.id?.[0] || "";
           const id = fullId.split("/").pop()?.split("v")[0] || fullId;
@@ -176,22 +177,32 @@ export async function getRecentArxivPapers(params: {
   const { categories, maxResults = 30, daysBack = 7 } = params;
   const capped = Math.min(maxResults, 30);
 
-  // Calculate date range
   const endDate = new Date();
   const startDate = new Date(endDate.getTime() - daysBack * 24 * 60 * 60 * 1000);
-
   const dateQuery = `submittedDate:[${startDate.toISOString().split("T")[0]}0000 TO ${
     endDate.toISOString().split("T")[0]
   }2359]`;
   const catQuery = categories.map((cat) => `cat:${cat}`).join(" OR ");
-  const query = `${dateQuery} AND (${catQuery})`;
+  const fullQuery = `${dateQuery} AND (${catQuery})`;
 
-  return searchArxiv({
-    query,
-    maxResults: capped,
-    sortBy: "submittedDate",
-    sortOrder: "descending",
-  });
+  try {
+    return await searchArxiv({
+      query: fullQuery,
+      maxResults: capped,
+      sortBy: "submittedDate",
+      sortOrder: "descending",
+    });
+  } catch (err) {
+    // arXiv often returns 500 on complex date+category queries; fallback to simpler query
+    console.warn("arXiv full query failed, trying fallback (categories only, no date filter):", err);
+    const fallbackResults = await searchArxiv({
+      query: catQuery,
+      maxResults: Math.min(capped, 20),
+      sortBy: "submittedDate",
+      sortOrder: "descending",
+    });
+    return fallbackResults;
+  }
 }
 
 // Common astronomy/astrophysics categories

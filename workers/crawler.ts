@@ -15,15 +15,34 @@ import {
 const CRAWLER_INTERVAL_HOURS = Number(Deno.env.get("CRAWLER_INTERVAL_HOURS")) || 24;
 const MAX_ITEMS_PER_SOURCE = Number(Deno.env.get("MAX_ITEMS_PER_SOURCE")) || 50;
 
-interface CrawlerStats {
+export interface CrawlerStats {
   papersCollected: number;
   videosCollected: number;
   nasaItemsCollected: number;
   errors: string[];
 }
 
+/** Optional dependencies for testing (when provided, used instead of real db/collectors/vector). */
+export interface CrawlerDeps {
+  db: typeof db;
+  initializeCollections: typeof initializeCollections;
+  processContent: typeof processContent;
+  collectAstronomyPapers: typeof collectAstronomyPapers;
+  collectAstronomyVideos: typeof collectAstronomyVideos;
+  fetchCompleteVideoData: typeof fetchCompleteVideoData;
+  collectNasaContent: typeof collectNasaContent;
+}
+
 // Main crawler function
-async function runCrawler(): Promise<CrawlerStats> {
+export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
+  const db_ = deps?.db ?? db;
+  const initCollections_ = deps?.initializeCollections ?? initializeCollections;
+  const processContent_ = deps?.processContent ?? processContent;
+  const collectAstronomyPapers_ = deps?.collectAstronomyPapers ?? collectAstronomyPapers;
+  const collectAstronomyVideos_ = deps?.collectAstronomyVideos ?? collectAstronomyVideos;
+  const fetchCompleteVideoData_ = deps?.fetchCompleteVideoData ?? fetchCompleteVideoData;
+  const collectNasaContent_ = deps?.collectNasaContent ?? collectNasaContent;
+
   console.log("🚀 Starting AstroGroot Crawler...");
   console.log(`Max items per source: ${MAX_ITEMS_PER_SOURCE}`);
 
@@ -35,12 +54,12 @@ async function runCrawler(): Promise<CrawlerStats> {
   };
 
   // Initialize vector store collections
-  const collections = await initializeCollections();
+  const collections = await initCollections_();
 
   // Collect arXiv papers
   try {
     console.log("\n📄 Collecting arXiv papers...");
-    const arxivPapers = await collectAstronomyPapers({
+    const arxivPapers = await collectAstronomyPapers_({
       maxResults: MAX_ITEMS_PER_SOURCE,
       daysBack: 7,
     });
@@ -48,7 +67,7 @@ async function runCrawler(): Promise<CrawlerStats> {
     for (const paper of arxivPapers) {
       try {
         // Check if paper already exists
-        const existing = await db.query.papers.findFirst({
+        const existing = await db_.query.papers.findFirst({
           where: eq(papers.id, paper.id),
         });
 
@@ -59,14 +78,14 @@ async function runCrawler(): Promise<CrawlerStats> {
 
         // Process with AI
         console.log(`  🤖 Processing paper: ${paper.title.substring(0, 50)}...`);
-        const processed = await processContent({
+        const processed = await processContent_({
           text: paper.summary,
           title: paper.title,
           sourceType: "paper",
         });
 
         // Insert into database
-        await db.insert(papers).values({
+        await db_.insert(papers).values({
           id: paper.id,
           title: paper.title,
           authors: JSON.stringify(paper.authors),
@@ -109,14 +128,14 @@ async function runCrawler(): Promise<CrawlerStats> {
   // Collect YouTube videos
   try {
     console.log("\n🎥 Collecting YouTube videos...");
-    const videoList = await collectAstronomyVideos({
+    const videoList = await collectAstronomyVideos_({
       maxResultsPerQuery: Math.floor(MAX_ITEMS_PER_SOURCE / 4),
     });
 
     for (const videoInfo of videoList.slice(0, MAX_ITEMS_PER_SOURCE)) {
       try {
         // Check if video already exists
-        const existing = await db.query.videos.findFirst({
+        const existing = await db_.query.videos.findFirst({
           where: eq(videos.id, videoInfo.videoId),
         });
 
@@ -127,18 +146,18 @@ async function runCrawler(): Promise<CrawlerStats> {
 
         // Fetch complete video data
         console.log(`  📥 Fetching video: ${videoInfo.title.substring(0, 50)}...`);
-        const videoData = await fetchCompleteVideoData(videoInfo.videoId);
+        const videoData = await fetchCompleteVideoData_(videoInfo.videoId);
 
         // Process with AI
         console.log(`  🤖 Processing video transcript...`);
-        const processed = await processContent({
+        const processed = await processContent_({
           text: videoData.fullText,
           title: videoData.metadata.title,
           sourceType: "video",
         });
 
         // Insert into database
-        await db.insert(videos).values({
+        await db_.insert(videos).values({
           id: videoData.metadata.id,
           title: videoData.metadata.title,
           channelName: videoData.metadata.channelName,
@@ -185,7 +204,7 @@ async function runCrawler(): Promise<CrawlerStats> {
   // Collect NASA content
   try {
     console.log("\n🚀 Collecting NASA content...");
-    const nasaData = await collectNasaContent({
+    const nasaData = await collectNasaContent_({
       includeApod: true,
       searchQueries: ["astronomy", "space telescope", "mars", "jupiter"],
       maxItemsPerQuery: Math.floor(MAX_ITEMS_PER_SOURCE / 4),
@@ -197,20 +216,20 @@ async function runCrawler(): Promise<CrawlerStats> {
         const apodId = `apod-${nasaData.apod.date}`;
 
         // Check if APOD already exists
-        const existing = await db.query.nasaContent.findFirst({
+        const existing = await db_.query.nasaContent.findFirst({
           where: eq(nasaContent.id, apodId),
         });
 
         if (!existing) {
           console.log(`  🌌 Processing APOD: ${nasaData.apod.title}`);
 
-          const processed = await processContent({
+          const processed = await processContent_({
             text: nasaData.apod.explanation,
             title: nasaData.apod.title,
             sourceType: "article",
           });
 
-          await db.insert(nasaContent).values({
+          await db_.insert(nasaContent).values({
             id: apodId,
             contentType: "apod",
             title: nasaData.apod.title,
@@ -250,7 +269,7 @@ async function runCrawler(): Promise<CrawlerStats> {
         const itemId = `nasa-${item.nasa_id}`;
 
         // Check if item already exists
-        const existing = await db.query.nasaContent.findFirst({
+        const existing = await db_.query.nasaContent.findFirst({
           where: eq(nasaContent.id, itemId),
         });
 
@@ -262,13 +281,13 @@ async function runCrawler(): Promise<CrawlerStats> {
         console.log(`  📸 Processing NASA item: ${item.title.substring(0, 50)}...`);
 
         const description = item.description || "";
-        const processed = await processContent({
+        const processed = await processContent_({
           text: description,
           title: item.title,
           sourceType: "article",
         });
 
-        await db.insert(nasaContent).values({
+        await db_.insert(nasaContent).values({
           id: itemId,
           contentType: "library",
           title: item.title,

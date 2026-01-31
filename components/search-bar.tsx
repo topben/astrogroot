@@ -1,7 +1,21 @@
 import type { FC } from "hono/jsx";
 
+interface SearchBarProps {
+  initialQuery?: string;
+  initialType?: string;
+  initialSortBy?: string;
+  initialDateFrom?: string;
+  initialDateTo?: string;
+}
+
 /** Static search form + vanilla JS for filter toggle and submit. No Preact. */
-export const SearchBar: FC = () => (
+export const SearchBar: FC<SearchBarProps> = (props) => {
+  const q = props.initialQuery ?? "";
+  const type = props.initialType ?? "all";
+  const sortBy = props.initialSortBy ?? "relevance";
+  const dateFrom = props.initialDateFrom ?? "";
+  const dateTo = props.initialDateTo ?? "";
+  return (
   <div class="search-bar-container">
     <form id="search-form" class="search-form" method="get" action="/search">
       <div class="search-input-wrapper">
@@ -12,6 +26,7 @@ export const SearchBar: FC = () => (
           placeholder="Search astronomy papers, videos, and NASA content..."
           class="search-input"
           autocomplete="off"
+          defaultValue={q}
         />
         <button type="submit" class="search-button" id="search-btn">
           Search
@@ -20,34 +35,34 @@ export const SearchBar: FC = () => (
       <button type="button" class="filter-toggle" id="filter-toggle" aria-expanded="false">
         Show Filters
       </button>
+      <div class="filters-panel" id="filters-panel" hidden>
+        <div class="filter-group">
+          <label for="filter-type">Content Type:</label>
+          <select name="type" id="filter-type" defaultValue={type}>
+            <option value="all">All Content</option>
+            <option value="papers">Research Papers</option>
+            <option value="videos">Videos</option>
+            <option value="nasa">NASA Content</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filter-sort">Sort By:</label>
+          <select name="sortBy" id="filter-sort" defaultValue={sortBy}>
+            <option value="relevance">Relevance</option>
+            <option value="date">Date</option>
+            <option value="title">Title</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filter-dateFrom">Date From:</label>
+          <input type="date" name="dateFrom" id="filter-dateFrom" defaultValue={dateFrom} />
+        </div>
+        <div class="filter-group">
+          <label for="filter-dateTo">Date To:</label>
+          <input type="date" name="dateTo" id="filter-dateTo" defaultValue={dateTo} />
+        </div>
+      </div>
     </form>
-    <div class="filters-panel" id="filters-panel" hidden>
-      <div class="filter-group">
-        <label for="filter-type">Content Type:</label>
-        <select name="type" id="filter-type">
-          <option value="all">All Content</option>
-          <option value="papers">Research Papers</option>
-          <option value="videos">Videos</option>
-          <option value="nasa">NASA Content</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label for="filter-sort">Sort By:</label>
-        <select name="sortBy" id="filter-sort">
-          <option value="relevance">Relevance</option>
-          <option value="date">Date</option>
-          <option value="title">Title</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label for="filter-dateFrom">Date From:</label>
-        <input type="date" name="dateFrom" id="filter-dateFrom" />
-      </div>
-      <div class="filter-group">
-        <label for="filter-dateTo">Date To:</label>
-        <input type="date" name="dateTo" id="filter-dateTo" />
-      </div>
-    </div>
     <script
       dangerouslySetInnerHTML={{
         __html: `
@@ -95,4 +110,5 @@ export const SearchBar: FC = () => (
       }}
     />
   </div>
-);
+  );
+};

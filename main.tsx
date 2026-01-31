@@ -3,6 +3,7 @@
 import { Hono } from "hono";
 import { handleMCPRequest } from "./lib/mcp.ts";
 import { getLibraryStats } from "./lib/stats.ts";
+import { searchLibrary } from "./lib/search.ts";
 import { DashboardPage } from "./components/pages/dashboard.tsx";
 import { SearchPage } from "./components/pages/search.tsx";
 import { NotFoundPage } from "./components/pages/not-found.tsx";
@@ -27,12 +28,43 @@ app.get("/api/health", (c) =>
 );
 app.get("/api/stats", async (c) => c.json(await getLibraryStats()));
 
+app.get("/api/search", async (c) => {
+  const q = c.req.query("q") ?? "";
+  const type = (c.req.query("type") ?? "all") as "all" | "papers" | "videos" | "nasa";
+  const limit = parseInt(c.req.query("limit") ?? "20", 10) || 20;
+  try {
+    const result = await searchLibrary({ q, type, limit });
+    return c.json(result);
+  } catch (err) {
+    console.error("Search error:", err);
+    return c.json(
+      { query: q, papers: [], videos: [], nasa: [], total: 0, error: String(err) },
+      500
+    );
+  }
+});
+
 // Pages
 app.get("/", async (c) => {
   const stats = await getLibraryStats();
   return c.html(<DashboardPage stats={stats} />);
 });
-app.get("/search", (c) => c.html(<SearchPage />));
+app.get("/search", (c) => {
+  const q = c.req.query("q") ?? "";
+  const type = c.req.query("type") ?? "all";
+  const sortBy = c.req.query("sortBy") ?? "relevance";
+  const dateFrom = c.req.query("dateFrom") ?? "";
+  const dateTo = c.req.query("dateTo") ?? "";
+  return c.html(
+    <SearchPage
+      query={q}
+      type={type}
+      sortBy={sortBy}
+      dateFrom={dateFrom}
+      dateTo={dateTo}
+    />
+  );
+});
 
 app.post("/api/mcp", async (c) => {
   try {

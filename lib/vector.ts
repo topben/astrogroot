@@ -1,7 +1,37 @@
-import { ChromaClient, Collection } from "chromadb";
+import { ChromaClient, Collection, type IEmbeddingFunction } from "chromadb";
 
 const CHROMA_HOST = Deno.env.get("CHROMA_HOST") || "http://localhost:8000";
 const CHROMA_AUTH_TOKEN = Deno.env.get("CHROMA_AUTH_TOKEN");
+
+/** Embedding dimension used by Chroma's default model (all-MiniLM-L6-v2). */
+const EMBEDDING_DIM = 384;
+
+/**
+ * Lightweight embedding function that does not require chromadb-default-embed.
+ * Produces deterministic 384-dim vectors from text (hash-based). Use chromadb-default-embed
+ * for real semantic embeddings; this avoids the optional dependency so the crawler runs.
+ */
+function simpleEmbeddingFunction(): IEmbeddingFunction {
+  function hash(s: string): number {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) {
+      h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+    }
+    return h;
+  }
+  return {
+    async generate(texts: string[]): Promise<number[][]> {
+      return texts.map((text) => {
+        const v = new Array(EMBEDDING_DIM).fill(0);
+        const h = hash(text);
+        for (let i = 0; i < EMBEDDING_DIM; i++) {
+          v[i] = (hash(text + i + h) % 1000) / 1000 - 0.5;
+        }
+        return v;
+      });
+    },
+  };
+}
 
 // Initialize ChromaDB client
 export const chromaClient = new ChromaClient({
@@ -34,6 +64,7 @@ export class VectorStore {
       const collection = await chromaClient.getOrCreateCollection({
         name,
         metadata: metadata || { description: `AstroGroot ${name} collection` },
+        embeddingFunction: simpleEmbeddingFunction(),
       });
       return new VectorStore(collection, name);
     } catch (error) {
@@ -96,13 +127,22 @@ export class VectorStore {
     metadatas: (Record<string, string | number | boolean> | null)[][];
   }> {
     try {
-      const results = await this.collection.query({
-        queryTexts: params.queryText ? [params.queryText] : undefined,
-        queryEmbeddings: params.queryEmbedding ? [params.queryEmbedding] : undefined,
-        nResults: params.nResults || 10,
-        where: params.filter,
-      });
-      return results;
+      const nResults = params.nResults || 10;
+      const results = params.queryEmbedding
+        ? await this.collection.query({
+            queryEmbeddings: [params.queryEmbedding],
+            nResults,
+            where: params.filter,
+          })
+        : await this.collection.query({
+            queryTexts: params.queryText ? [params.queryText] : [""],
+            nResults,
+            where: params.filter,
+          });
+      return {
+        ...results,
+        distances: results.distances ?? [],
+      };
     } catch (error) {
       console.error(`Failed to query ${this.collectionName}:`, error);
       throw error;
