@@ -19,6 +19,7 @@ AstroGroot collects, processes, and indexes astronomy content from multiple sour
 
 ```
 ├── deno.json                # Project config & dependencies
+├── main.tsx                 # Hono app entry (routes, API, static)
 ├── drizzle.config.ts        # Drizzle ORM configuration
 ├── docker-compose.yml       # ChromaDB & Redis services
 ├── .env.example             # Environment variables template
@@ -29,6 +30,7 @@ AstroGroot collects, processes, and indexes astronomy content from multiple sour
 │
 ├── lib/                     # Shared Libraries
 │   ├── vector.ts            # ChromaDB wrapper
+│   ├── mcp.ts               # MCP request handler (getStats, listMethods, etc.)
 │   ├── ai/
 │   │   ├── client.ts        # Anthropic SDK client
 │   │   └── processor.ts     # AI summarization & translation
@@ -37,17 +39,19 @@ AstroGroot collects, processes, and indexes astronomy content from multiple sour
 │       ├── arxiv.ts         # arXiv API integration
 │       └── youtube.ts       # YouTube transcript extraction
 │
-├── routes/                  # Fresh Framework Web Server
-│   ├── index.tsx            # Dashboard
-│   ├── search.tsx           # Search interface
-│   └── api/
-│       └── mcp.ts           # MCP Server endpoint
+├── components/              # Hono JSX UI (server-rendered)
+│   ├── layout.tsx           # Shared layout (starfield, nav, styles)
+│   ├── search-bar.tsx       # Search form + filters
+│   └── pages/
+│       ├── dashboard.tsx    # Dashboard (stats, about)
+│       ├── search.tsx       # Search page
+│       └── not-found.tsx    # 404 page
 │
-├── workers/                 # Background Processing
-│   └── crawler.ts           # Automated data collection worker
+├── static/                  # Static assets
+│   └── astrogroot-logo.png  # Logo (transparent)
 │
-└── components/              # UI Components
-    └── SearchBar.tsx        # Search interface component
+└── workers/                 # Background Processing
+    └── crawler.ts           # Automated data collection worker
 ```
 
 ## 🚀 Quick Start
@@ -127,13 +131,13 @@ deno cache --reload deno.json
 
 ### Running the Web Server
 
-Start the Fresh development server:
+Start the Hono development server:
 
 ```bash
 deno task dev
 ```
 
-Visit http://localhost:8000 to access the dashboard.
+Visit http://localhost:8000 to access the dashboard. If port 8000 is in use, the server will try the next available port (8001, 8002, …).
 
 ### Running the Crawler
 
@@ -164,12 +168,9 @@ AstroGroot includes an MCP (Model Context Protocol) server for integration with 
 
 **Available MCP methods:**
 
-- `search` - Search the library
-- `getPaper` - Get a specific paper by arXiv ID
-- `getVideo` - Get a specific video by YouTube ID
-- `getNasaContent` - Get NASA content by ID
-- `getStats` - Get library statistics
+- `getStats` - Get library statistics (papers, videos, NASA counts)
 - `listMethods` - List all available methods
+- `search` - Search the library (advertised; implementation in progress)
 
 **Example MCP request:**
 
@@ -206,7 +207,7 @@ deno task db:studio
 - **Database Layer**: Drizzle ORM with Turso (LibSQL)
 - **Vector Store**: ChromaDB for semantic search
 - **AI Processing**: Anthropic Claude for summarization
-- **Web Framework**: Fresh 2.0 (Deno-native React framework)
+- **Web Framework**: [Hono](https://hono.dev/) with server-side JSX (Deno)
 - **Background Workers**: Deno native with scheduled execution
 
 ### Adding New Data Sources
@@ -293,4 +294,4 @@ For issues, questions, or contributions:
 
 ---
 
-**Built with ❤️ using Deno, Fresh, Claude AI, and open astronomy data**
+**Built with ❤️ using Deno, Hono, Claude AI, and open astronomy data**
