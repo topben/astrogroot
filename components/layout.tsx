@@ -106,6 +106,21 @@ const SHARED_STYLES = `
   .info-list { margin-left: 2rem; margin-bottom: 1.5rem; line-height: 2; color: #c7d2fe; }
   .info-list li { margin-bottom: 0.5rem; }
   .info-list li::marker { color: #a855f7; filter: drop-shadow(0 0 6px rgba(168,85,247,0.6)); }
+  .calendar-modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); overflow-y: auto; }
+  .calendar-modal-backdrop[hidden] { display: none !important; }
+  .calendar-popover { position: relative; min-width: 280px; max-width: min(320px, calc(100vw - 2rem)); padding: 1.25rem; padding-top: 2.25rem; background: rgba(5, 8, 22, 0.98); border: 1px solid rgba(34, 211, 238, 0.35); border-radius: 16px; box-shadow: 0 0 40px rgba(0,0,0,0.5), 0 0 60px rgba(168, 85, 247, 0.2), 0 0 80px rgba(34, 211, 238, 0.12); backdrop-filter: blur(12px); flex-shrink: 0; margin: auto; }
+  .calendar-close { position: absolute; top: 0.75rem; right: 0.75rem; width: 2rem; height: 2rem; padding: 0; display: flex; align-items: center; justify-content: center; background: transparent; border: none; border-radius: 8px; color: #94a3b8; font-size: 1.5rem; line-height: 1; cursor: pointer; transition: color 0.2s ease, background 0.2s ease; }
+  .calendar-close:hover { color: #e0e7ff; background: rgba(168, 85, 247, 0.2); }
+  .calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .calendar-month-year { font-size: 1rem; font-weight: 600; color: #e0e7ff; text-shadow: 0 0 20px rgba(34, 211, 238, 0.3); }
+  .calendar-nav { width: 2rem; height: 2rem; padding: 0; display: flex; align-items: center; justify-content: center; background: rgba(34, 211, 238, 0.1); border: 1px solid rgba(34, 211, 238, 0.3); border-radius: 8px; color: #22d3ee; font-size: 1.25rem; cursor: pointer; transition: all 0.2s ease; line-height: 1; }
+  .calendar-nav:hover { background: rgba(34, 211, 238, 0.2); border-color: rgba(34, 211, 238, 0.5); box-shadow: 0 0 15px rgba(34, 211, 238, 0.25); }
+  .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 0.5rem; text-align: center; font-size: 0.7rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.03em; }
+  .calendar-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .calendar-day { width: 2.25rem; height: 2.25rem; padding: 0; display: flex; align-items: center; justify-content: center; background: transparent; border: none; border-radius: 8px; font-size: 0.875rem; color: #e0e7ff; cursor: pointer; transition: all 0.2s ease; margin: 0 auto; }
+  .calendar-day:hover { background: rgba(168, 85, 247, 0.2); color: #fff; box-shadow: 0 0 12px rgba(168, 85, 247, 0.3); }
+  .calendar-day.other-month { color: #475569; opacity: 0.7; }
+  .calendar-day.other-month:hover { background: rgba(34, 211, 238, 0.1); color: #94a3b8; }
 `;
 
 type LayoutProps = PropsWithChildren<{
@@ -156,6 +171,20 @@ export const Layout: FC<LayoutProps> = (props) => {
         </nav>
       )}
       {children}
+      <div id="calendar-modal-backdrop" class="calendar-modal-backdrop" hidden aria-hidden="true">
+        <div id="calendar-popover" class="calendar-popover" role="dialog" aria-modal="true" aria-label="Pick a date">
+          <button type="button" class="calendar-close" aria-label="Close calendar">×</button>
+          <div class="calendar-header">
+            <button type="button" class="calendar-nav calendar-prev" aria-label="Previous month">‹</button>
+            <div class="calendar-month-year" id="calendar-month-year"></div>
+            <button type="button" class="calendar-nav calendar-next" aria-label="Next month">›</button>
+          </div>
+          <div class="calendar-weekdays">
+            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+          </div>
+          <div class="calendar-days" id="calendar-days"></div>
+        </div>
+      </div>
       <style dangerouslySetInnerHTML={{ __html: SHARED_STYLES }} />
       <script
         dangerouslySetInnerHTML={{

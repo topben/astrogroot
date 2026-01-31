@@ -53,13 +53,23 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
             <option value="title">Title</option>
           </select>
         </div>
-        <div class="filter-group">
+        <div class="filter-group date-picker-group">
           <label for="filter-dateFrom">Date From:</label>
-          <input type="date" name="dateFrom" id="filter-dateFrom" defaultValue={dateFrom} />
+          <div class="date-picker-wrap">
+            <input type="date" name="dateFrom" id="filter-dateFrom" class="date-input" defaultValue={dateFrom} />
+            <button type="button" class="calendar-btn" data-target="filter-dateFrom" title="Pick date" aria-label="Open calendar">
+              <span class="calendar-btn-icon" aria-hidden="true">📅</span>
+            </button>
+          </div>
         </div>
-        <div class="filter-group">
+        <div class="filter-group date-picker-group">
           <label for="filter-dateTo">Date To:</label>
-          <input type="date" name="dateTo" id="filter-dateTo" defaultValue={dateTo} />
+          <div class="date-picker-wrap">
+            <input type="date" name="dateTo" id="filter-dateTo" class="date-input" defaultValue={dateTo} />
+            <button type="button" class="calendar-btn" data-target="filter-dateTo" title="Pick date" aria-label="Open calendar">
+              <span class="calendar-btn-icon" aria-hidden="true">📅</span>
+            </button>
+          </div>
         </div>
       </div>
     </form>
@@ -67,22 +77,133 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
       dangerouslySetInnerHTML={{
         __html: `
 (function() {
-  var toggle = document.getElementById('filter-toggle');
-  var panel = document.getElementById('filters-panel');
-  if (toggle && panel) {
-    toggle.addEventListener('click', function() {
-      var open = !panel.hidden;
-      panel.hidden = !open;
-      toggle.textContent = open ? "Hide Filters" : "Show Filters";
-      toggle.setAttribute('aria-expanded', open ? 'false' : 'true');
+  function initFilters() {
+    var toggle = document.getElementById('filter-toggle');
+    var panel = document.getElementById('filters-panel');
+    if (toggle && panel) {
+      toggle.addEventListener('click', function() {
+        var open = !panel.hidden;
+        panel.hidden = !open;
+        toggle.textContent = open ? "Hide Filters" : "Show Filters";
+        toggle.setAttribute('aria-expanded', open ? 'false' : 'true');
+      });
+    }
+    var form = document.getElementById('search-form');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        var q = document.getElementById('search-input');
+        if (q && !q.value.trim()) e.preventDefault();
+      });
+    }
+  }
+  function initCalendar() {
+    var backdrop = document.getElementById('calendar-modal-backdrop');
+    var popover = document.getElementById('calendar-popover');
+    if (!backdrop || !popover) return;
+    var monthYearEl = document.getElementById('calendar-month-year');
+    var daysEl = document.getElementById('calendar-days');
+    var currentYear, currentMonth, targetInputId;
+    var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    function pad(n) { return n < 10 ? '0' + n : String(n); }
+    function openCalendar(inputId) {
+      targetInputId = inputId;
+      var input = document.getElementById(inputId);
+      if (input && input.value) {
+        var p = input.value.split('-').map(Number);
+        if (p.length === 3) { currentYear = p[0]; currentMonth = p[1] - 1; }
+        else { var d = new Date(); currentYear = d.getFullYear(); currentMonth = d.getMonth(); }
+      } else {
+        var d = new Date();
+        currentYear = d.getFullYear();
+        currentMonth = d.getMonth();
+      }
+      renderCalendar();
+      backdrop.hidden = false;
+      backdrop.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeCalendar() {
+      backdrop.hidden = true;
+      backdrop.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+    function setDate(y, m, d) {
+      var input = document.getElementById(targetInputId);
+      if (input) {
+        input.value = y + '-' + pad(m) + '-' + pad(d);
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      closeCalendar();
+    }
+    function renderCalendar() {
+      if (!monthYearEl || !daysEl) return;
+      monthYearEl.textContent = MONTHS[currentMonth] + ' ' + currentYear;
+      var first = new Date(currentYear, currentMonth, 1);
+      var start = first.getDay();
+      var daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      var prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+      var prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+      var prevDays = new Date(prevYear, prevMonth + 1, 0).getDate();
+      var html = '';
+      var i;
+      for (i = start - 1; i >= 0; i--) {
+        var d = prevDays - i;
+        html += '<button type="button" class="calendar-day other-month" data-y="' + prevYear + '" data-m="' + (prevMonth + 1) + '" data-d="' + d + '">' + d + '</button>';
+      }
+      for (i = 1; i <= daysInMonth; i++) {
+        html += '<button type="button" class="calendar-day" data-y="' + currentYear + '" data-m="' + (currentMonth + 1) + '" data-d="' + i + '">' + i + '</button>';
+      }
+      var remaining = 42 - (start + daysInMonth);
+      var nextMonth = currentMonth === 11 ? 0 : currentMonth + 1;
+      var nextYear = currentMonth === 11 ? currentYear + 1 : currentYear;
+      for (i = 1; i <= remaining; i++) {
+        html += '<button type="button" class="calendar-day other-month" data-y="' + nextYear + '" data-m="' + (nextMonth + 1) + '" data-d="' + i + '">' + i + '</button>';
+      }
+      daysEl.innerHTML = html;
+      daysEl.querySelectorAll('.calendar-day').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          setDate(parseInt(btn.getAttribute('data-y'), 10), parseInt(btn.getAttribute('data-m'), 10), parseInt(btn.getAttribute('data-d'), 10));
+        });
+      });
+    }
+    document.querySelectorAll('.calendar-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var id = btn.getAttribute('data-target');
+        if (id) openCalendar(id);
+      });
+    });
+    popover.addEventListener('click', function(e) { e.stopPropagation(); });
+    var prevBtn = popover.querySelector('.calendar-prev');
+    var nextBtn = popover.querySelector('.calendar-next');
+    if (prevBtn) prevBtn.addEventListener('click', function() {
+      currentMonth--;
+      if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+      renderCalendar();
+    });
+    if (nextBtn) nextBtn.addEventListener('click', function() {
+      currentMonth++;
+      if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+      renderCalendar();
+    });
+    backdrop.addEventListener('click', function(e) {
+      if (e.target === backdrop) closeCalendar();
+    });
+    var closeBtn = popover.querySelector('.calendar-close');
+    if (closeBtn) closeBtn.addEventListener('click', closeCalendar);
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && !backdrop.hidden) closeCalendar();
     });
   }
-  var form = document.getElementById('search-form');
-  if (form) {
-    form.addEventListener('submit', function(e) {
-      var q = document.getElementById('search-input');
-      if (q && !q.value.trim()) e.preventDefault();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      initFilters();
+      initCalendar();
     });
+  } else {
+    initFilters();
+    initCalendar();
   }
 })();
 `,
@@ -106,6 +227,12 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
 .filter-group label { font-size: 0.9375rem; font-weight: 600; color: #c7d2fe; }
 .filter-group select, .filter-group input { padding: 0.75rem; background: rgba(5, 8, 22, 0.9); border: 1px solid rgba(34, 211, 238, 0.3); border-radius: 10px; font-size: 0.9375rem; color: #e0e7ff; outline: none; }
 .filter-group select:focus, .filter-group input:focus { border-color: rgba(168, 85, 247, 0.6); box-shadow: 0 0 20px rgba(168, 85, 247, 0.25); background: rgba(5, 8, 22, 0.95); }
+.date-picker-group { grid-column: 1 / -1; }
+.date-picker-wrap { display: flex; gap: 0.5rem; align-items: center; }
+.date-picker-wrap .date-input { flex: 1; min-width: 0; }
+.calendar-btn { display: flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; padding: 0; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 10px; color: #e0e7ff; cursor: pointer; transition: all 0.2s ease; }
+.calendar-btn:hover { background: rgba(168, 85, 247, 0.25); border-color: rgba(168, 85, 247, 0.6); box-shadow: 0 0 15px rgba(168, 85, 247, 0.3); }
+.calendar-btn-icon { font-size: 1.25rem; line-height: 1; }
 `,
       }}
     />
