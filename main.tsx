@@ -2,6 +2,7 @@
 
 import { Hono } from "hono";
 import { handleMCPRequest } from "./lib/mcp.ts";
+import { getLibraryStats } from "./lib/stats.ts";
 import { DashboardPage } from "./components/pages/dashboard.tsx";
 import { SearchPage } from "./components/pages/search.tsx";
 import { NotFoundPage } from "./components/pages/not-found.tsx";
@@ -20,14 +21,18 @@ app.get("/static/astrogroot-logo.png", async (c) => {
   return c.body(file, 200);
 });
 
-// Pages
-app.get("/", (c) => c.html(<DashboardPage />));
-app.get("/search", (c) => c.html(<SearchPage />));
-
 // API
-app.get("/api/stats", (c) =>
-  c.json({ papers: 0, videos: 0, nasa: 0, total: 0 })
+app.get("/api/health", (c) =>
+  c.json({ ok: true, service: "astrogroot", timestamp: new Date().toISOString() })
 );
+app.get("/api/stats", async (c) => c.json(await getLibraryStats()));
+
+// Pages
+app.get("/", async (c) => {
+  const stats = await getLibraryStats();
+  return c.html(<DashboardPage stats={stats} />);
+});
+app.get("/search", (c) => c.html(<SearchPage />));
 
 app.post("/api/mcp", async (c) => {
   try {
@@ -76,13 +81,17 @@ if (import.meta.main) {
       }
       break;
     } catch (err) {
+      const code = err && typeof err === "object" && "code" in err ? (err as { code: unknown }).code : null;
+      const name = err instanceof Error ? err.name : "";
+      const msg = err instanceof Error ? err.message : String(err);
       const addrInUse =
-        err instanceof Error &&
-        ("code" in err ? (err as { code: string }).code === "AddrInUse" : false);
+        name === "AddrInUse" ||
+        code === "AddrInUse" ||
+        code === 48 ||
+        code === "48" ||
+        /address already in use|addrinuse/i.test(msg);
       if (addrInUse && attempt < maxPortAttempts - 1) continue;
       throw err;
     }
   }
 }
-
-export default app;

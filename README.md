@@ -137,7 +137,22 @@ Start the Hono development server:
 deno task dev
 ```
 
-Visit http://localhost:8000 to access the dashboard. If port 8000 is in use, the server will try the next available port (8001, 8002, …).
+Visit the URL shown in the terminal (e.g. http://localhost:8000 or http://localhost:8001) to access the dashboard. If port 8000 is in use (e.g. by ChromaDB when using Docker), the server will try the next available port.
+
+**Tip:** When running Docker (ChromaDB on 8000), set `PORT=8001` in `.env` so the web app uses 8001 and avoids port conflict.
+
+**Verify everything is running:**
+
+```bash
+# Check Docker containers (ChromaDB, Redis)
+docker compose ps
+
+# Check web app (replace 8001 with your app port if different)
+curl -s http://localhost:8001/api/health
+# → {"ok":true,"service":"astrogroot","timestamp":"..."}
+```
+
+The dashboard shows **Library Statistics** as 0 until you run the crawler to collect data. The app is running if you see the dashboard and `/api/health` returns `ok: true`.
 
 ### Running the Crawler
 

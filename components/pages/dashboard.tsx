@@ -1,7 +1,15 @@
 import type { FC } from "hono/jsx";
 import { Layout } from "../layout.tsx";
+import type { LibraryStats } from "../../lib/stats.ts";
 
-export const DashboardPage: FC = () => (
+export const DashboardPage: FC<{ stats?: LibraryStats }> = (props) => {
+  const stats = props.stats ?? {
+    papers: 0,
+    videos: 0,
+    nasa: 0,
+    total: 0,
+  };
+  return (
   <Layout pageClass="dashboard" activeNav="dashboard">
     <main class="main-content">
       <section class="stats-section">
@@ -9,22 +17,22 @@ export const DashboardPage: FC = () => (
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon">📄</div>
-            <div class="stat-value">0</div>
+            <div class="stat-value">{stats.papers}</div>
             <div class="stat-label">Research Papers</div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">🎥</div>
-            <div class="stat-value">0</div>
+            <div class="stat-value">{stats.videos}</div>
             <div class="stat-label">Videos</div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">🚀</div>
-            <div class="stat-value">0</div>
+            <div class="stat-value">{stats.nasa}</div>
             <div class="stat-label">NASA Content</div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">⭐</div>
-            <div class="stat-value">0</div>
+            <div class="stat-value">{stats.total}</div>
             <div class="stat-label">Total Items</div>
           </div>
         </div>
@@ -47,4 +55,5 @@ export const DashboardPage: FC = () => (
       </section>
     </main>
   </Layout>
-);
+  );
+};

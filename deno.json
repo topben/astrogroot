@@ -2,12 +2,12 @@
   "name": "@astrogroot/research-library",
   "version": "1.0.0",
   "tasks": {
-    "dev": "deno run --allow-all --watch main.tsx",
-    "start": "deno run --allow-all main.tsx",
+    "dev": "deno run --allow-all --env --watch main.tsx",
+    "start": "deno run --allow-all --env main.tsx",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "worker": "deno run --allow-all workers/crawler.ts"
+    "worker": "deno run --allow-all --env workers/crawler.ts"
   },
   "imports": {
     "@anthropic-ai/sdk": "npm:@anthropic-ai/sdk@^0.32.0",

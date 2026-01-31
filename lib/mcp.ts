@@ -1,5 +1,7 @@
 // MCP (Model Context Protocol) Server for Claude Desktop Integration
 
+import { getLibraryStats } from "./stats.ts";
+
 export interface MCPRequest {
   method: string;
   params?: Record<string, unknown>;
@@ -17,15 +19,10 @@ export async function handleMCPRequest(request: MCPRequest): Promise<MCPResponse
   const { method } = request;
 
   switch (method) {
-    case "getStats":
-      return {
-        result: {
-          papers: 0,
-          videos: 0,
-          nasa: 0,
-          total: 0,
-        },
-      };
+    case "getStats": {
+      const stats = await getLibraryStats();
+      return { result: stats };
+    }
     case "listMethods":
       return handleListMethods();
     default:
