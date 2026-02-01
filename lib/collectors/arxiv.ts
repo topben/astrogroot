@@ -19,7 +19,7 @@ const ArxivEntrySchema = z.object({
 export type ArxivEntry = z.infer<typeof ArxivEntrySchema>;
 
 // Parse XML response from arXiv
-async function parseArxivXml(xml: string): Promise<ArxivEntry[]> {
+function parseArxivXml(xml: string): Promise<ArxivEntry[]> {
   return new Promise((resolve, reject) => {
     parseString(xml, (err: unknown, result: unknown) => {
       if (err) {
@@ -218,7 +218,7 @@ export const ASTRO_CATEGORIES = [
 ];
 
 // Collect recent astronomy papers
-export async function collectAstronomyPapers(params: {
+export function collectAstronomyPapers(params: {
   maxResults?: number;
   daysBack?: number;
   includeAllCategories?: boolean;

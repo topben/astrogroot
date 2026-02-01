@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert";
+import { assertEquals } from "jsr:@std/assert@1";
 import {
   runCrawler,
   type CrawlerDeps,
@@ -11,14 +11,14 @@ import { SUPPORTED_LOCALES } from "../lib/i18n.ts";
 
 // --- Mocks (minimal shape; cast to CrawlerDeps so we don't need full VectorStore/db) ---
 
-const asyncNoop = async () => {};
+const asyncNoop = () => Promise.resolve();
 
 function createMockDb() {
   return {
     query: {
-      papers: { findFirst: async () => undefined },
-      videos: { findFirst: async () => undefined },
-      nasaContent: { findFirst: async () => undefined },
+      papers: { findFirst: () => Promise.resolve(undefined) },
+      videos: { findFirst: () => Promise.resolve(undefined) },
+      nasaContent: { findFirst: () => Promise.resolve(undefined) },
     },
     insert: () => ({ values: asyncNoop }),
   };
@@ -47,7 +47,7 @@ function createMockProcessMultilingual(
     ],
   },
 ) {
-  return async (): Promise<ProcessMultilingualResult> => result;
+  return (): Promise<ProcessMultilingualResult> => Promise.resolve(result);
 }
 
 const emptyArxiv: ArxivEntry[] = [];
@@ -82,14 +82,12 @@ const oneNasaLibraryItem: NasaAsset = {
 Deno.test("runCrawler with empty mocks returns zero counts and no errors", async () => {
   const deps = {
     db: createMockDb(),
-    initializeCollections: async () => createMockCollections(),
+    initializeCollections: () => Promise.resolve(createMockCollections()),
     processMultilingualContent: createMockProcessMultilingual(),
-    collectAstronomyPapers: async () => emptyArxiv,
-    collectAstronomyVideos: async () => emptyVideoList,
-    fetchCompleteVideoData: async () => {
-      throw new Error("should not be called");
-    },
-    collectNasaContent: async () => emptyNasa,
+    collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
+    collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
+    fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
+    collectNasaContent: () => Promise.resolve(emptyNasa),
   } as unknown as CrawlerDeps;
 
   const stats = await runCrawler(deps);
@@ -103,14 +101,12 @@ Deno.test("runCrawler with empty mocks returns zero counts and no errors", async
 Deno.test("runCrawler with one arXiv paper increments papersCollected", async () => {
   const deps = {
     db: createMockDb(),
-    initializeCollections: async () => createMockCollections(),
+    initializeCollections: () => Promise.resolve(createMockCollections()),
     processMultilingualContent: createMockProcessMultilingual(),
-    collectAstronomyPapers: async () => onePaper,
-    collectAstronomyVideos: async () => emptyVideoList,
-    fetchCompleteVideoData: async () => {
-      throw new Error("should not be called");
-    },
-    collectNasaContent: async () => emptyNasa,
+    collectAstronomyPapers: () => Promise.resolve(onePaper),
+    collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
+    fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
+    collectNasaContent: () => Promise.resolve(emptyNasa),
   } as unknown as CrawlerDeps;
 
   const stats = await runCrawler(deps);
@@ -127,22 +123,23 @@ Deno.test("runCrawler with one video increments videosCollected", async () => {
   ];
   const deps = {
     db: createMockDb(),
-    initializeCollections: async () => createMockCollections(),
+    initializeCollections: () => Promise.resolve(createMockCollections()),
     processMultilingualContent: createMockProcessMultilingual(),
-    collectAstronomyPapers: async () => emptyArxiv,
-    collectAstronomyVideos: async () => videoList,
-    fetchCompleteVideoData: async () => ({
-      metadata: {
-        id: "abc123",
-        title: "Test Video",
-        channelName: "Channel",
-        publishedAt: "2024-01-01T00:00:00Z",
-        thumbnailUrl: "https://example.com/thumb.jpg",
-      },
-      transcript: [],
-      fullText: "Transcript text",
-    }),
-    collectNasaContent: async () => emptyNasa,
+    collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
+    collectAstronomyVideos: () => Promise.resolve(videoList),
+    fetchCompleteVideoData: () =>
+      Promise.resolve({
+        metadata: {
+          id: "abc123",
+          title: "Test Video",
+          channelName: "Channel",
+          publishedAt: "2024-01-01T00:00:00Z",
+          thumbnailUrl: "https://example.com/thumb.jpg",
+        },
+        transcript: [],
+        fullText: "Transcript text",
+      }),
+    collectNasaContent: () => Promise.resolve(emptyNasa),
   } as unknown as CrawlerDeps;
 
   const stats = await runCrawler(deps);
@@ -163,14 +160,12 @@ Deno.test("runCrawler with APOD increments nasaItemsCollected", async () => {
   };
   const deps = {
     db: createMockDb(),
-    initializeCollections: async () => createMockCollections(),
+    initializeCollections: () => Promise.resolve(createMockCollections()),
     processMultilingualContent: createMockProcessMultilingual(),
-    collectAstronomyPapers: async () => emptyArxiv,
-    collectAstronomyVideos: async () => emptyVideoList,
-    fetchCompleteVideoData: async () => {
-      throw new Error("should not be called");
-    },
-    collectNasaContent: async () => ({ apod, libraryItems: [] }),
+    collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
+    collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
+    fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
+    collectNasaContent: () => Promise.resolve({ apod, libraryItems: [] }),
   } as unknown as CrawlerDeps;
 
   const stats = await runCrawler(deps);
@@ -184,17 +179,16 @@ Deno.test("runCrawler with APOD increments nasaItemsCollected", async () => {
 Deno.test("runCrawler with NASA library item increments nasaItemsCollected", async () => {
   const deps = {
     db: createMockDb(),
-    initializeCollections: async () => createMockCollections(),
+    initializeCollections: () => Promise.resolve(createMockCollections()),
     processMultilingualContent: createMockProcessMultilingual(),
-    collectAstronomyPapers: async () => emptyArxiv,
-    collectAstronomyVideos: async () => emptyVideoList,
-    fetchCompleteVideoData: async () => {
-      throw new Error("should not be called");
-    },
-    collectNasaContent: async () => ({
-      apod: null,
-      libraryItems: [oneNasaLibraryItem],
-    }),
+    collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
+    collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
+    fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
+    collectNasaContent: () =>
+      Promise.resolve({
+        apod: null,
+        libraryItems: [oneNasaLibraryItem],
+      }),
   } as unknown as CrawlerDeps;
 
   const stats = await runCrawler(deps);
@@ -208,16 +202,12 @@ Deno.test("runCrawler with NASA library item increments nasaItemsCollected", asy
 Deno.test("runCrawler records errors when processMultilingualContent throws", async () => {
   const deps = {
     db: createMockDb(),
-    initializeCollections: async () => createMockCollections(),
-    processMultilingualContent: async () => {
-      throw new Error("AI processing failed");
-    },
-    collectAstronomyPapers: async () => onePaper,
-    collectAstronomyVideos: async () => emptyVideoList,
-    fetchCompleteVideoData: async () => {
-      throw new Error("should not be called");
-    },
-    collectNasaContent: async () => emptyNasa,
+    initializeCollections: () => Promise.resolve(createMockCollections()),
+    processMultilingualContent: () => Promise.reject(new Error("AI processing failed")),
+    collectAstronomyPapers: () => Promise.resolve(onePaper),
+    collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
+    fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
+    collectNasaContent: () => Promise.resolve(emptyNasa),
   } as unknown as CrawlerDeps;
 
   const stats = await runCrawler(deps);

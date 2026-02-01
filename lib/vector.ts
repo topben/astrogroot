@@ -27,15 +27,15 @@ function simpleEmbeddingFunction(): IEmbeddingFunction {
     return h;
   }
   return {
-    async generate(texts: string[]): Promise<number[][]> {
-      return texts.map((text) => {
+    generate(texts: string[]): Promise<number[][]> {
+      return Promise.resolve(texts.map((text) => {
         const v = new Array(EMBEDDING_DIM).fill(0);
         const h = hash(text);
         for (let i = 0; i < EMBEDDING_DIM; i++) {
           v[i] = (hash(text + i + h) % 1000) / 1000 - 0.5;
         }
         return v;
-      });
+      }));
     },
   };
 }

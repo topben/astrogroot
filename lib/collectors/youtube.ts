@@ -52,10 +52,10 @@ export async function fetchTranscript(videoId: string): Promise<TranscriptEntry[
 }
 
 // Fetch transcript from URL
-export async function fetchTranscriptFromUrl(url: string): Promise<TranscriptEntry[]> {
+export function fetchTranscriptFromUrl(url: string): Promise<TranscriptEntry[]> {
   const videoId = extractVideoId(url);
   if (!videoId) {
-    throw new Error("Invalid YouTube URL");
+    return Promise.reject(new Error("Invalid YouTube URL"));
   }
   return fetchTranscript(videoId);
 }
