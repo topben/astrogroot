@@ -145,10 +145,23 @@ fly secrets list --config fly.toml
 
 ### 2.2 設定專案
 
-| 設定項 | 值 |
-|--------|-----|
-| Entrypoint | `main.tsx` |
-| Root Directory | `.` (留空) |
+在 **Settings → Build & Deploy** 設定：
+
+| 設定項 | 值 | 說明 |
+|--------|-----|------|
+| **Framework preset** | `No Preset` | 不使用框架預設 |
+| **Install command** | (留空) | Deno 自動處理依賴 |
+| **Build command** | (留空) | 無需建置步驟 |
+| **Pre-deploy command** | (留空) | 無需預部署指令 |
+
+**Runtime Configuration:**
+
+| 設定項 | 值 | 說明 |
+|--------|-----|------|
+| **Runtime** | `Dynamic App` | 動態應用程式 |
+| **Entrypoint** | `main.tsx` | 應用程式進入點 |
+| **Arguments** | (留空) | 無額外參數 |
+| **Runtime Working Directory** | (留空) | 使用預設目錄 |
 
 ### 2.3 設定環境變數
 
