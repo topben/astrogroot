@@ -323,6 +323,24 @@ fly ssh console --config fly.toml
 deno task worker
 ```
 
+### Q: 部署 ChromaDB 後向量資料庫是空的？
+
+Turso 資料庫在雲端，但 ChromaDB 向量需要重建。執行：
+
+```bash
+# SSH 進入 Crawler
+fly ssh console --config fly.toml
+
+# 重建向量（從 Turso 讀取，不呼叫 AI API）
+deno task rebuild-vectors
+```
+
+這個腳本會：
+- 從 Turso 讀取現有的 papers/videos/NASA 資料
+- 使用已存在的翻譯
+- 寫入 ChromaDB 向量
+- **不消耗 Anthropic API 額度**
+
 ---
 
 ## 監控與除錯
