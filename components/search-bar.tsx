@@ -201,10 +201,10 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
       var showText = toggle.getAttribute('data-show') || 'Show Filters';
       var hideText = toggle.getAttribute('data-hide') || 'Hide Filters';
       toggle.addEventListener('click', function() {
-        var open = !panel.hidden;
-        panel.hidden = !open;
-        toggle.textContent = open ? hideText : showText;
-        toggle.setAttribute('aria-expanded', open ? 'false' : 'true');
+        var isHidden = panel.hidden;
+        panel.hidden = !isHidden;
+        toggle.textContent = isHidden ? hideText : showText;
+        toggle.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
       });
     }
     var form = document.getElementById('search-form');
