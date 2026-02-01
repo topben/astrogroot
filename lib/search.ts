@@ -302,15 +302,15 @@ export async function searchLibrary(params: {
       .map((entry) => entry.item);
   };
 
-  const papers = rerank(filteredPapers.map(toPaperItem));
-  const videos = rerank(filteredVideos.map(toVideoItem));
-  const nasa = rerank(filteredNasa.map(toNasaItem));
+  const paperItems = rerank(filteredPapers.map(toPaperItem));
+  const videoItems = rerank(filteredVideos.map(toVideoItem));
+  const nasaItems = rerank(filteredNasa.map(toNasaItem));
 
   return {
     query: trimmed,
-    papers,
-    videos,
-    nasa,
-    total: papers.length + videos.length + nasa.length,
+    papers: paperItems,
+    videos: videoItems,
+    nasa: nasaItems,
+    total: paperItems.length + videoItems.length + nasaItems.length,
   };
 }
