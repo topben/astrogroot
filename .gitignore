@@ -2,6 +2,13 @@
 .env
 .env.local
 .env.*.local
+.env.production
+.env.staging
+
+# Keep example files
+!.env.example
+!.env.deno-deploy.example
+!.env.fly.example
 
 # Deno
 node_modules/
