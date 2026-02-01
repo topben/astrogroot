@@ -1,0 +1,69 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "search": "Search"
+  },
+  "header": {
+    "subtitle": "Research Library",
+    "description": "Your astronomy and space science knowledge hub"
+  },
+  "stats": {
+    "title": "Library Statistics",
+    "papers": "Research Papers",
+    "videos": "Videos",
+    "nasa": "NASA Content",
+    "total": "Total Items"
+  },
+  "search": {
+    "title": "Search the Library",
+    "description": "Explore astronomy papers, videos, and NASA content",
+    "placeholder": "Search astronomy papers, videos, and NASA content...",
+    "button": "Search",
+    "showFilters": "Show Filters",
+    "hideFilters": "Hide Filters",
+    "contentType": "Content Type",
+    "allContent": "All Content",
+    "papers": "Research Papers",
+    "videos": "Videos",
+    "nasa": "NASA Content",
+    "sortBy": "Sort By",
+    "relevance": "Relevance",
+    "date": "Date",
+    "sortByTitle": "Title",
+    "dateFrom": "Date From",
+    "dateTo": "Date To",
+    "hint": "Enter a query above and click Search (e.g. dark energy, black holes, Mars).",
+    "searching": "Searching…",
+    "found": "Found {count} result(s)",
+    "noResults": "No results. Try different keywords or filters.",
+    "error": "Search failed"
+  },
+  "about": {
+    "title": "About AstroGroot",
+    "intro": "AstroGroot is an automated astronomy research library that collects, processes, and indexes content from multiple sources:",
+    "sources": {
+      "papers": "Research papers from arXiv",
+      "videos": "Educational videos from YouTube",
+      "nasa": "NASA imagery and content"
+    },
+    "ai": "All content is processed using Claude AI for summarization and semantic search via vector embeddings."
+  },
+  "common": {
+    "paper": "Paper",
+    "video": "Video",
+    "nasa": "NASA"
+  },
+  "error404": {
+    "title": "Lost in Space",
+    "message": "The page you're looking for doesn't exist in this galaxy.",
+    "returnButton": "Return to Dashboard"
+  },
+  "calendar": {
+    "weekdays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    "pickDate": "Pick a date",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "close": "Close calendar"
+  }
+}

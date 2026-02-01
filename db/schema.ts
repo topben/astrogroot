@@ -98,6 +98,18 @@ export const metadata = sqliteTable("metadata", {
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(sql`(unixepoch())`).notNull(),
 });
 
+// Translations table - Localized title/summary per item and language (i18n content)
+export const translations = sqliteTable("translations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  itemType: text("item_type").notNull(), // 'paper', 'video', 'nasa'
+  itemId: text("item_id").notNull(),
+  lang: text("lang", { length: 10 }).notNull(), // 'en', 'zh-TW', 'zh-CN'
+  title: text("title"),
+  summary: text("summary"),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(sql`(unixepoch())`).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).default(sql`(unixepoch())`).notNull(),
+});
+
 // Type exports for TypeScript
 export type Paper = typeof papers.$inferSelect;
 export type NewPaper = typeof papers.$inferInsert;
@@ -110,3 +122,6 @@ export type NewNasaContent = typeof nasaContent.$inferInsert;
 
 export type Metadata = typeof metadata.$inferSelect;
 export type NewMetadata = typeof metadata.$inferInsert;
+
+export type Translation = typeof translations.$inferSelect;
+export type NewTranslation = typeof translations.$inferInsert;

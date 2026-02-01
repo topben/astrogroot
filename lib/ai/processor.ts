@@ -1,9 +1,27 @@
 import { sendMessage } from "./client.ts";
 
+/** Supported content languages for summaries/translations (aligned with i18n locales). */
+export const SUPPORTED_LANGUAGES = [
+  { code: "en", name: "English" },
+  { code: "zh-TW", name: "Traditional Chinese" },
+  { code: "zh-CN", name: "Simplified Chinese" },
+] as const;
+
 export interface ProcessingResult {
   summary: string;
   translation?: string;
   keyPoints?: string[];
+}
+
+export interface MultilingualTranslation {
+  lang: string;
+  title: string;
+  summary: string;
+}
+
+export interface ProcessMultilingualResult {
+  baseSummary: string;
+  translations: MultilingualTranslation[];
 }
 
 const SUMMARIZE_SYSTEM_PROMPT = `You are an expert astronomy and space science communicator. Your task is to summarize research papers, articles, and video content in a clear, accessible way while maintaining scientific accuracy.
@@ -74,6 +92,26 @@ ${summary}`;
   }
 }
 
+/** Translate a short text (e.g. title) to the target language. */
+export async function translateText(text: string, targetLanguage: string): Promise<string> {
+  const prompt = `Translate the following astronomy/space science title or short text to ${targetLanguage}. Return only the translation, no explanation.
+
+${text}`;
+
+  try {
+    const translation = await sendMessage({
+      messages: [{ role: "user", content: prompt }],
+      systemPrompt: TRANSLATE_SYSTEM_PROMPT,
+      temperature: 0.3,
+    });
+
+    return translation.trim();
+  } catch (error) {
+    console.error("Error translating text:", error);
+    throw error;
+  }
+}
+
 export async function extractKeyPoints(text: string, count = 5): Promise<string[]> {
   const prompt = `Extract the ${count} most important key points from this astronomy/space science content:
 
@@ -140,6 +178,42 @@ export async function processContent(params: {
   }
 
   return result;
+}
+
+/** Summarize in base language (English), then translate title + summary to all supported languages. */
+export async function processMultilingualContent(params: {
+  text: string;
+  title: string;
+  sourceType: "paper" | "video" | "article";
+}): Promise<ProcessMultilingualResult> {
+  const { text, title, sourceType } = params;
+
+  console.log(`Processing multilingual ${sourceType}: ${title.substring(0, 50)}...`);
+
+  const baseSummary = await summarizeText({
+    text,
+    title,
+    sourceType,
+  });
+
+  const targetLangs = SUPPORTED_LANGUAGES.filter((l) => l.code !== "en");
+  const translations: MultilingualTranslation[] = [
+    { lang: "en", title, summary: baseSummary },
+  ];
+
+  const translated = await Promise.all(
+    targetLangs.map(async (lang) => ({
+      lang: lang.code,
+      title: await translateText(title, lang.name),
+      summary: await translateSummary({ summary: baseSummary, targetLanguage: lang.name }),
+    })),
+  );
+
+  for (const t of translated) {
+    translations.push({ lang: t.lang, title: t.title, summary: t.summary });
+  }
+
+  return { baseSummary, translations };
 }
 
 export async function answerQuestion(params: {

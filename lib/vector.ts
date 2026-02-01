@@ -1,10 +1,17 @@
 import { ChromaClient, Collection, type IEmbeddingFunction } from "chromadb";
+import type { Locale } from "./i18n.ts";
+import { SUPPORTED_LOCALES } from "./i18n.ts";
 
 const CHROMA_HOST = Deno.env.get("CHROMA_HOST") || "http://localhost:8000";
 const CHROMA_AUTH_TOKEN = Deno.env.get("CHROMA_AUTH_TOKEN");
 
 /** Embedding dimension used by Chroma's default model (all-MiniLM-L6-v2). */
 const EMBEDDING_DIM = 384;
+
+/** Locale to Chroma-safe collection suffix (en, zh_tw, zh_cn). */
+export function localeToSuffix(locale: string): string {
+  return locale.replace("-", "_").toLowerCase();
+}
 
 /**
  * Lightweight embedding function that does not require chromadb-default-embed.
@@ -39,11 +46,28 @@ export const chromaClient = new ChromaClient({
   auth: CHROMA_AUTH_TOKEN ? { provider: "token", credentials: CHROMA_AUTH_TOKEN } : undefined,
 });
 
-// Collection names
-export const COLLECTIONS = {
+// Collection name prefixes (per content type); suffix = locale (en, zh_tw, zh_cn)
+export const COLLECTION_PREFIX = {
   PAPERS: "astrogroot_papers",
   VIDEOS: "astrogroot_videos",
   NASA: "astrogroot_nasa",
+} as const;
+
+/** Get collection name for content type and locale (e.g. astrogroot_papers_zh_tw). */
+export function getCollectionName(
+  contentType: keyof typeof COLLECTION_PREFIX,
+  locale: string,
+): string {
+  const prefix = COLLECTION_PREFIX[contentType];
+  const suffix = localeToSuffix(locale);
+  return `${prefix}_${suffix}`;
+}
+
+/** Legacy flat collection names (default locale "en" only). */
+export const COLLECTIONS = {
+  PAPERS: "astrogroot_papers_en",
+  VIDEOS: "astrogroot_videos_en",
+  NASA: "astrogroot_nasa_en",
 } as const;
 
 // Vector store wrapper class
@@ -193,23 +217,33 @@ export class VectorStore {
   }
 }
 
-// Helper to initialize all collections
-export async function initializeCollections() {
-  const collections = await Promise.all([
-    VectorStore.getOrCreateCollection(COLLECTIONS.PAPERS, {
-      description: "Research papers from arXiv",
-    }),
-    VectorStore.getOrCreateCollection(COLLECTIONS.VIDEOS, {
-      description: "Educational videos from YouTube",
-    }),
-    VectorStore.getOrCreateCollection(COLLECTIONS.NASA, {
-      description: "NASA content and imagery",
-    }),
-  ]);
+export type CollectionsByLocale = Record<Locale, VectorStore>;
 
-  return {
-    papers: collections[0],
-    videos: collections[1],
-    nasa: collections[2],
-  };
+/** Initialize per-locale collections for papers, videos, and NASA content. */
+export async function initializeCollections(): Promise<{
+  papers: CollectionsByLocale;
+  videos: CollectionsByLocale;
+  nasa: CollectionsByLocale;
+}> {
+  const papers: CollectionsByLocale = {} as CollectionsByLocale;
+  const videos: CollectionsByLocale = {} as CollectionsByLocale;
+  const nasa: CollectionsByLocale = {} as CollectionsByLocale;
+
+  for (const locale of SUPPORTED_LOCALES) {
+    const suffix = localeToSuffix(locale);
+    papers[locale] = await VectorStore.getOrCreateCollection(
+      getCollectionName("PAPERS", locale),
+      { description: `arXiv papers (${suffix})` },
+    );
+    videos[locale] = await VectorStore.getOrCreateCollection(
+      getCollectionName("VIDEOS", locale),
+      { description: `YouTube videos (${suffix})` },
+    );
+    nasa[locale] = await VectorStore.getOrCreateCollection(
+      getCollectionName("NASA", locale),
+      { description: `NASA content (${suffix})` },
+    );
+  }
+
+  return { papers, videos, nasa };
 }

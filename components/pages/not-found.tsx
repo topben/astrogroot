@@ -1,4 +1,10 @@
 import type { FC } from "hono/jsx";
+import type { Locale, LocaleDict } from "../../lib/i18n.ts";
+
+function homeHref(locale?: Locale): string {
+  if (locale && locale !== "en") return `/?lang=${encodeURIComponent(locale)}`;
+  return "/";
+}
 
 const ERROR_STYLES = `
   .starfield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,0.9), transparent), radial-gradient(2px 2px at 60% 70%, rgba(255,255,255,0.9), transparent), radial-gradient(1px 1px at 50% 50%, #fff, transparent), radial-gradient(1px 1px at 80% 10%, rgba(255,215,0,0.4), transparent), radial-gradient(1px 1px at 33% 60%, rgba(34,211,238,0.5), transparent), radial-gradient(1px 1px at 10% 20%, #fff, transparent), radial-gradient(2px 2px at 85% 85%, rgba(255,255,255,0.8), transparent), radial-gradient(1px 1px at 25% 45%, rgba(34,211,238,0.6), transparent), radial-gradient(1px 1px at 70% 15%, rgba(255,215,0,0.35), transparent), radial-gradient(2px 2px at 5% 60%, #fff, transparent), radial-gradient(1px 1px at 95% 55%, rgba(168,85,247,0.5), transparent), radial-gradient(1px 1px at 45% 5%, #fff, transparent), radial-gradient(1px 1px at 12% 78%, rgba(255,255,255,0.85), transparent), radial-gradient(2px 2px at 65% 35%, rgba(255,215,0,0.3), transparent), radial-gradient(1px 1px at 88% 92%, rgba(34,211,238,0.45), transparent); background-size: 200% 200%; animation: starfield 60s linear infinite; opacity: 0.8; z-index: 0; }
@@ -21,7 +27,13 @@ const ERROR_STYLES = `
   .return-button:hover { transform: translateY(-2px); box-shadow: 0 6px 35px rgba(168,85,247,0.5), 0 0 50px rgba(34,211,238,0.3); filter: brightness(1.1); }
 `;
 
-export const NotFoundPage: FC = () => (
+export const NotFoundPage: FC<{ locale?: Locale; dict?: LocaleDict }> = (props) => {
+  const locale = props.locale ?? "en";
+  const d = props.dict;
+  const title = d?.error404.title ?? "Lost in Space";
+  const message = d?.error404.message ?? "The page you're looking for doesn't exist in this galaxy.";
+  const returnButton = d?.error404.returnButton ?? "Return to Dashboard";
+  return (
   <div class="error-page">
     <div class="starfield" />
     <div class="starfield-2" />
@@ -31,11 +43,11 @@ export const NotFoundPage: FC = () => (
     <div class="error-content">
       <h1 class="error-title">
         <span class="error-number">404</span>
-        <span class="error-text">Lost in Space</span>
+        <span class="error-text">{title}</span>
       </h1>
-      <p class="error-message">The page you're looking for doesn't exist in this galaxy.</p>
-      <a href="/" class="return-button">
-        <span>Return to Dashboard</span>
+      <p class="error-message">{message}</p>
+      <a href={homeHref(locale)} class="return-button">
+        <span>{returnButton}</span>
       </a>
     </div>
     <style dangerouslySetInnerHTML={{ __html: ERROR_STYLES }} />
@@ -67,4 +79,5 @@ export const NotFoundPage: FC = () => (
       }}
     />
   </div>
-);
+  );
+};

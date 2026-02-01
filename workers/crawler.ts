@@ -1,10 +1,12 @@
 #!/usr/bin/env -S deno run --allow-all
 
 import { db } from "../db/client.ts";
-import { papers, videos, nasaContent } from "../db/schema.ts";
+import { papers, videos, nasaContent, translations } from "../db/schema.ts";
 import { eq } from "drizzle-orm";
 import { initializeCollections } from "../lib/vector.ts";
-import { processContent } from "../lib/ai/processor.ts";
+import { processMultilingualContent } from "../lib/ai/processor.ts";
+import type { Locale } from "../lib/i18n.ts";
+import { SUPPORTED_LOCALES } from "../lib/i18n.ts";
 import { collectAstronomyPapers } from "../lib/collectors/arxiv.ts";
 import { collectNasaContent } from "../lib/collectors/nasa.ts";
 import {
@@ -26,7 +28,7 @@ export interface CrawlerStats {
 export interface CrawlerDeps {
   db: typeof db;
   initializeCollections: typeof initializeCollections;
-  processContent: typeof processContent;
+  processMultilingualContent: typeof processMultilingualContent;
   collectAstronomyPapers: typeof collectAstronomyPapers;
   collectAstronomyVideos: typeof collectAstronomyVideos;
   fetchCompleteVideoData: typeof fetchCompleteVideoData;
@@ -37,7 +39,7 @@ export interface CrawlerDeps {
 export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
   const db_ = deps?.db ?? db;
   const initCollections_ = deps?.initializeCollections ?? initializeCollections;
-  const processContent_ = deps?.processContent ?? processContent;
+  const processMultilingual_ = deps?.processMultilingualContent ?? processMultilingualContent;
   const collectAstronomyPapers_ = deps?.collectAstronomyPapers ?? collectAstronomyPapers;
   const collectAstronomyVideos_ = deps?.collectAstronomyVideos ?? collectAstronomyVideos;
   const fetchCompleteVideoData_ = deps?.fetchCompleteVideoData ?? fetchCompleteVideoData;
@@ -76,21 +78,21 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
           continue;
         }
 
-        // Process with AI
+        // Process with AI (summarize + translate to all supported languages)
         console.log(`  🤖 Processing paper: ${paper.title.substring(0, 50)}...`);
-        const processed = await processContent_({
+        const { baseSummary, translations: trans } = await processMultilingual_({
           text: paper.summary,
           title: paper.title,
           sourceType: "paper",
         });
 
-        // Insert into database
+        // Insert into database (main row: English summary)
         await db_.insert(papers).values({
           id: paper.id,
           title: paper.title,
           authors: JSON.stringify(paper.authors),
           abstract: paper.summary,
-          summary: processed.summary,
+          summary: baseSummary,
           publishedDate: new Date(paper.published),
           updatedDate: paper.updated ? new Date(paper.updated) : null,
           categories: JSON.stringify(paper.categories),
@@ -100,16 +102,31 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
           vectorId: paper.id,
         });
 
-        // Add to vector store
-        await collections.papers.add({
-          id: paper.id,
-          text: `${paper.title}\n\n${processed.summary}\n\n${paper.summary}`,
-          metadata: {
-            title: paper.title,
-            published: paper.published,
-            categories: paper.categories.join(", "),
-          },
-        });
+        // Insert translations for each language
+        for (const t of trans) {
+          await db_.insert(translations).values({
+            itemType: "paper",
+            itemId: paper.id,
+            lang: t.lang,
+            title: t.title,
+            summary: t.summary,
+          });
+        }
+
+        // Add to per-locale vector stores
+        for (const t of trans) {
+          const locale = t.lang as Locale;
+          if (!SUPPORTED_LOCALES.includes(locale)) continue;
+          await collections.papers[locale].add({
+            id: paper.id,
+            text: `${t.title}\n\n${t.summary}\n\n${paper.summary}`,
+            metadata: {
+              title: t.title,
+              published: paper.published,
+              categories: paper.categories.join(", "),
+            },
+          });
+        }
 
         stats.papersCollected++;
         console.log(`  ✅ Saved paper: ${paper.id}`);
@@ -148,15 +165,15 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
         console.log(`  📥 Fetching video: ${videoInfo.title.substring(0, 50)}...`);
         const videoData = await fetchCompleteVideoData_(videoInfo.videoId);
 
-        // Process with AI
+        // Process with AI (summarize + translate to all supported languages)
         console.log(`  🤖 Processing video transcript...`);
-        const processed = await processContent_({
+        const { baseSummary, translations: trans } = await processMultilingual_({
           text: videoData.fullText,
           title: videoData.metadata.title,
           sourceType: "video",
         });
 
-        // Insert into database
+        // Insert into database (main row: English summary)
         await db_.insert(videos).values({
           id: videoData.metadata.id,
           title: videoData.metadata.title,
@@ -164,7 +181,7 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
           channelId: videoData.metadata.channelId,
           description: videoData.metadata.description,
           transcript: videoData.fullText,
-          summary: processed.summary,
+          summary: baseSummary,
           publishedDate: new Date(videoData.metadata.publishedAt),
           duration: videoData.metadata.duration,
           viewCount: videoData.metadata.viewCount,
@@ -176,16 +193,31 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
           vectorId: videoData.metadata.id,
         });
 
-        // Add to vector store
-        await collections.videos.add({
-          id: videoData.metadata.id,
-          text: `${videoData.metadata.title}\n\n${processed.summary}\n\n${videoData.fullText.substring(0, 5000)}`,
-          metadata: {
-            title: videoData.metadata.title,
-            channelName: videoData.metadata.channelName,
-            published: videoData.metadata.publishedAt,
-          },
-        });
+        // Insert translations for each language
+        for (const t of trans) {
+          await db_.insert(translations).values({
+            itemType: "video",
+            itemId: videoData.metadata.id,
+            lang: t.lang,
+            title: t.title,
+            summary: t.summary,
+          });
+        }
+
+        // Add to per-locale vector stores
+        for (const t of trans) {
+          const locale = t.lang as Locale;
+          if (!SUPPORTED_LOCALES.includes(locale)) continue;
+          await collections.videos[locale].add({
+            id: videoData.metadata.id,
+            text: `${t.title}\n\n${t.summary}\n\n${videoData.fullText.substring(0, 5000)}`,
+            metadata: {
+              title: t.title,
+              channelName: videoData.metadata.channelName,
+              published: videoData.metadata.publishedAt,
+            },
+          });
+        }
 
         stats.videosCollected++;
         console.log(`  ✅ Saved video: ${videoData.metadata.id}`);
@@ -223,7 +255,7 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
         if (!existing) {
           console.log(`  🌌 Processing APOD: ${nasaData.apod.title}`);
 
-          const processed = await processContent_({
+          const { baseSummary, translations: trans } = await processMultilingual_({
             text: nasaData.apod.explanation,
             title: nasaData.apod.title,
             sourceType: "article",
@@ -234,7 +266,7 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
             contentType: "apod",
             title: nasaData.apod.title,
             explanation: nasaData.apod.explanation,
-            summary: processed.summary,
+            summary: baseSummary,
             date: new Date(nasaData.apod.date),
             mediaType: nasaData.apod.media_type,
             hdUrl: nasaData.apod.hdurl,
@@ -244,15 +276,29 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
             vectorId: apodId,
           });
 
-          await collections.nasa.add({
-            id: apodId,
-            text: `${nasaData.apod.title}\n\n${processed.summary}\n\n${nasaData.apod.explanation}`,
-            metadata: {
-              title: nasaData.apod.title,
-              date: nasaData.apod.date,
-              type: "apod",
-            },
-          });
+          for (const t of trans) {
+            await db_.insert(translations).values({
+              itemType: "nasa",
+              itemId: apodId,
+              lang: t.lang,
+              title: t.title,
+              summary: t.summary,
+            });
+          }
+
+          for (const t of trans) {
+            const locale = t.lang as Locale;
+            if (!SUPPORTED_LOCALES.includes(locale)) continue;
+            await collections.nasa[locale].add({
+              id: apodId,
+              text: `${t.title}\n\n${t.summary}\n\n${nasaData.apod.explanation}`,
+              metadata: {
+                title: t.title,
+                date: nasaData.apod.date,
+                type: "apod",
+              },
+            });
+          }
 
           stats.nasaItemsCollected++;
           console.log(`  ✅ Saved APOD: ${apodId}`);
@@ -281,7 +327,7 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
         console.log(`  📸 Processing NASA item: ${item.title.substring(0, 50)}...`);
 
         const description = item.description || "";
-        const processed = await processContent_({
+        const { baseSummary, translations: trans } = await processMultilingual_({
           text: description,
           title: item.title,
           sourceType: "article",
@@ -292,7 +338,7 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
           contentType: "library",
           title: item.title,
           description: description,
-          summary: processed.summary,
+          summary: baseSummary,
           date: new Date(item.date_created),
           mediaType: item.media_type,
           url: item.href,
@@ -303,16 +349,30 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
           vectorId: itemId,
         });
 
-        await collections.nasa.add({
-          id: itemId,
-          text: `${item.title}\n\n${processed.summary}\n\n${description}`,
-          metadata: {
-            title: item.title,
-            nasaId: item.nasa_id,
-            center: item.center || "",
-            type: "library",
-          },
-        });
+        for (const t of trans) {
+          await db_.insert(translations).values({
+            itemType: "nasa",
+            itemId: itemId,
+            lang: t.lang,
+            title: t.title,
+            summary: t.summary,
+          });
+        }
+
+        for (const t of trans) {
+          const locale = t.lang as Locale;
+          if (!SUPPORTED_LOCALES.includes(locale)) continue;
+          await collections.nasa[locale].add({
+            id: itemId,
+            text: `${t.title}\n\n${t.summary}\n\n${description}`,
+            metadata: {
+              title: t.title,
+              nasaId: item.nasa_id,
+              center: item.center || "",
+              type: "library",
+            },
+          });
+        }
 
         stats.nasaItemsCollected++;
         console.log(`  ✅ Saved NASA item: ${itemId}`);

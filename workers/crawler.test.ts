@@ -6,7 +6,8 @@ import {
 } from "./crawler.ts";
 import type { ArxivEntry } from "../lib/collectors/arxiv.ts";
 import type { ApodData, NasaAsset } from "../lib/collectors/nasa.ts";
-import type { ProcessingResult } from "../lib/ai/processor.ts";
+import type { ProcessMultilingualResult } from "../lib/ai/processor.ts";
+import { SUPPORTED_LOCALES } from "../lib/i18n.ts";
 
 // --- Mocks (minimal shape; cast to CrawlerDeps so we don't need full VectorStore/db) ---
 
@@ -23,16 +24,30 @@ function createMockDb() {
   };
 }
 
+const mockStore = { add: asyncNoop };
+
 function createMockCollections() {
+  const byLocale = Object.fromEntries(
+    SUPPORTED_LOCALES.map((locale) => [locale, mockStore]),
+  ) as Record<(typeof SUPPORTED_LOCALES)[number], { add: typeof asyncNoop }>;
   return {
-    papers: { add: asyncNoop },
-    videos: { add: asyncNoop },
-    nasa: { add: asyncNoop },
+    papers: byLocale,
+    videos: byLocale,
+    nasa: byLocale,
   };
 }
 
-function createMockProcessContent(result: ProcessingResult = { summary: "Test summary" }) {
-  return async (): Promise<ProcessingResult> => result;
+function createMockProcessMultilingual(
+  result: ProcessMultilingualResult = {
+    baseSummary: "Test summary",
+    translations: [
+      { lang: "en", title: "Test title", summary: "Test summary" },
+      { lang: "zh-TW", title: "測試標題", summary: "測試摘要" },
+      { lang: "zh-CN", title: "测试标题", summary: "测试摘要" },
+    ],
+  },
+) {
+  return async (): Promise<ProcessMultilingualResult> => result;
 }
 
 const emptyArxiv: ArxivEntry[] = [];
@@ -68,7 +83,7 @@ Deno.test("runCrawler with empty mocks returns zero counts and no errors", async
   const deps = {
     db: createMockDb(),
     initializeCollections: async () => createMockCollections(),
-    processContent: createMockProcessContent(),
+    processMultilingualContent: createMockProcessMultilingual(),
     collectAstronomyPapers: async () => emptyArxiv,
     collectAstronomyVideos: async () => emptyVideoList,
     fetchCompleteVideoData: async () => {
@@ -89,7 +104,7 @@ Deno.test("runCrawler with one arXiv paper increments papersCollected", async ()
   const deps = {
     db: createMockDb(),
     initializeCollections: async () => createMockCollections(),
-    processContent: createMockProcessContent(),
+    processMultilingualContent: createMockProcessMultilingual(),
     collectAstronomyPapers: async () => onePaper,
     collectAstronomyVideos: async () => emptyVideoList,
     fetchCompleteVideoData: async () => {
@@ -113,7 +128,7 @@ Deno.test("runCrawler with one video increments videosCollected", async () => {
   const deps = {
     db: createMockDb(),
     initializeCollections: async () => createMockCollections(),
-    processContent: createMockProcessContent(),
+    processMultilingualContent: createMockProcessMultilingual(),
     collectAstronomyPapers: async () => emptyArxiv,
     collectAstronomyVideos: async () => videoList,
     fetchCompleteVideoData: async () => ({
@@ -149,7 +164,7 @@ Deno.test("runCrawler with APOD increments nasaItemsCollected", async () => {
   const deps = {
     db: createMockDb(),
     initializeCollections: async () => createMockCollections(),
-    processContent: createMockProcessContent(),
+    processMultilingualContent: createMockProcessMultilingual(),
     collectAstronomyPapers: async () => emptyArxiv,
     collectAstronomyVideos: async () => emptyVideoList,
     fetchCompleteVideoData: async () => {
@@ -170,7 +185,7 @@ Deno.test("runCrawler with NASA library item increments nasaItemsCollected", asy
   const deps = {
     db: createMockDb(),
     initializeCollections: async () => createMockCollections(),
-    processContent: createMockProcessContent(),
+    processMultilingualContent: createMockProcessMultilingual(),
     collectAstronomyPapers: async () => emptyArxiv,
     collectAstronomyVideos: async () => emptyVideoList,
     fetchCompleteVideoData: async () => {
@@ -190,11 +205,11 @@ Deno.test("runCrawler with NASA library item increments nasaItemsCollected", asy
   assertEquals(stats.errors.length, 0);
 });
 
-Deno.test("runCrawler records errors when processContent throws", async () => {
+Deno.test("runCrawler records errors when processMultilingualContent throws", async () => {
   const deps = {
     db: createMockDb(),
     initializeCollections: async () => createMockCollections(),
-    processContent: async () => {
+    processMultilingualContent: async () => {
       throw new Error("AI processing failed");
     },
     collectAstronomyPapers: async () => onePaper,

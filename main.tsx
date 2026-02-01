@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { handleMCPRequest } from "./lib/mcp.ts";
 import { getLibraryStats } from "./lib/stats.ts";
 import { searchLibrary } from "./lib/search.ts";
+import { getLocaleFromRequest, loadDictionary } from "./lib/i18n.ts";
 import { DashboardPage } from "./components/pages/dashboard.tsx";
 import { SearchPage } from "./components/pages/search.tsx";
 import { NotFoundPage } from "./components/pages/not-found.tsx";
@@ -32,8 +33,12 @@ app.get("/api/search", async (c) => {
   const q = c.req.query("q") ?? "";
   const type = (c.req.query("type") ?? "all") as "all" | "papers" | "videos" | "nasa";
   const limit = parseInt(c.req.query("limit") ?? "20", 10) || 20;
+  const locale = getLocaleFromRequest(
+    c.req.query("lang"),
+    c.req.header("Accept-Language"),
+  );
   try {
-    const result = await searchLibrary({ q, type, limit });
+    const result = await searchLibrary({ q, type, limit, locale });
     return c.json(result);
   } catch (err) {
     console.error("Search error:", err);
@@ -46,15 +51,25 @@ app.get("/api/search", async (c) => {
 
 // Pages
 app.get("/", async (c) => {
+  const locale = getLocaleFromRequest(
+    c.req.query("lang"),
+    c.req.header("Accept-Language"),
+  );
+  const dict = await loadDictionary(locale);
   const stats = await getLibraryStats();
-  return c.html(<DashboardPage stats={stats} />);
+  return c.html(<DashboardPage stats={stats} locale={locale} dict={dict} />);
 });
-app.get("/search", (c) => {
+app.get("/search", async (c) => {
   const q = c.req.query("q") ?? "";
   const type = c.req.query("type") ?? "all";
   const sortBy = c.req.query("sortBy") ?? "relevance";
   const dateFrom = c.req.query("dateFrom") ?? "";
   const dateTo = c.req.query("dateTo") ?? "";
+  const locale = getLocaleFromRequest(
+    c.req.query("lang"),
+    c.req.header("Accept-Language"),
+  );
+  const dict = await loadDictionary(locale);
   return c.html(
     <SearchPage
       query={q}
@@ -62,6 +77,8 @@ app.get("/search", (c) => {
       sortBy={sortBy}
       dateFrom={dateFrom}
       dateTo={dateTo}
+      locale={locale}
+      dict={dict}
     />
   );
 });
@@ -96,7 +113,14 @@ app.get("/api/mcp", async (c) => {
 });
 
 // 404
-app.notFound((c) => c.html(<NotFoundPage />, 404));
+app.notFound(async (c) => {
+  const locale = getLocaleFromRequest(
+    c.req.query("lang"),
+    c.req.header("Accept-Language"),
+  );
+  const dict = await loadDictionary(locale);
+  return c.html(<NotFoundPage locale={locale} dict={dict} />, 404);
+});
 
 export { app };
 

@@ -1,0 +1,69 @@
+{
+  "nav": {
+    "dashboard": "儀表板",
+    "search": "搜尋"
+  },
+  "header": {
+    "subtitle": "研究圖書館",
+    "description": "您的天文與太空科學知識庫"
+  },
+  "stats": {
+    "title": "圖書館統計",
+    "papers": "研究論文",
+    "videos": "科普影片",
+    "nasa": "NASA 內容",
+    "total": "總項目"
+  },
+  "search": {
+    "title": "搜尋圖書館",
+    "description": "探索天文論文、影片與 NASA 內容",
+    "placeholder": "搜尋天文論文、影片與 NASA 內容…",
+    "button": "搜尋",
+    "showFilters": "顯示篩選",
+    "hideFilters": "隱藏篩選",
+    "contentType": "內容類型",
+    "allContent": "全部內容",
+    "papers": "研究論文",
+    "videos": "影片",
+    "nasa": "NASA 內容",
+    "sortBy": "排序方式",
+    "relevance": "相關度",
+    "date": "日期",
+    "sortByTitle": "標題",
+    "dateFrom": "開始日期",
+    "dateTo": "結束日期",
+    "hint": "在上方輸入查詢並點擊搜尋（例如：暗能量、黑洞、火星）。",
+    "searching": "搜尋中…",
+    "found": "共 {count} 筆結果",
+    "noResults": "沒有結果，請嘗試其他關鍵字或篩選條件。",
+    "error": "搜尋失敗"
+  },
+  "about": {
+    "title": "關於 AstroGroot",
+    "intro": "AstroGroot 是自動化天文研究圖書館，收錄、處理並索引來自多種來源的內容：",
+    "sources": {
+      "papers": "arXiv 研究論文",
+      "videos": "YouTube 科普影片",
+      "nasa": "NASA 影像與內容"
+    },
+    "ai": "所有內容皆經 Claude AI 摘要處理，並透過向量嵌入支援語意搜尋。"
+  },
+  "common": {
+    "paper": "論文",
+    "video": "影片",
+    "nasa": "NASA"
+  },
+  "error404": {
+    "title": "迷失太空",
+    "message": "找不到您要的頁面。",
+    "returnButton": "返回儀表板"
+  },
+  "calendar": {
+    "weekdays": ["日", "一", "二", "三", "四", "五", "六"],
+    "months": ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+    "pickDate": "選擇日期",
+    "prevMonth": "上個月",
+    "nextMonth": "下個月",
+    "close": "關閉日曆"
+  }
+}

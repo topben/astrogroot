@@ -1,4 +1,6 @@
 import type { FC, PropsWithChildren } from "hono/jsx";
+import type { Locale, LocaleDict } from "../lib/i18n.ts";
+import { SUPPORTED_LOCALES } from "../lib/i18n.ts";
 
 const SHARED_STYLES = `
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -72,6 +74,10 @@ const SHARED_STYLES = `
   .nebula-2 { width: 500px; height: 500px; background: radial-gradient(circle, #22d3ee 0%, #06b6d4 40%, transparent 70%); bottom: -150px; left: -150px; }
   .header { text-align: center; padding: 2rem 1rem 2rem; position: relative; z-index: 1; }
   .header-search { padding: 2rem 1rem 1.5rem; }
+  .lang-switcher { position: absolute; top: 1rem; right: 1rem; display: flex; gap: 0.35rem; z-index: 2; }
+  .lang-switcher a { padding: 0.4rem 0.65rem; font-size: 0.8125rem; font-weight: 500; color: #94a3b8; text-decoration: none; border-radius: 8px; border: 1px solid rgba(34,211,238,0.25); background: rgba(15,23,42,0.6); backdrop-filter: blur(8px); transition: all 0.2s ease; }
+  .lang-switcher a:hover { color: #e0e7ff; border-color: rgba(34,211,238,0.5); background: rgba(34,211,238,0.1); }
+  .lang-switcher a.lang-active { color: #22d3ee; border-color: rgba(34,211,238,0.6); background: rgba(34,211,238,0.15); box-shadow: 0 0 12px rgba(34,211,238,0.25); }
   .brand-link { display: inline-flex; flex-direction: column; align-items: center; gap: 0.75rem; text-decoration: none; color: inherit; transition: opacity 0.3s ease; }
   .brand-link:hover { opacity: 0.95; }
   .logo-img { height: 120px; width: auto; object-fit: contain; filter: drop-shadow(0 0 30px rgba(34,211,238,0.5)) drop-shadow(0 0 60px rgba(168,85,247,0.4)); transition: filter 0.3s ease; }
@@ -127,11 +133,45 @@ type LayoutProps = PropsWithChildren<{
   pageClass: string;
   activeNav?: "dashboard" | "search";
   headerVariant?: "default" | "search";
+  locale?: Locale;
+  dict?: LocaleDict;
 }>;
 
+function searchHref(locale?: Locale): string {
+  if (locale && locale !== "en") return `/search?lang=${encodeURIComponent(locale)}`;
+  return "/search";
+}
+
+function homeHref(locale?: Locale): string {
+  if (locale && locale !== "en") return `/?lang=${encodeURIComponent(locale)}`;
+  return "/";
+}
+
+const LOCALE_LABELS: Record<Locale, string> = {
+  "en": "EN",
+  "zh-TW": "繁中",
+  "zh-CN": "簡中",
+};
+
+function currentPageHref(activeNav: "dashboard" | "search" | undefined, locale: Locale): string {
+  return activeNav === "search" ? searchHref(locale) : homeHref(locale);
+}
+
 export const Layout: FC<LayoutProps> = (props) => {
-  const { pageClass, activeNav = "dashboard", headerVariant = "default", children } = props;
+  const { pageClass, activeNav = "dashboard", headerVariant = "default", locale, dict, children } = props;
   const headerClass = headerVariant === "search" ? "header header-search" : "header";
+  const currentLocale = locale ?? "en";
+  const navDashboard = dict?.nav.dashboard ?? "Dashboard";
+  const navSearch = dict?.nav.search ?? "Search";
+  const headerSubtitle = dict?.header.subtitle ?? "Research Library";
+  const headerDescription = dict?.header.description ?? "Your astronomy and space science knowledge hub";
+  const calendarWeekdays = dict?.calendar.weekdays ?? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const calendarMonths = dict?.calendar.months ?? ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const calendarPickDate = dict?.calendar.pickDate ?? "Pick a date";
+  const calendarPrevMonth = dict?.calendar.prevMonth ?? "Previous month";
+  const calendarNextMonth = dict?.calendar.nextMonth ?? "Next month";
+  const calendarClose = dict?.calendar.close ?? "Close calendar";
+  const calendarMonthsStr = calendarMonths.join("\u001F");
   return (
     <div class={pageClass}>
       <div class="starfield" />
@@ -140,7 +180,19 @@ export const Layout: FC<LayoutProps> = (props) => {
       <div class="nebula nebula-1" />
       <div class="nebula nebula-2" />
       <header class={headerClass}>
-        <a href="/" class="brand-link" aria-label="AstroGroot home">
+        <div class="lang-switcher" role="group" aria-label="Language">
+          {SUPPORTED_LOCALES.map((loc) => (
+            <a
+              href={currentPageHref(activeNav, loc)}
+              class={currentLocale === loc ? "lang-active" : ""}
+              aria-current={currentLocale === loc ? "true" : undefined}
+              aria-label={loc === "en" ? "English" : loc === "zh-TW" ? "繁體中文" : "简体中文"}
+            >
+              {LOCALE_LABELS[loc]}
+            </a>
+          ))}
+        </div>
+        <a href={homeHref(locale)} class="brand-link" aria-label="AstroGroot home">
           <img
             src="/static/astrogroot-logo.png"
             alt="AstroGroot"
@@ -155,32 +207,44 @@ export const Layout: FC<LayoutProps> = (props) => {
         </a>
         {headerVariant === "default" && (
           <>
-            <p class="header-subtitle">Research Library</p>
-            <p class="header-description">Your astronomy and space science knowledge hub</p>
+            <p class="header-subtitle">{headerSubtitle}</p>
+            <p class="header-description">{headerDescription}</p>
           </>
         )}
       </header>
       {(activeNav === "dashboard" || activeNav === "search") && (
         <nav class="navigation">
-          <a href="/" class={activeNav === "dashboard" ? "nav-link active" : "nav-link"}>
-            <span class="nav-glow">Dashboard</span>
+          <a href={homeHref(locale)} class={activeNav === "dashboard" ? "nav-link active" : "nav-link"}>
+            <span class="nav-glow">{navDashboard}</span>
           </a>
-          <a href="/search" class={activeNav === "search" ? "nav-link active" : "nav-link"}>
-            <span class="nav-glow">Search</span>
+          <a href={searchHref(locale)} class={activeNav === "search" ? "nav-link active" : "nav-link"}>
+            <span class="nav-glow">{navSearch}</span>
           </a>
         </nav>
       )}
       {children}
       <div id="calendar-modal-backdrop" class="calendar-modal-backdrop" hidden aria-hidden="true">
-        <div id="calendar-popover" class="calendar-popover" role="dialog" aria-modal="true" aria-label="Pick a date">
-          <button type="button" class="calendar-close" aria-label="Close calendar">×</button>
+        <div
+          id="calendar-popover"
+          class="calendar-popover"
+          role="dialog"
+          aria-modal="true"
+          aria-label={calendarPickDate}
+          data-weekdays={calendarWeekdays.join("\u001F")}
+          data-months={calendarMonthsStr}
+          data-pick-date={calendarPickDate}
+          data-prev-month={calendarPrevMonth}
+          data-next-month={calendarNextMonth}
+          data-close={calendarClose}
+        >
+          <button type="button" class="calendar-close" aria-label={calendarClose}>×</button>
           <div class="calendar-header">
-            <button type="button" class="calendar-nav calendar-prev" aria-label="Previous month">‹</button>
+            <button type="button" class="calendar-nav calendar-prev" aria-label={calendarPrevMonth}>‹</button>
             <div class="calendar-month-year" id="calendar-month-year"></div>
-            <button type="button" class="calendar-nav calendar-next" aria-label="Next month">›</button>
+            <button type="button" class="calendar-nav calendar-next" aria-label={calendarNextMonth}>›</button>
           </div>
           <div class="calendar-weekdays">
-            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+            {calendarWeekdays.map((w) => <span key={w}>{w}</span>)}
           </div>
           <div class="calendar-days" id="calendar-days"></div>
         </div>

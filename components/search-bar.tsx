@@ -1,4 +1,5 @@
 import type { FC } from "hono/jsx";
+import type { Locale, LocaleDict } from "../lib/i18n.ts";
 
 interface SearchBarProps {
   initialQuery?: string;
@@ -6,6 +7,8 @@ interface SearchBarProps {
   initialSortBy?: string;
   initialDateFrom?: string;
   initialDateTo?: string;
+  locale?: Locale;
+  dict?: LocaleDict;
 }
 
 /** Static search form + vanilla JS for filter toggle and submit. No Preact. */
@@ -15,58 +18,78 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
   const sortBy = props.initialSortBy ?? "relevance";
   const dateFrom = props.initialDateFrom ?? "";
   const dateTo = props.initialDateTo ?? "";
+  const locale = props.locale ?? "en";
+  const d = props.dict;
+  const placeholder = d?.search.placeholder ?? "Search astronomy papers, videos, and NASA content...";
+  const buttonLabel = d?.search.button ?? "Search";
+  const showFilters = d?.search.showFilters ?? "Show Filters";
+  const hideFilters = d?.search.hideFilters ?? "Hide Filters";
+  const contentType = d?.search.contentType ?? "Content Type:";
+  const allContent = d?.search.allContent ?? "All Content";
+  const papersLabel = d?.search.papers ?? "Research Papers";
+  const videosLabel = d?.search.videos ?? "Videos";
+  const nasaLabel = d?.search.nasa ?? "NASA Content";
+  const sortByLabel = d?.search.sortBy ?? "Sort By:";
+  const relevanceLabel = d?.search.relevance ?? "Relevance";
+  const dateLabel = d?.search.date ?? "Date";
+  const titleLabel = d?.search.sortByTitle ?? "Title";
+  const dateFromLabel = d?.search.dateFrom ?? "Date From:";
+  const dateToLabel = d?.search.dateTo ?? "Date To:";
+  const pickDateLabel = d?.calendar.pickDate ?? "Pick date";
+  const formAction = "/search";
   return (
   <div class="search-bar-container">
-    <form id="search-form" class="search-form" method="get" action="/search">
+    <form id="search-form" class="search-form" method="get" action={formAction}>
+      <input type="hidden" name="lang" value={locale} />
       <div class="search-input-wrapper">
         <input
           type="text"
           name="q"
           id="search-input"
-          placeholder="Search astronomy papers, videos, and NASA content..."
+          placeholder={placeholder}
           class="search-input"
           autocomplete="off"
           defaultValue={q}
         />
         <button type="submit" class="search-button" id="search-btn">
-          Search
+          {buttonLabel}
         </button>
       </div>
-      <button type="button" class="filter-toggle" id="filter-toggle" aria-expanded="false">
-        Show Filters
+      <button type="button" class="filter-toggle" id="filter-toggle" aria-expanded="false" data-show={showFilters} data-hide={hideFilters}>
+        {showFilters}
       </button>
       <div class="filters-panel" id="filters-panel" hidden>
         <div class="filter-group">
-          <label for="filter-type">Content Type:</label>
+          <label for="filter-type">{contentType}</label>
           <select name="type" id="filter-type" defaultValue={type}>
-            <option value="all">All Content</option>
-            <option value="papers">Research Papers</option>
-            <option value="videos">Videos</option>
-            <option value="nasa">NASA Content</option>
+            <option value="all">{allContent}</option>
+            <option value="papers">{papersLabel}</option>
+            <option value="videos">{videosLabel}</option>
+            <option value="nasa">{nasaLabel}</option>
           </select>
         </div>
         <div class="filter-group">
-          <label for="filter-sort">Sort By:</label>
+          <label for="filter-sort">{sortByLabel}</label>
           <select name="sortBy" id="filter-sort" defaultValue={sortBy}>
-            <option value="relevance">Relevance</option>
-            <option value="date">Date</option>
-            <option value="title">Title</option>
+            <option value="relevance">{relevanceLabel}</option>
+            <option value="date">{dateLabel}</option>
+            <option value="title">{titleLabel}</option>
           </select>
         </div>
         <div class="filter-group date-picker-group">
-          <label for="filter-dateFrom">Date From:</label>
+          <label for="filter-dateFrom">{dateFromLabel}</label>
           <div class="date-picker-wrap">
             <input type="date" name="dateFrom" id="filter-dateFrom" class="date-input" defaultValue={dateFrom} />
-            <button type="button" class="calendar-btn" data-target="filter-dateFrom" title="Pick date" aria-label="Open calendar">
+            <button type="button" class="calendar-btn" data-target="filter-dateFrom" title={pickDateLabel} aria-label={pickDateLabel}>
               <span class="calendar-btn-icon" aria-hidden="true">📅</span>
             </button>
           </div>
         </div>
         <div class="filter-group date-picker-group">
-          <label for="filter-dateTo">Date To:</label>
+          <label for="filter-dateTo">{dateToLabel}</label>
           <div class="date-picker-wrap">
             <input type="date" name="dateTo" id="filter-dateTo" class="date-input" defaultValue={dateTo} />
-            <button type="button" class="calendar-btn" data-target="filter-dateTo" title="Pick date" aria-label="Open calendar">
+            <button type="button" class="calendar-btn" data-target="filter-dateTo" title={pickDateLabel} aria-label={pickDateLabel}>
               <span class="calendar-btn-icon" aria-hidden="true">📅</span>
             </button>
           </div>
@@ -81,10 +104,12 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
     var toggle = document.getElementById('filter-toggle');
     var panel = document.getElementById('filters-panel');
     if (toggle && panel) {
+      var showText = toggle.getAttribute('data-show') || 'Show Filters';
+      var hideText = toggle.getAttribute('data-hide') || 'Hide Filters';
       toggle.addEventListener('click', function() {
         var open = !panel.hidden;
         panel.hidden = !open;
-        toggle.textContent = open ? "Hide Filters" : "Show Filters";
+        toggle.textContent = open ? hideText : showText;
         toggle.setAttribute('aria-expanded', open ? 'false' : 'true');
       });
     }
@@ -103,7 +128,9 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
     var monthYearEl = document.getElementById('calendar-month-year');
     var daysEl = document.getElementById('calendar-days');
     var currentYear, currentMonth, targetInputId;
-    var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var monthsAttr = popover.getAttribute('data-months');
+    var sep = String.fromCharCode(31);
+    var MONTHS = monthsAttr ? monthsAttr.split(sep) : ['January','February','March','April','May','June','July','August','September','October','November','December'];
     function pad(n) { return n < 10 ? '0' + n : String(n); }
     function openCalendar(inputId) {
       targetInputId = inputId;

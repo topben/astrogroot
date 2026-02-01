@@ -1,4 +1,5 @@
 import type { FC } from "hono/jsx";
+import type { Locale, LocaleDict } from "../../lib/i18n.ts";
 import { Layout } from "../layout.tsx";
 import { SearchBar } from "../search-bar.tsx";
 
@@ -8,6 +9,8 @@ interface SearchPageProps {
   sortBy?: string;
   dateFrom?: string;
   dateTo?: string;
+  locale?: Locale;
+  dict?: LocaleDict;
 }
 
 export const SearchPage: FC<SearchPageProps> = (props) => {
@@ -16,26 +19,52 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
   const sortBy = props.sortBy ?? "relevance";
   const dateFrom = props.dateFrom ?? "";
   const dateTo = props.dateTo ?? "";
+  const locale = props.locale ?? "en";
+  const d = props.dict;
+  const searchTitle = d?.search.title ?? "Search the Library";
+  const searchDescription = d?.search.description ?? "Explore astronomy papers, videos, and NASA content";
+  const searchingText = d?.search.searching ?? "Searching…";
+  const hintText = d?.search.hint ?? "Enter a query above and click Search (e.g. dark energy, black holes, Mars).";
+  const foundTpl = d?.search.found ?? "Found {count} result(s)";
+  const noResultsText = d?.search.noResults ?? "No results. Try different keywords or filters.";
+  const errorTpl = d?.search.error ?? "Search failed";
+  const labelPaper = d?.common.paper ?? "Paper";
+  const labelVideo = d?.common.video ?? "Video";
+  const labelNasa = d?.common.nasa ?? "NASA";
   return (
-    <Layout pageClass="search-page" activeNav="search" headerVariant="search">
+    <Layout pageClass="search-page" activeNav="search" headerVariant="search" locale={locale} dict={d}>
       <main class="main-content main-content-narrow">
         <div class="search-container">
-          <h2 class="section-title section-title-search">Search the Library</h2>
-          <p class="search-description">Explore astronomy papers, videos, and NASA content</p>
+          <h2 class="section-title section-title-search">{searchTitle}</h2>
+          <p class="search-description">{searchDescription}</p>
           <SearchBar
             initialQuery={query}
             initialType={type}
             initialSortBy={sortBy}
             initialDateFrom={dateFrom}
             initialDateTo={dateTo}
+            locale={locale}
+            dict={d}
           />
-          <div id="search-results" class="search-results" data-query={query} data-type={type}>
+          <div
+            id="search-results"
+            class="search-results"
+            data-query={query}
+            data-type={type}
+            data-locale={locale}
+            data-found-tpl={foundTpl}
+            data-no-results={noResultsText}
+            data-label-paper={labelPaper}
+            data-label-video={labelVideo}
+            data-label-nasa={labelNasa}
+            data-error-tpl={errorTpl}
+          >
             {query ? (
               <p class="search-results-loading" id="search-results-loading">
-                Searching…
+                {searchingText}
               </p>
             ) : (
-              <p class="search-results-hint">Enter a query above and click Search (e.g. dark energy, black holes, Mars).</p>
+              <p class="search-results-hint">{hintText}</p>
             )}
           </div>
         </div>
@@ -48,18 +77,31 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
   if (!el) return;
   var q = (el.getAttribute('data-query') || '').trim();
   var type = el.getAttribute('data-type') || 'all';
+  var locale = el.getAttribute('data-locale') || 'en';
+  var foundTpl = el.getAttribute('data-found-tpl') || 'Found {count} result(s)';
+  var noResults = el.getAttribute('data-no-results') || 'No results. Try different keywords or filters.';
+  var labelPaper = el.getAttribute('data-label-paper') || 'Paper';
+  var labelVideo = el.getAttribute('data-label-video') || 'Video';
+  var labelNasa = el.getAttribute('data-label-nasa') || 'NASA';
+  var errorTpl = el.getAttribute('data-error-tpl') || 'Search failed';
   if (!q) return;
   var loading = document.getElementById('search-results-loading');
-  var params = new URLSearchParams({ q: q, type: type, limit: '20' });
+  var params = new URLSearchParams({ q: q, type: type, limit: '20', lang: locale });
   fetch('/api/search?' + params.toString())
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (loading) loading.remove();
+      if (data.error) {
+        var errMsg = (data.error || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        el.insertAdjacentHTML('beforeend', '<p class="search-results-error">' + errorTpl + ': ' + errMsg + '</p>');
+        return;
+      }
       var total = data.total || 0;
       var papers = data.papers || [];
       var videos = data.videos || [];
       var nasa = data.nasa || [];
-      var html = '<p class="search-results-count">Found ' + total + ' result' + (total !== 1 ? 's' : '') + '</p>';
+      var countText = foundTpl.split('{count}').join(String(total));
+      var html = '<p class="search-results-count">' + countText + '</p>';
       function itemHtml(item, label) {
         var title = (item.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         var snippet = (item.snippet || '').slice(0, 200).replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -67,15 +109,16 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
         var date = item.publishedDate ? ' <span class="search-result-date">' + item.publishedDate + '</span>' : '';
         return '<div class="search-result-card"><span class="search-result-type">' + label + '</span><a href="' + url + '" target="_blank" rel="noopener" class="search-result-title">' + title + '</a>' + date + (snippet ? '<p class="search-result-snippet">' + snippet + '…</p>' : '') + '</div>';
       }
-      papers.forEach(function(p) { html += itemHtml(p, 'Paper'); });
-      videos.forEach(function(v) { html += itemHtml(v, 'Video'); });
-      nasa.forEach(function(n) { html += itemHtml(n, 'NASA'); });
-      if (total === 0) html += '<p class="search-results-empty">No results. Try different keywords or filters.</p>';
+      papers.forEach(function(p) { html += itemHtml(p, labelPaper); });
+      videos.forEach(function(v) { html += itemHtml(v, labelVideo); });
+      nasa.forEach(function(n) { html += itemHtml(n, labelNasa); });
+      if (total === 0) html += '<p class="search-results-empty">' + noResults + '</p>';
       el.insertAdjacentHTML('beforeend', html);
     })
     .catch(function(err) {
       if (loading) loading.remove();
-      el.insertAdjacentHTML('beforeend', '<p class="search-results-error">Search failed: ' + (err.message || String(err)) + '</p>');
+      var msg = (err && err.message) ? err.message : String(err);
+      el.insertAdjacentHTML('beforeend', '<p class="search-results-error">' + errorTpl + ': ' + msg.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</p>');
     });
 })();
 `,
