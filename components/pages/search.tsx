@@ -53,6 +53,8 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
             data-query={query}
             data-type={type}
             data-locale={locale}
+            data-date-from={dateFrom}
+            data-date-to={dateTo}
             data-found-tpl={foundTpl}
             data-no-results={noResultsText}
             data-label-paper={labelPaper}
@@ -79,6 +81,8 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
   var q = (el.getAttribute('data-query') || '').trim();
   var type = el.getAttribute('data-type') || 'all';
   var locale = el.getAttribute('data-locale') || 'en';
+  var dateFrom = (el.getAttribute('data-date-from') || '').trim();
+  var dateTo = (el.getAttribute('data-date-to') || '').trim();
   var foundTpl = el.getAttribute('data-found-tpl') || 'Found {count} result(s)';
   var noResults = el.getAttribute('data-no-results') || 'No results. Try different keywords or filters.';
   var labelPaper = el.getAttribute('data-label-paper') || 'Paper';
@@ -88,6 +92,8 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
   if (!q) return;
   var loading = document.getElementById('search-results-loading');
   var params = new URLSearchParams({ q: q, type: type, limit: '20', lang: locale });
+  if (dateFrom) params.set('dateFrom', dateFrom);
+  if (dateTo) params.set('dateTo', dateTo);
   fetch('/api/search?' + params.toString())
     .then(function(r) { return r.json(); })
     .then(function(data) {

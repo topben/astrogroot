@@ -33,12 +33,14 @@ app.get("/api/search", async (c) => {
   const q = c.req.query("q") ?? "";
   const type = (c.req.query("type") ?? "all") as "all" | "papers" | "videos" | "nasa";
   const limit = parseInt(c.req.query("limit") ?? "20", 10) || 20;
+  const dateFrom = c.req.query("dateFrom") ?? "";
+  const dateTo = c.req.query("dateTo") ?? "";
   const locale = getLocaleFromRequest(
     c.req.query("lang"),
     c.req.header("Accept-Language"),
   );
   try {
-    const result = await searchLibrary({ q, type, limit, locale });
+    const result = await searchLibrary({ q, type, limit, locale, dateFrom, dateTo });
     return c.json(result);
   } catch (err) {
     console.error("Search error:", err);

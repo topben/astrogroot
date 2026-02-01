@@ -36,11 +36,18 @@ export async function searchLibrary(params: {
   type?: SearchType;
   limit?: number;
   locale?: Locale;
+  dateFrom?: string;
+  dateTo?: string;
 }): Promise<SearchResponse> {
-  const { q, type = "all", limit = DEFAULT_LIMIT, locale: requestedLocale } = params;
+  const { q, type = "all", limit = DEFAULT_LIMIT, locale: requestedLocale, dateFrom, dateTo } =
+    params;
   const locale = requestedLocale && SUPPORTED_LOCALES.includes(requestedLocale)
     ? requestedLocale
     : DEFAULT_LOCALE;
+
+  const dateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/;
+  const normalizedDateFrom = dateFrom && dateOnlyPattern.test(dateFrom) ? dateFrom : undefined;
+  const normalizedDateTo = dateTo && dateOnlyPattern.test(dateTo) ? dateTo : undefined;
 
   const trimmed = q.trim();
   if (!trimmed) {
@@ -178,13 +185,36 @@ export async function searchLibrary(params: {
   const videoOrdered = orderByIds(videoRows, videoIds);
   const nasaOrdered = orderByIds(nasaRows, nasaIds);
 
+  const toDateOnly = (value: Date | string | null | undefined): string | null => {
+    if (!value) return null;
+    const date = typeof value === "string" ? new Date(value) : value;
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toISOString().slice(0, 10);
+  };
+
+  const inDateRange = (dateOnly: string | null): boolean => {
+    if (!normalizedDateFrom && !normalizedDateTo) return true;
+    if (!dateOnly) return false;
+    if (normalizedDateFrom && dateOnly < normalizedDateFrom) return false;
+    if (normalizedDateTo && dateOnly > normalizedDateTo) return false;
+    return true;
+  };
+
+  const filteredPapers = paperOrdered.filter((row) =>
+    inDateRange(toDateOnly(row.publishedDate))
+  );
+  const filteredVideos = videoOrdered.filter((row) =>
+    inDateRange(toDateOnly(row.publishedDate))
+  );
+  const filteredNasa = nasaOrdered.filter((row) => inDateRange(toDateOnly(row.date)));
+
   // Load localized title/summary from translations when not English
   const transByKey = new Map<string, { title: string | null; summary: string | null }>();
-  if (locale !== "en" && (paperOrdered.length || videoOrdered.length || nasaOrdered.length)) {
+  if (locale !== "en" && (filteredPapers.length || filteredVideos.length || filteredNasa.length)) {
     const allIds = [
-      ...paperOrdered.map((r) => ({ type: "paper" as const, id: r.id })),
-      ...videoOrdered.map((r) => ({ type: "video" as const, id: r.id })),
-      ...nasaOrdered.map((r) => ({ type: "nasa" as const, id: r.id })),
+      ...filteredPapers.map((r) => ({ type: "paper" as const, id: r.id })),
+      ...filteredVideos.map((r) => ({ type: "video" as const, id: r.id })),
+      ...filteredNasa.map((r) => ({ type: "nasa" as const, id: r.id })),
     ];
     const transRows = await db.query.translations.findMany({
       where: and(
@@ -244,11 +274,43 @@ export async function searchLibrary(params: {
     };
   };
 
+  const tokenizeQuery = (query: string): string[] => {
+    const lower = query.toLowerCase();
+    if (/[\u4e00-\u9fff]/.test(lower)) {
+      return [lower];
+    }
+    return lower.split(/[^a-z0-9]+/i).filter((term) => term.length >= 2);
+  };
+
+  const computeKeywordScore = (text: string, terms: string[]): number => {
+    if (terms.length === 0) return 0;
+    const hits = terms.filter((term) => text.includes(term)).length;
+    return hits / terms.length;
+  };
+
+  const rerank = (items: SearchResultItem[]): SearchResultItem[] => {
+    const terms = tokenizeQuery(trimmed);
+    return items
+      .map((item, index) => {
+        const baseScore = Math.max(0, Math.min(1, item.score ?? 0));
+        const haystack = `${item.title} ${item.snippet ?? ""}`.toLowerCase();
+        const keywordScore = computeKeywordScore(haystack, terms);
+        const combined = terms.length ? baseScore * 0.7 + keywordScore * 0.3 : baseScore;
+        return { item: { ...item, score: combined }, index, combined };
+      })
+      .sort((a, b) => (b.combined - a.combined) || (a.index - b.index))
+      .map((entry) => entry.item);
+  };
+
+  const papers = rerank(filteredPapers.map(toPaperItem));
+  const videos = rerank(filteredVideos.map(toVideoItem));
+  const nasa = rerank(filteredNasa.map(toNasaItem));
+
   return {
     query: trimmed,
-    papers: paperOrdered.map(toPaperItem),
-    videos: videoOrdered.map(toVideoItem),
-    nasa: nasaOrdered.map(toNasaItem),
-    total: paperOrdered.length + videoOrdered.length + nasaOrdered.length,
+    papers,
+    videos,
+    nasa,
+    total: papers.length + videos.length + nasa.length,
   };
 }

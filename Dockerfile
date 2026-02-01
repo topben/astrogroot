@@ -4,7 +4,7 @@
 # ============================================
 # Stage 1: Crawler (Deno-based)
 # ============================================
-FROM denoland/deno:2.1.4 AS crawler
+FROM denoland/deno:2.5.6 AS crawler
 
 WORKDIR /app
 
