@@ -77,7 +77,11 @@ turso db tokens create astrogroot
 
 ## 第一步：部署 Fly.io
 
+> **建議使用 CLI** 搭配專案內的 `fly.toml` 和 `fly.chromadb.toml`，設定已經寫好了。
+
 ### 1.1 部署 ChromaDB
+
+#### 方法 A：使用 CLI（推薦）
 
 ```bash
 cd /path/to/astrogroot
@@ -96,9 +100,34 @@ fly secrets set CHROMA_SERVER_AUTH_CREDENTIALS=your-secure-token-here \
 fly deploy --config fly.chromadb.toml
 ```
 
+#### 方法 B：使用 Web Dashboard
+
+若要從 fly.io Dashboard 建立，使用以下設定：
+
+| 設定項 | ChromaDB | 說明 |
+|--------|----------|------|
+| **App name** | `astrogroot-chromadb` | 自訂名稱 |
+| **Branch** | `main` | |
+| **Region** | `nrt` (Tokyo) | 或選擇離你近的 |
+| **Internal port** | `8000` | ChromaDB 預設 port |
+| **CPU** | `shared-cpu-1x` | |
+| **Memory** | `1024 MB` (1GB) | ChromaDB 需要較多記憶體 |
+| **Working directory** | (留空) | |
+| **Config path** | `fly.chromadb.toml` | |
+
+**Environment Variables (在 Dashboard 或用 CLI 設定):**
+
+| Key | Value |
+|-----|-------|
+| `CHROMA_SERVER_AUTH_CREDENTIALS` | `your-secure-token` |
+
 **記下 ChromaDB 網址**: `https://astrogroot-chromadb.fly.dev`
 
+---
+
 ### 1.2 部署 Crawler
+
+#### 方法 A：使用 CLI（推薦）
 
 ```bash
 # 建立 app
@@ -118,6 +147,31 @@ fly secrets set \
 # 部署
 fly deploy --config fly.toml
 ```
+
+#### 方法 B：使用 Web Dashboard
+
+| 設定項 | Crawler | 說明 |
+|--------|---------|------|
+| **App name** | `astrogroot-crawler` | 自訂名稱 |
+| **Branch** | `main` | |
+| **Region** | `nrt` (Tokyo) | 或選擇離你近的 |
+| **Internal port** | (留空或 8080) | Crawler 不需要 HTTP |
+| **CPU** | `shared-cpu-1x` | |
+| **Memory** | `512 MB` | |
+| **Working directory** | (留空) | |
+| **Config path** | `fly.toml` | |
+
+**Environment Variables:**
+
+| Key | Value |
+|-----|-------|
+| `TURSO_DATABASE_URL` | `libsql://your-db.turso.io` |
+| `TURSO_AUTH_TOKEN` | `your-turso-token` |
+| `ANTHROPIC_API_KEY` | `sk-ant-xxx` |
+| `CHROMA_HOST` | `https://astrogroot-chromadb.fly.dev` |
+| `CHROMA_AUTH_TOKEN` | `your-secure-token` |
+| `NASA_API_KEY` | `your-nasa-key` |
+| `YOUTUBE_API_KEY` | `your-youtube-key` |
 
 ### 1.3 驗證 Fly.io 部署
 
