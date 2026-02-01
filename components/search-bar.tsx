@@ -9,7 +9,18 @@ interface SearchBarProps {
   initialDateTo?: string;
   locale?: Locale;
   dict?: LocaleDict;
+  compact?: boolean; // For dashboard mini search bar
+  showSuggestions?: boolean; // Show quick search examples
 }
+
+// Quick search examples
+const QUICK_SEARCHES = [
+  { en: "black holes", "zh-TW": "黑洞", "zh-CN": "黑洞" },
+  { en: "dark energy", "zh-TW": "暗能量", "zh-CN": "暗能量" },
+  { en: "exoplanets", "zh-TW": "系外行星", "zh-CN": "系外行星" },
+  { en: "Mars rover", "zh-TW": "火星探測車", "zh-CN": "火星探测车" },
+  { en: "gravitational waves", "zh-TW": "重力波", "zh-CN": "引力波" },
+];
 
 /** Static search form + vanilla JS for filter toggle and submit. No Preact. */
 export const SearchBar: FC<SearchBarProps> = (props) => {
@@ -19,6 +30,8 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
   const dateFrom = props.initialDateFrom ?? "";
   const dateTo = props.initialDateTo ?? "";
   const locale = props.locale ?? "en";
+  const compact = props.compact ?? false;
+  const showSuggestions = props.showSuggestions ?? false;
   const d = props.dict;
   const placeholder = d?.search.placeholder ?? "Search astronomy papers, videos, and NASA content...";
   const buttonLabel = d?.search.button ?? "Search";
@@ -36,7 +49,55 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
   const dateFromLabel = d?.search.dateFrom ?? "Date From:";
   const dateToLabel = d?.search.dateTo ?? "Date To:";
   const pickDateLabel = d?.calendar.pickDate ?? "Pick date";
+  const tryLabel = d?.search.try ?? "Try:";
   const formAction = "/search";
+
+  // Get localized quick searches
+  const quickSearches = QUICK_SEARCHES.map(s => s[locale as keyof typeof s] || s.en);
+  // Compact mode for dashboard
+  if (compact) {
+    return (
+      <div class="search-bar-compact">
+        <form class="search-form-compact" method="get" action={formAction}>
+          <input type="hidden" name="lang" value={locale} />
+          <input
+            type="text"
+            name="q"
+            placeholder={placeholder}
+            class="search-input-compact"
+            autocomplete="off"
+          />
+          <button type="submit" class="search-button-compact">
+            🔍
+          </button>
+        </form>
+        {showSuggestions && (
+          <div class="quick-searches-compact">
+            <span class="quick-label">{tryLabel}</span>
+            {quickSearches.slice(0, 3).map((term) => (
+              <a href={`/search?q=${encodeURIComponent(term)}&lang=${locale}`} class="quick-link">
+                {term}
+              </a>
+            ))}
+          </div>
+        )}
+        <style dangerouslySetInnerHTML={{ __html: `
+.search-bar-compact { max-width: 500px; margin: 0 auto; }
+.search-form-compact { display: flex; gap: 0.5rem; }
+.search-input-compact { flex: 1; padding: 0.75rem 1rem; font-size: 1rem; background: rgba(5, 8, 22, 0.8); border: 2px solid rgba(34, 211, 238, 0.3); border-radius: 10px; outline: none; color: #e0e7ff; transition: all 0.3s ease; }
+.search-input-compact:focus { border-color: rgba(168, 85, 247, 0.6); box-shadow: 0 0 20px rgba(168, 85, 247, 0.3); }
+.search-input-compact::placeholder { color: #64748b; }
+.search-button-compact { padding: 0.75rem 1.25rem; font-size: 1.125rem; background: linear-gradient(135deg, #22d3ee 0%, #a855f7 100%); border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; }
+.search-button-compact:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4); }
+.quick-searches-compact { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.75rem; justify-content: center; }
+.quick-label { font-size: 0.875rem; color: #64748b; }
+.quick-link { font-size: 0.875rem; color: #22d3ee; text-decoration: none; padding: 0.25rem 0.75rem; background: rgba(34, 211, 238, 0.1); border-radius: 20px; transition: all 0.2s ease; }
+.quick-link:hover { background: rgba(34, 211, 238, 0.2); color: #a855f7; }
+` }} />
+      </div>
+    );
+  }
+
   return (
   <div class="search-bar-container">
     <form id="search-form" class="search-form" method="get" action={formAction}>
@@ -55,6 +116,39 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
           {buttonLabel}
         </button>
       </div>
+
+      {/* Content Type Tabs - Always visible */}
+      <div class="content-type-tabs" role="tablist">
+        <label class={`type-tab ${type === "all" ? "active" : ""}`}>
+          <input type="radio" name="type" value="all" checked={type === "all"} />
+          <span>📚 {allContent}</span>
+        </label>
+        <label class={`type-tab ${type === "papers" ? "active" : ""}`}>
+          <input type="radio" name="type" value="papers" checked={type === "papers"} />
+          <span>📄 {papersLabel}</span>
+        </label>
+        <label class={`type-tab ${type === "videos" ? "active" : ""}`}>
+          <input type="radio" name="type" value="videos" checked={type === "videos"} />
+          <span>🎥 {videosLabel}</span>
+        </label>
+        <label class={`type-tab ${type === "nasa" ? "active" : ""}`}>
+          <input type="radio" name="type" value="nasa" checked={type === "nasa"} />
+          <span>🚀 {nasaLabel}</span>
+        </label>
+      </div>
+
+      {/* Quick Search Suggestions */}
+      {showSuggestions && !q && (
+        <div class="quick-searches">
+          <span class="quick-label">{tryLabel}</span>
+          {quickSearches.map((term) => (
+            <a href={`/search?q=${encodeURIComponent(term)}&lang=${locale}`} class="quick-link">
+              {term}
+            </a>
+          ))}
+        </div>
+      )}
+
       <button type="button" class="filter-toggle" id="filter-toggle" aria-expanded="false" data-show={showFilters} data-hide={hideFilters}>
         {showFilters}
       </button>
@@ -260,6 +354,15 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
 .calendar-btn { display: flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; padding: 0; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 10px; color: #e0e7ff; cursor: pointer; transition: all 0.2s ease; }
 .calendar-btn:hover { background: rgba(168, 85, 247, 0.25); border-color: rgba(168, 85, 247, 0.6); box-shadow: 0 0 15px rgba(168, 85, 247, 0.3); }
 .calendar-btn-icon { font-size: 1.25rem; line-height: 1; }
+.content-type-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+.type-tab { display: flex; align-items: center; gap: 0.25rem; padding: 0.5rem 1rem; font-size: 0.9375rem; color: #94a3b8; background: rgba(5, 8, 22, 0.6); border: 1px solid rgba(34, 211, 238, 0.2); border-radius: 25px; cursor: pointer; transition: all 0.2s ease; }
+.type-tab input { display: none; }
+.type-tab:hover { background: rgba(34, 211, 238, 0.1); border-color: rgba(34, 211, 238, 0.4); color: #e0e7ff; }
+.type-tab.active { background: rgba(34, 211, 238, 0.15); border-color: rgba(34, 211, 238, 0.5); color: #22d3ee; box-shadow: 0 0 15px rgba(34, 211, 238, 0.2); }
+.quick-searches { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 1rem; padding: 1rem; background: rgba(5, 8, 22, 0.5); border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.15); }
+.quick-label { font-size: 0.875rem; color: #64748b; margin-right: 0.25rem; }
+.quick-link { font-size: 0.875rem; color: #a855f7; text-decoration: none; padding: 0.375rem 0.875rem; background: rgba(168, 85, 247, 0.1); border-radius: 20px; transition: all 0.2s ease; border: 1px solid rgba(168, 85, 247, 0.2); }
+.quick-link:hover { background: rgba(168, 85, 247, 0.2); color: #c4b5fd; border-color: rgba(168, 85, 247, 0.4); transform: translateY(-1px); }
 `,
       }}
     />

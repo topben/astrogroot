@@ -32,6 +32,7 @@
     "sortByTitle": "标题",
     "dateFrom": "开始日期",
     "dateTo": "结束日期",
+    "try": "试试：",
     "hint": "在上方输入查询并点击搜索（例如：暗能量、黑洞、火星）。",
     "searching": "搜索中…",
     "found": "共 {count} 条结果",

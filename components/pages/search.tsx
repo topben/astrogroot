@@ -45,6 +45,7 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
             initialDateTo={dateTo}
             locale={locale}
             dict={d}
+            showSuggestions={true}
           />
           <div
             id="search-results"

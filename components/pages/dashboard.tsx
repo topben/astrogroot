@@ -1,5 +1,6 @@
 import type { FC } from "hono/jsx";
 import { Layout } from "../layout.tsx";
+import { SearchBar } from "../search-bar.tsx";
 import type { LibraryStats } from "../../lib/stats.ts";
 import type { Locale, LocaleDict } from "../../lib/i18n.ts";
 
@@ -10,10 +11,17 @@ export const DashboardPage: FC<{ stats?: LibraryStats; locale?: Locale; dict?: L
     nasa: 0,
     total: 0,
   };
+  const locale = props.locale ?? "en";
   const d = props.dict;
   return (
-  <Layout pageClass="dashboard" activeNav="dashboard" locale={props.locale} dict={d}>
+  <Layout pageClass="dashboard" activeNav="dashboard" locale={locale} dict={d}>
     <main class="main-content">
+      {/* Quick Search Section */}
+      <section class="quick-search-section">
+        <h2 class="section-title">{d?.search.title ?? "Search the Library"}</h2>
+        <SearchBar compact={true} showSuggestions={true} locale={locale} dict={d} />
+      </section>
+
       <section class="stats-section">
         <h2 class="section-title">{d?.stats.title ?? "Library Statistics"}</h2>
         <div class="stats-grid">

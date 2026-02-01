@@ -1,7 +1,7 @@
 import { db } from "../db/client.ts";
 import { papers, videos, nasaContent, translations } from "../db/schema.ts";
 import { inArray, and, eq } from "drizzle-orm";
-import { initializeCollections } from "./vector.ts";
+import { initializeCollections, initializeLegacyCollections } from "./vector.ts";
 import type { Locale } from "./i18n.ts";
 import { SUPPORTED_LOCALES } from "./i18n.ts";
 
@@ -94,8 +94,8 @@ export async function searchLibrary(params: {
     });
   }
 
-  // Fallback: when using zh-TW/zh-CN and locale-specific collection has no docs, query English collection
-  const hasNoResults = paperIds.length === 0 && videoIds.length === 0 && nasaIds.length === 0;
+  // Fallback 1: when using zh-TW/zh-CN and locale-specific collection has no docs, query English collection
+  let hasNoResults = paperIds.length === 0 && videoIds.length === 0 && nasaIds.length === 0;
   if (locale !== "en" && hasNoResults) {
     const [enPaperRes, enVideoRes, enNasaRes] = await Promise.all([
       searchPapers ? collections.papers["en"].query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
@@ -120,6 +120,38 @@ export async function searchLibrary(params: {
       enNasaRes.ids[0].forEach((id, i) => {
         nasaIds.push(id);
         const dist = enNasaRes.distances?.[0]?.[i];
+        if (dist != null) nasaScores[id] = 1 - dist / 2;
+      });
+    }
+  }
+
+  // Fallback 2: query legacy collections (pre-i18n) if still no results
+  hasNoResults = paperIds.length === 0 && videoIds.length === 0 && nasaIds.length === 0;
+  if (hasNoResults) {
+    const legacy = await initializeLegacyCollections();
+    const [legacyPaperRes, legacyVideoRes, legacyNasaRes] = await Promise.all([
+      searchPapers ? legacy.papers.query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
+      searchVideos ? legacy.videos.query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
+      searchNasa ? legacy.nasa.query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
+    ]);
+    if (searchPapers && legacyPaperRes.ids[0]?.length) {
+      legacyPaperRes.ids[0].forEach((id, i) => {
+        paperIds.push(id);
+        const dist = legacyPaperRes.distances?.[0]?.[i];
+        if (dist != null) paperScores[id] = 1 - dist / 2;
+      });
+    }
+    if (searchVideos && legacyVideoRes.ids[0]?.length) {
+      legacyVideoRes.ids[0].forEach((id, i) => {
+        videoIds.push(id);
+        const dist = legacyVideoRes.distances?.[0]?.[i];
+        if (dist != null) videoScores[id] = 1 - dist / 2;
+      });
+    }
+    if (searchNasa && legacyNasaRes.ids[0]?.length) {
+      legacyNasaRes.ids[0].forEach((id, i) => {
+        nasaIds.push(id);
+        const dist = legacyNasaRes.distances?.[0]?.[i];
         if (dist != null) nasaScores[id] = 1 - dist / 2;
       });
     }

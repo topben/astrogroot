@@ -30,6 +30,7 @@ export interface LocaleDict {
     sortByTitle: string;
     dateFrom: string;
     dateTo: string;
+    try: string;
     hint: string;
     searching: string;
     found: string;

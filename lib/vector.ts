@@ -63,7 +63,14 @@ export function getCollectionName(
   return `${prefix}_${suffix}`;
 }
 
-/** Legacy flat collection names (default locale "en" only). */
+/** Legacy flat collection names (pre-i18n, no locale suffix). */
+export const LEGACY_COLLECTIONS = {
+  PAPERS: "astrogroot_papers",
+  VIDEOS: "astrogroot_videos",
+  NASA: "astrogroot_nasa",
+} as const;
+
+/** New locale-suffixed collection names (default to "en"). */
 export const COLLECTIONS = {
   PAPERS: "astrogroot_papers_en",
   VIDEOS: "astrogroot_videos_en",
@@ -245,5 +252,26 @@ export async function initializeCollections(): Promise<{
     );
   }
 
+  return { papers, videos, nasa };
+}
+
+/** Initialize legacy collections (pre-i18n, no locale suffix) for backward compatibility. */
+export async function initializeLegacyCollections(): Promise<{
+  papers: VectorStore;
+  videos: VectorStore;
+  nasa: VectorStore;
+}> {
+  const papers = await VectorStore.getOrCreateCollection(
+    LEGACY_COLLECTIONS.PAPERS,
+    { description: "arXiv papers (legacy)" },
+  );
+  const videos = await VectorStore.getOrCreateCollection(
+    LEGACY_COLLECTIONS.VIDEOS,
+    { description: "YouTube videos (legacy)" },
+  );
+  const nasa = await VectorStore.getOrCreateCollection(
+    LEGACY_COLLECTIONS.NASA,
+    { description: "NASA content (legacy)" },
+  );
   return { papers, videos, nasa };
 }

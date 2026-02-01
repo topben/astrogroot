@@ -32,6 +32,7 @@
     "sortByTitle": "Title",
     "dateFrom": "Date From",
     "dateTo": "Date To",
+    "try": "Try:",
     "hint": "Enter a query above and click Search (e.g. dark energy, black holes, Mars).",
     "searching": "Searching…",
     "found": "Found {count} result(s)",
