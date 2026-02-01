@@ -177,6 +177,28 @@ export async function searchYouTubeVideos(params: {
   }
 }
 
+// Known astronomy/science education channel IDs
+const ASTRONOMY_CHANNELS = [
+  { id: "UC1znqKFL3jeR0eoA0pHpzvw", name: "NASA" },
+  { id: "UCXuqSBlHAE6Xw-yeJA0Tunw", name: "Linus Tech Tips" }, // Sometimes covers space
+  { id: "UC7_gcs09iThXybpVgjHZ_7g", name: "PBS Space Time" },
+  { id: "UCvBqzzvUBLCs8Y7Axb-jZew", name: "Sixty Symbols" },
+  { id: "UCUHW94eEFW7hkUMVaZz4eDg", name: "Kurzgesagt" },
+  { id: "UC6nSFpj9HTCZ5t-N3Rm3-HA", name: "Vsauce" },
+  { id: "UCsXVk37bltHxD1rDPwtNM8Q", name: "Kurzgesagt – In a Nutshell" },
+  { id: "UCZYTClx2T1of7BRZ86-8fow", name: "SciShow Space" },
+  { id: "UCddiUEpeqJcYeBxX1IVBKvQ", name: "Dr. Becky" },
+  { id: "UC0e3QhIYukixgh5VVpKHH9Q", name: "Real Engineering" },
+  { id: "UC7DdEm33SyaTDtWYGO2CwdA", name: "Physics Girl" },
+  { id: "UCBbnbBWJtwsf0jLGUwX5Q3g", name: "Journey to the Microcosmos" },
+  { id: "UCYO_jab_esuFRV4b17AJtAw", name: "3Blue1Brown" },
+  { id: "UCHnyfMqiRRG1u-2MsSQLbXA", name: "Veritasium" },
+  { id: "UCEIwxahdLz7bap-VDs9h35A", name: "Steve Mould" },
+  { id: "UC-3SbfTPJlsFZWxYGLHQnWA", name: "Space Engine" },
+  { id: "UCUK0HBIBWgM2c4vsPhkYY4w", name: "Scott Manley" },
+  { id: "UCmyxyuun7-mD37BYsKyEMgA", name: "Launch Pad Astronomy" },
+];
+
 // Collect astronomy videos from specific channels or search
 export async function collectAstronomyVideos(params: {
   searchQueries?: string[];
@@ -184,34 +206,154 @@ export async function collectAstronomyVideos(params: {
 }): Promise<Array<{ videoId: string; title: string; channelName: string }>> {
   const {
     searchQueries = [
+      // General astronomy - relevance sort
       "astronomy lecture",
       "space documentary",
       "astrophysics explained",
-      "telescope observation",
+      "telescope observation guide",
+      // Specific topics - relevance sort
+      "black hole documentary",
+      "neutron star explanation",
+      "exoplanet discovery news",
+      "james webb telescope images",
+      "hubble deep field",
+      "mars perseverance rover",
+      // Educational content
+      "universe scale explained",
+      "cosmology for beginners",
+      "solar system formation",
+      "galaxy collision simulation",
+      "gravitational waves explained",
+      "dark matter evidence",
+      "dark energy cosmology",
+      // Recent events & missions
+      "artemis moon mission",
+      "SpaceX starship",
+      "asteroid bennu sample",
+      "europa clipper mission",
+      // Phenomena
+      "aurora borealis explained",
+      "solar eclipse 2024",
+      "meteor shower guide",
+      "pulsar magnetar",
+      // History
+      "apollo mission documentary",
+      "voyager golden record",
+      "carl sagan cosmos",
     ],
     maxResultsPerQuery = 10,
   } = params;
 
   const allVideos: Array<{ videoId: string; title: string; channelName: string }> = [];
 
-  for (const query of searchQueries) {
+  // Limit searches to stay within YouTube API quota (10,000 units/day)
+  // Each search costs 100 units, so we limit to ~30-40 searches per run
+  const maxSearches = 30;
+  let searchCount = 0;
+
+  // Strategy 1: Search with relevance sort (popular videos) - 8 searches
+  console.log("  📡 Searching by relevance...");
+  for (const query of searchQueries.slice(0, 8)) {
+    if (searchCount >= maxSearches) break;
     try {
       const videos = await searchYouTubeVideos({
         query,
-        maxResults: maxResultsPerQuery,
+        maxResults: Math.min(maxResultsPerQuery, 10),
         order: "relevance",
       });
       allVideos.push(...videos);
+      searchCount++;
     } catch (error) {
+      if (String(error).includes("Forbidden")) {
+        console.warn("  ⚠️ YouTube API quota exceeded, stopping searches");
+        break;
+      }
       console.error(`Failed to search for "${query}":`, error);
     }
   }
+
+  // Strategy 2: Search with date sort (newest videos) - 8 searches
+  if (searchCount < maxSearches) {
+    console.log("  📅 Searching by date...");
+    for (const query of searchQueries.slice(8, 16)) {
+      if (searchCount >= maxSearches) break;
+      try {
+        const videos = await searchYouTubeVideos({
+          query,
+          maxResults: Math.min(maxResultsPerQuery, 10),
+          order: "date",
+        });
+        allVideos.push(...videos);
+        searchCount++;
+      } catch (error) {
+        if (String(error).includes("Forbidden")) {
+          console.warn("  ⚠️ YouTube API quota exceeded, stopping searches");
+          break;
+        }
+        console.error(`Failed to search for "${query}" (date):`, error);
+      }
+    }
+  }
+
+  // Strategy 3: Search with viewCount sort (most viewed) - 8 searches
+  if (searchCount < maxSearches) {
+    console.log("  👀 Searching by view count...");
+    for (const query of searchQueries.slice(16)) {
+      if (searchCount >= maxSearches) break;
+      try {
+        const videos = await searchYouTubeVideos({
+          query,
+          maxResults: Math.min(maxResultsPerQuery, 10),
+          order: "viewCount",
+        });
+        allVideos.push(...videos);
+        searchCount++;
+      } catch (error) {
+        if (String(error).includes("Forbidden")) {
+          console.warn("  ⚠️ YouTube API quota exceeded, stopping searches");
+          break;
+        }
+        console.error(`Failed to search for "${query}" (viewCount):`, error);
+      }
+    }
+  }
+
+  // Strategy 4: Search specific channels - only if quota allows
+  if (searchCount < maxSearches - 5) {
+    console.log("  📺 Searching astronomy channels...");
+    const channelQueries = ["astronomy", "space"];
+    for (const channel of ASTRONOMY_CHANNELS.slice(0, 4)) {
+      if (searchCount >= maxSearches) break;
+      for (const query of channelQueries) {
+        if (searchCount >= maxSearches) break;
+        try {
+          const videos = await searchYouTubeVideos({
+            query,
+            maxResults: 5,
+            order: "date",
+            channelId: channel.id,
+          });
+          allVideos.push(...videos);
+          searchCount++;
+        } catch (error) {
+          if (String(error).includes("Forbidden")) {
+            console.warn("  ⚠️ YouTube API quota exceeded");
+            break;
+          }
+          // Channel search may fail, continue
+        }
+      }
+    }
+  }
+
+  console.log(`  📊 Completed ${searchCount} searches`);
 
   // Remove duplicates
   const uniqueVideos = Array.from(
     new Map(allVideos.map((v) => [v.videoId, v])).values(),
   );
 
+  console.log(`  📊 Found ${uniqueVideos.length} unique videos from ${allVideos.length} results`);
   return uniqueVideos;
 }
 

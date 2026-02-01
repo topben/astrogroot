@@ -2,10 +2,12 @@
   "version": "5",
   "specifiers": {
     "jsr:@std/assert@*": "1.0.18",
+    "jsr:@std/assert@1": "1.0.18",
     "jsr:@std/internal@^1.0.12": "1.0.12",
     "npm:@anthropic-ai/sdk@0.32": "0.32.1",
     "npm:@libsql/client@0.14": "0.14.0",
     "npm:chromadb@^1.8.0": "1.10.5",
+    "npm:drizzle-kit@*": "0.28.1_esbuild@0.19.12",
     "npm:drizzle-kit@0.28": "0.28.1_esbuild@0.19.12",
     "npm:drizzle-orm@0.36": "0.36.4_@libsql+client@0.14.0",
     "npm:hono@^4.6.0": "4.11.7",
