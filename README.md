@@ -227,6 +227,97 @@ The web app is ready for [Deno Deploy](https://deno.com/deploy). On Deploy, the 
 
 **5. Optional:** Use a remote ChromaDB (e.g. [Chroma Cloud](https://www.trychroma.com/) or a VPS) and set `CHROMA_HOST` so `/api/search` works on Deploy.
 
+## 🚀 Deploying to Fly.io (ChromaDB + Crawler)
+
+For a complete production setup, deploy ChromaDB and the Crawler to [Fly.io](https://fly.io). This complements Deno Deploy (web app) with persistent vector storage and scheduled data collection.
+
+### Architecture
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  Deno Deploy    │────▶│     Turso       │◀────│    Fly.io       │
+│  (Web App)      │     │  (SQLite Edge)  │     │                 │
+│                 │     └─────────────────┘     │  ┌───────────┐  │
+│                 │                             │  │ ChromaDB  │  │
+│                 │────────────────────────────▶│  │ (vectors) │  │
+│                 │                             │  └───────────┘  │
+└─────────────────┘                             │  ┌───────────┐  │
+                                                │  │ Crawler   │  │
+                                                │  │ (worker)  │  │
+                                                │  └───────────┘  │
+                                                └─────────────────┘
+```
+
+### Prerequisites
+
+1. Install the [Fly CLI](https://fly.io/docs/hands-on/install-flyctl/)
+2. Sign up / log in: `fly auth login`
+
+### Step 1: Deploy ChromaDB
+
+```bash
+# Create the ChromaDB app with persistent volume
+fly launch --config fly.chromadb.toml --no-deploy
+
+# Create persistent volume for vector data (10GB)
+fly volumes create chromadb_data --size 10 --config fly.chromadb.toml
+
+# Set authentication token (use a secure random string)
+fly secrets set CHROMA_SERVER_AUTH_CREDENTIALS=your-secure-token-here --config fly.chromadb.toml
+
+# Deploy
+fly deploy --config fly.chromadb.toml
+```
+
+Note your ChromaDB URL: `https://astrogroot-chromadb.fly.dev`
+
+### Step 2: Deploy the Crawler
+
+```bash
+# Create the crawler app
+fly launch --config fly.toml --no-deploy
+
+# Set environment secrets
+fly secrets set \
+  TURSO_DATABASE_URL=libsql://your-db.turso.io \
+  TURSO_AUTH_TOKEN=your-turso-token \
+  ANTHROPIC_API_KEY=sk-ant-your-key \
+  CHROMA_HOST=https://astrogroot-chromadb.fly.dev \
+  CHROMA_AUTH_TOKEN=your-secure-token-here \
+  NASA_API_KEY=your-nasa-key \
+  --config fly.toml
+
+# Deploy
+fly deploy --config fly.toml
+```
+
+### Step 3: Update Deno Deploy
+
+In your Deno Deploy dashboard, set:
+- `CHROMA_HOST=https://astrogroot-chromadb.fly.dev`
+- `CHROMA_AUTH_TOKEN=your-secure-token-here`
+
+### Monitoring
+
+```bash
+# View crawler logs
+fly logs --config fly.toml
+
+# View ChromaDB logs
+fly logs --config fly.chromadb.toml
+
+# SSH into crawler for debugging
+fly ssh console --config fly.toml
+```
+
+### Cost Estimate
+
+| Service | Specs | Cost |
+|---------|-------|------|
+| ChromaDB | 1 shared CPU, 1GB RAM, 10GB disk | ~$5-7/mo |
+| Crawler | 1 shared CPU, 512MB RAM | ~$3-5/mo |
+| **Total** | | **~$8-12/mo** |
+
 ## 🧪 Development
 
 ### Database Management

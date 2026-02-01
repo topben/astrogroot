@@ -1,0 +1,32 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment (secrets should be set in Fly.io dashboard)
+.env
+.env.*
+!.env.example
+
+# Development
+node_modules
+.deno
+coverage
+*.log
+
+# Documentation
+*.md
+!README.md
+
+# Tests (not needed in production)
+**/*.test.ts
+**/*.spec.ts
+
+# Local Docker
+docker-compose.yml
+docker-compose.*.yml

@@ -1,0 +1,38 @@
+# Fly.io configuration for AstroGroot Crawler
+# This runs the crawler service that populates your database and ChromaDB
+#
+# Prerequisites:
+#   1. ChromaDB must be running (see fly.chromadb.toml or use Chroma Cloud)
+#   2. Turso database must be set up
+#
+# Deploy:
+#   fly launch --config fly.toml
+#   fly secrets set TURSO_DATABASE_URL=libsql://... TURSO_AUTH_TOKEN=... ANTHROPIC_API_KEY=... CHROMA_HOST=... CHROMA_AUTH_TOKEN=...
+#   fly deploy
+
+app = "astrogroot-crawler"
+primary_region = "nrt"  # Tokyo - change to your preferred region
+
+[build]
+  dockerfile = "Dockerfile"
+  target = "crawler"
+
+[env]
+  # Crawler runs every 24 hours by default
+  CRAWLER_INTERVAL_HOURS = "24"
+  MAX_ITEMS_PER_SOURCE = "20"
+  # CHROMA_HOST will be set via secrets (e.g., https://astrogroot-chromadb.fly.dev)
+
+# No HTTP service needed - this is a background worker
+# If you want health checks, uncomment below:
+# [[services]]
+#   internal_port = 8080
+#   protocol = "tcp"
+#   [[services.http_checks]]
+#     path = "/health"
+
+# Resource allocation (adjust based on your needs)
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

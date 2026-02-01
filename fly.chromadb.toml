@@ -1,0 +1,48 @@
+# Fly.io configuration for ChromaDB
+# This provides the vector database for AstroGroot search functionality
+#
+# Deploy:
+#   fly launch --config fly.chromadb.toml
+#   fly secrets set CHROMA_SERVER_AUTH_CREDENTIALS=your-secure-token --config fly.chromadb.toml
+#   fly deploy --config fly.chromadb.toml
+#
+# After deployment, set CHROMA_HOST in your other services:
+#   CHROMA_HOST=https://astrogroot-chromadb.fly.dev
+
+app = "astrogroot-chromadb"
+primary_region = "nrt"  # Tokyo - change to your preferred region
+
+[build]
+  image = "chromadb/chroma:latest"
+
+[env]
+  # Token-based authentication
+  CHROMA_SERVER_AUTH_CREDENTIALS_PROVIDER = "chromadb.auth.token_authn.TokenAuthenticationServerProvider"
+  CHROMA_SERVER_AUTH_TOKEN_TRANSPORT_HEADER = "X-Chroma-Token"
+  # CHROMA_SERVER_AUTH_CREDENTIALS is set via secrets
+
+  # Performance tuning
+  IS_PERSISTENT = "TRUE"
+  ANONYMIZED_TELEMETRY = "FALSE"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "off"  # Keep running for crawler access
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 100
+    soft_limit = 80
+
+# Persistent storage for vector data
+[mounts]
+  source = "chromadb_data"
+  destination = "/chroma/chroma"
+
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1

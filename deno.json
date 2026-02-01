@@ -9,7 +9,11 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "worker": "deno run --allow-all --env workers/crawler.ts"
+    "worker": "deno run --allow-all --env workers/crawler.ts",
+    "fly:deploy": "./scripts/deploy-fly.sh all",
+    "fly:chromadb": "./scripts/deploy-fly.sh chromadb",
+    "fly:crawler": "./scripts/deploy-fly.sh crawler",
+    "fly:status": "./scripts/deploy-fly.sh status"
   },
   "imports": {
     "@anthropic-ai/sdk": "npm:@anthropic-ai/sdk@^0.32.0",
