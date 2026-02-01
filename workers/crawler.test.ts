@@ -5,6 +5,7 @@ import {
   type CrawlerStats,
 } from "./crawler.ts";
 import type { ArxivEntry } from "../lib/collectors/arxiv.ts";
+import type { NtrsEntry } from "../lib/collectors/ntrs.ts";
 import type { ApodData, NasaAsset } from "../lib/collectors/nasa.ts";
 import type { ProcessMultilingualResult } from "../lib/ai/processor.ts";
 import { SUPPORTED_LOCALES } from "../lib/i18n.ts";
@@ -65,6 +66,8 @@ const onePaper: ArxivEntry[] = [
 
 const emptyVideoList: Array<{ videoId: string; title: string; channelName: string }> = [];
 
+const emptyNtrs: NtrsEntry[] = [];
+
 const emptyNasa = { apod: null as ApodData | null, libraryItems: [] as NasaAsset[] };
 
 const oneNasaLibraryItem: NasaAsset = {
@@ -85,6 +88,7 @@ Deno.test("runCrawler with empty mocks returns zero counts and no errors", async
     initializeCollections: () => Promise.resolve(createMockCollections()),
     processMultilingualContent: createMockProcessMultilingual(),
     collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
+    collectRocketReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () => Promise.resolve(emptyNasa),
@@ -93,6 +97,7 @@ Deno.test("runCrawler with empty mocks returns zero counts and no errors", async
   const stats = await runCrawler(deps);
 
   assertEquals(stats.papersCollected, 0);
+  assertEquals(stats.ntrsReportsCollected, 0);
   assertEquals(stats.videosCollected, 0);
   assertEquals(stats.nasaItemsCollected, 0);
   assertEquals(stats.errors.length, 0);
@@ -104,6 +109,7 @@ Deno.test("runCrawler with one arXiv paper increments papersCollected", async ()
     initializeCollections: () => Promise.resolve(createMockCollections()),
     processMultilingualContent: createMockProcessMultilingual(),
     collectAstronomyPapers: () => Promise.resolve(onePaper),
+    collectRocketReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () => Promise.resolve(emptyNasa),
@@ -112,6 +118,7 @@ Deno.test("runCrawler with one arXiv paper increments papersCollected", async ()
   const stats = await runCrawler(deps);
 
   assertEquals(stats.papersCollected, 1);
+  assertEquals(stats.ntrsReportsCollected, 0);
   assertEquals(stats.videosCollected, 0);
   assertEquals(stats.nasaItemsCollected, 0);
   assertEquals(stats.errors.length, 0);
@@ -126,6 +133,7 @@ Deno.test("runCrawler with one video increments videosCollected", async () => {
     initializeCollections: () => Promise.resolve(createMockCollections()),
     processMultilingualContent: createMockProcessMultilingual(),
     collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
+    collectRocketReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(videoList),
     fetchCompleteVideoData: () =>
       Promise.resolve({
@@ -145,6 +153,7 @@ Deno.test("runCrawler with one video increments videosCollected", async () => {
   const stats = await runCrawler(deps);
 
   assertEquals(stats.papersCollected, 0);
+  assertEquals(stats.ntrsReportsCollected, 0);
   assertEquals(stats.videosCollected, 1);
   assertEquals(stats.nasaItemsCollected, 0);
   assertEquals(stats.errors.length, 0);
@@ -163,6 +172,7 @@ Deno.test("runCrawler with APOD increments nasaItemsCollected", async () => {
     initializeCollections: () => Promise.resolve(createMockCollections()),
     processMultilingualContent: createMockProcessMultilingual(),
     collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
+    collectRocketReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () => Promise.resolve({ apod, libraryItems: [] }),
@@ -171,6 +181,7 @@ Deno.test("runCrawler with APOD increments nasaItemsCollected", async () => {
   const stats = await runCrawler(deps);
 
   assertEquals(stats.papersCollected, 0);
+  assertEquals(stats.ntrsReportsCollected, 0);
   assertEquals(stats.videosCollected, 0);
   assertEquals(stats.nasaItemsCollected, 1);
   assertEquals(stats.errors.length, 0);
@@ -182,6 +193,7 @@ Deno.test("runCrawler with NASA library item increments nasaItemsCollected", asy
     initializeCollections: () => Promise.resolve(createMockCollections()),
     processMultilingualContent: createMockProcessMultilingual(),
     collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
+    collectRocketReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () =>
@@ -194,6 +206,7 @@ Deno.test("runCrawler with NASA library item increments nasaItemsCollected", asy
   const stats = await runCrawler(deps);
 
   assertEquals(stats.papersCollected, 0);
+  assertEquals(stats.ntrsReportsCollected, 0);
   assertEquals(stats.videosCollected, 0);
   assertEquals(stats.nasaItemsCollected, 1);
   assertEquals(stats.errors.length, 0);
@@ -205,6 +218,7 @@ Deno.test("runCrawler records errors when processMultilingualContent throws", as
     initializeCollections: () => Promise.resolve(createMockCollections()),
     processMultilingualContent: () => Promise.reject(new Error("AI processing failed")),
     collectAstronomyPapers: () => Promise.resolve(onePaper),
+    collectRocketReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () => Promise.resolve(emptyNasa),
@@ -220,11 +234,13 @@ Deno.test("runCrawler records errors when processMultilingualContent throws", as
 Deno.test("CrawlerStats has expected shape", () => {
   const stats: CrawlerStats = {
     papersCollected: 0,
+    ntrsReportsCollected: 0,
     videosCollected: 0,
     nasaItemsCollected: 0,
     errors: [],
   };
   assertEquals(typeof stats.papersCollected, "number");
+  assertEquals(typeof stats.ntrsReportsCollected, "number");
   assertEquals(typeof stats.videosCollected, "number");
   assertEquals(typeof stats.nasaItemsCollected, "number");
   assertEquals(Array.isArray(stats.errors), true);

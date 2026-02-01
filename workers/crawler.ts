@@ -13,12 +13,14 @@ import {
   collectAstronomyVideos,
   fetchCompleteVideoData,
 } from "../lib/collectors/youtube.ts";
+import { collectRocketReports, type NtrsEntry } from "../lib/collectors/ntrs.ts";
 
 const CRAWLER_INTERVAL_HOURS = Number(Deno.env.get("CRAWLER_INTERVAL_HOURS")) || 24;
 const MAX_ITEMS_PER_SOURCE = Number(Deno.env.get("MAX_ITEMS_PER_SOURCE")) || 50;
 
 export interface CrawlerStats {
   papersCollected: number;
+  ntrsReportsCollected: number;
   videosCollected: number;
   nasaItemsCollected: number;
   errors: string[];
@@ -30,6 +32,7 @@ export interface CrawlerDeps {
   initializeCollections: typeof initializeCollections;
   processMultilingualContent: typeof processMultilingualContent;
   collectAstronomyPapers: typeof collectAstronomyPapers;
+  collectRocketReports: typeof collectRocketReports;
   collectAstronomyVideos: typeof collectAstronomyVideos;
   fetchCompleteVideoData: typeof fetchCompleteVideoData;
   collectNasaContent: typeof collectNasaContent;
@@ -41,6 +44,7 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
   const initCollections_ = deps?.initializeCollections ?? initializeCollections;
   const processMultilingual_ = deps?.processMultilingualContent ?? processMultilingualContent;
   const collectAstronomyPapers_ = deps?.collectAstronomyPapers ?? collectAstronomyPapers;
+  const collectRocketReports_ = deps?.collectRocketReports ?? collectRocketReports;
   const collectAstronomyVideos_ = deps?.collectAstronomyVideos ?? collectAstronomyVideos;
   const fetchCompleteVideoData_ = deps?.fetchCompleteVideoData ?? fetchCompleteVideoData;
   const collectNasaContent_ = deps?.collectNasaContent ?? collectNasaContent;
@@ -50,6 +54,7 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
 
   const stats: CrawlerStats = {
     papersCollected: 0,
+    ntrsReportsCollected: 0,
     videosCollected: 0,
     nasaItemsCollected: 0,
     errors: [],
@@ -136,10 +141,95 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
       }
     }
 
-    console.log(`\n✅ Collected ${stats.papersCollected} papers`);
+    console.log(`\n✅ Collected ${stats.papersCollected} arXiv papers`);
   } catch (error) {
     console.error("❌ Error collecting arXiv papers:", error);
     stats.errors.push(`arXiv collection: ${error}`);
+  }
+
+  // Collect NASA NTRS technical reports (rocket/propulsion focused)
+  try {
+    console.log("\n🚀 Collecting NASA NTRS technical reports...");
+    const ntrsReports = await collectRocketReports_({
+      maxResultsPerQuery: Math.floor(MAX_ITEMS_PER_SOURCE / 10),
+    });
+
+    for (const report of ntrsReports.slice(0, MAX_ITEMS_PER_SOURCE)) {
+      try {
+        const reportId = `ntrs-${report.id}`;
+
+        // Check if report already exists
+        const existing = await db_.query.papers.findFirst({
+          where: eq(papers.id, reportId),
+        });
+
+        if (existing) {
+          console.log(`  ⏭️  NTRS ${report.id} already exists, skipping`);
+          continue;
+        }
+
+        // Process with AI (summarize + translate to all supported languages)
+        console.log(`  🤖 Processing NTRS: ${report.title.substring(0, 50)}...`);
+        const { baseSummary, translations: trans } = await processMultilingual_({
+          text: report.abstract || report.title,
+          title: report.title,
+          sourceType: "paper",
+        });
+
+        // Insert into database (using papers table with ntrs- prefix)
+        await db_.insert(papers).values({
+          id: reportId,
+          title: report.title,
+          authors: JSON.stringify(report.authors),
+          abstract: report.abstract || "",
+          summary: baseSummary,
+          publishedDate: report.publishedDate ? new Date(report.publishedDate) : new Date(),
+          categories: JSON.stringify(report.subjectCategories),
+          pdfUrl: report.pdfUrl,
+          arxivUrl: report.ntrsUrl, // Store NTRS URL in arxivUrl field
+          processed: true,
+          vectorId: reportId,
+        });
+
+        // Insert translations for each language
+        for (const t of trans) {
+          await db_.insert(translations).values({
+            itemType: "paper",
+            itemId: reportId,
+            lang: t.lang,
+            title: t.title,
+            summary: t.summary,
+          });
+        }
+
+        // Add to per-locale vector stores
+        for (const t of trans) {
+          const locale = t.lang as Locale;
+          if (!SUPPORTED_LOCALES.includes(locale)) continue;
+          await collections.papers[locale].add({
+            id: reportId,
+            text: `${t.title}\n\n${t.summary}\n\n${report.abstract || ""}`,
+            metadata: {
+              title: t.title,
+              published: report.publishedDate || "",
+              categories: report.subjectCategories.join(", "),
+              source: "NASA NTRS",
+            },
+          });
+        }
+
+        stats.ntrsReportsCollected++;
+        console.log(`  ✅ Saved NTRS report: ${reportId}`);
+      } catch (error) {
+        console.error(`  ❌ Error processing NTRS ${report.id}:`, error);
+        stats.errors.push(`NTRS ${report.id}: ${error}`);
+      }
+    }
+
+    console.log(`\n✅ Collected ${stats.ntrsReportsCollected} NTRS reports`);
+  } catch (error) {
+    console.error("❌ Error collecting NTRS reports:", error);
+    stats.errors.push(`NTRS collection: ${error}`);
   }
 
   // Collect YouTube videos
@@ -404,10 +494,12 @@ async function runOnce() {
   console.log("\n" + "=".repeat(60));
   console.log("📊 Crawler Summary");
   console.log("=".repeat(60));
-  console.log(`Papers collected: ${stats.papersCollected}`);
+  console.log(`arXiv papers collected: ${stats.papersCollected}`);
+  console.log(`NTRS reports collected: ${stats.ntrsReportsCollected}`);
   console.log(`Videos collected: ${stats.videosCollected}`);
   console.log(`NASA items collected: ${stats.nasaItemsCollected}`);
-  console.log(`Total items: ${stats.papersCollected + stats.videosCollected + stats.nasaItemsCollected}`);
+  const total = stats.papersCollected + stats.ntrsReportsCollected + stats.videosCollected + stats.nasaItemsCollected;
+  console.log(`Total items: ${total}`);
   console.log(`Duration: ${duration}s`);
 
   if (stats.errors.length > 0) {
@@ -435,7 +527,7 @@ async function runScheduled() {
 
       console.log("\n✅ Crawl completed");
       console.log(
-        `Collected: ${stats.papersCollected} papers, ${stats.videosCollected} videos, ${stats.nasaItemsCollected} NASA items`,
+        `Collected: ${stats.papersCollected} arXiv, ${stats.ntrsReportsCollected} NTRS, ${stats.videosCollected} videos, ${stats.nasaItemsCollected} NASA items`,
       );
       console.log(`Duration: ${duration} minutes`);
 
