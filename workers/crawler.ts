@@ -17,6 +17,12 @@ import { collectRocketReports, type NtrsEntry } from "../lib/collectors/ntrs.ts"
 
 const CRAWLER_INTERVAL_HOURS = Number(Deno.env.get("CRAWLER_INTERVAL_HOURS")) || 24;
 const MAX_ITEMS_PER_SOURCE = Number(Deno.env.get("MAX_ITEMS_PER_SOURCE")) || 50;
+const HEALTH_CHECK_PORT = Number(Deno.env.get("PORT")) || 8080;
+
+// Track crawler state for health checks
+let lastCrawlTime: Date | null = null;
+let lastCrawlStats: CrawlerStats | null = null;
+let isRunning = false;
 
 export interface CrawlerStats {
   papersCollected: number;
@@ -510,6 +516,37 @@ async function runOnce() {
   console.log("=".repeat(60));
 }
 
+// Simple HTTP health check server for Fly.io
+async function startHealthCheckServer() {
+  console.log(`🏥 Starting health check server on port ${HEALTH_CHECK_PORT}...`);
+
+  Deno.serve({ port: HEALTH_CHECK_PORT }, (req) => {
+    const url = new URL(req.url);
+
+    if (url.pathname === "/health" || url.pathname === "/") {
+      const status = {
+        ok: true,
+        service: "astrogroot-crawler",
+        mode: "scheduled",
+        intervalHours: CRAWLER_INTERVAL_HOURS,
+        isRunning,
+        lastCrawl: lastCrawlTime?.toISOString() || null,
+        lastStats: lastCrawlStats,
+        nextCrawl: lastCrawlTime
+          ? new Date(lastCrawlTime.getTime() + CRAWLER_INTERVAL_HOURS * 60 * 60 * 1000).toISOString()
+          : null,
+      };
+      return new Response(JSON.stringify(status, null, 2), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response("Not Found", { status: 404 });
+  });
+
+  console.log(`✅ Health check server running at http://0.0.0.0:${HEALTH_CHECK_PORT}/health`);
+}
+
 // Run crawler on schedule (24/7 mode)
 async function runScheduled() {
   console.log("=".repeat(60));
@@ -517,13 +554,21 @@ async function runScheduled() {
   console.log(`Running every ${CRAWLER_INTERVAL_HOURS} hours`);
   console.log("=".repeat(60));
 
+  // Start health check server for Fly.io
+  startHealthCheckServer();
+
   while (true) {
     const startTime = Date.now();
     console.log(`\n🕐 Starting crawl at ${new Date().toISOString()}`);
+    isRunning = true;
 
     try {
       const stats = await runCrawler();
       const duration = ((Date.now() - startTime) / 1000 / 60).toFixed(2);
+
+      lastCrawlTime = new Date();
+      lastCrawlStats = stats;
+      isRunning = false;
 
       console.log("\n✅ Crawl completed");
       console.log(
@@ -535,6 +580,7 @@ async function runScheduled() {
         console.log(`⚠️  Encountered ${stats.errors.length} errors`);
       }
     } catch (error) {
+      isRunning = false;
       console.error("❌ Crawler failed:", error);
     }
 

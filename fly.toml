@@ -12,6 +12,28 @@ primary_region = 'nrt'
 [env]
   CRAWLER_INTERVAL_HOURS = '1'
   MAX_ITEMS_PER_SOURCE = '20'
+  PORT = '8080'
+
+# HTTP service for health checks (keeps machine alive)
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+# Health check to ensure crawler is running
+[[http_service.checks]]
+  interval = "30s"
+  timeout = "5s"
+  grace_period = "10s"
+  method = "GET"
+  path = "/health"
 
 [[vm]]
   memory = '1024mb'
