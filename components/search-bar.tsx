@@ -155,7 +155,7 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
       <div class="filters-panel" id="filters-panel" hidden>
         <div class="filter-group">
           <label for="filter-type">{contentType}</label>
-          <select name="type" id="filter-type" defaultValue={type}>
+          <select name="typeFilter" id="filter-type" defaultValue={type}>
             <option value="all">{allContent}</option>
             <option value="papers">{papersLabel}</option>
             <option value="videos">{videosLabel}</option>
@@ -212,10 +212,6 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
       form.addEventListener('submit', function(e) {
         var q = document.getElementById('search-input');
         if (q && !q.value.trim()) e.preventDefault();
-        var filterType = document.getElementById('filter-type');
-        if (filterType && filterType instanceof HTMLSelectElement) {
-          filterType.disabled = true;
-        }
       });
     }
     var filterType = document.getElementById('filter-type');
@@ -250,6 +246,8 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
         maybeSubmit();
       });
     });
+    var current = tabs.find(function(input) { return input.checked; });
+    if (current) setActiveTab(current.value || 'all');
   }
   function initCalendar() {
     var backdrop = document.getElementById('calendar-modal-backdrop');
