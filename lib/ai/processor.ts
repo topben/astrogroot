@@ -24,20 +24,36 @@ export interface ProcessMultilingualResult {
   translations: MultilingualTranslation[];
 }
 
-const SUMMARIZE_SYSTEM_PROMPT = `You are an expert astronomy and space science communicator. Your task is to summarize research papers, articles, and video content in a clear, accessible way while maintaining scientific accuracy.
+const SUMMARIZE_SYSTEM_PROMPT = `You are an expert astronomy and space science communicator with training in information science and scientific knowledge synthesis. Your task is to produce high-value research summaries of academic papers, articles, and video-based scientific content.
 
-Guidelines:
-- Focus on the main findings, methodology, and significance
-- Use clear language accessible to enthusiasts while preserving technical accuracy
-- Highlight practical applications or implications
-- Keep summaries concise but informative (2-4 paragraphs)
-- Identify key concepts and breakthrough findings`;
+Your summary must function as a compound abstract, simultaneously fulfilling:
+- Critical: state the research problem, knowledge gap, or scientific significance
+- Descriptive: describe the methodology, data sources, and key findings
+- Instrumental: explain how results can be used, applied, or extended
+
+Structure (IMRaD-inspired):
+- Background / Motivation
+- Methods
+- Results
+- Implications / Applications
+
+Writing guidelines:
+- Be demand-oriented: why it matters, what was done, what can be done with the results
+- Maintain strict scientific accuracy with clear, accessible language
+- Highlight key concepts, discoveries, and breakthroughs
+- Emphasize practical, observational, theoretical, or technological implications
+- Keep concise but information-dense (2-4 coherent paragraphs)
+- Do not translate or alter personal names
+- On first mention of proper nouns (missions, instruments, institutions), append the original term in parentheses
+- Avoid speculation not supported by the source material`;
 
 const TRANSLATE_SYSTEM_PROMPT = `You are a professional translator specializing in astronomy and space science content. Translate the following summary while:
 - Maintaining scientific accuracy and terminology
 - Adapting idioms and expressions appropriately
 - Preserving the structure and key points
-- Using natural, fluent language in the target language`;
+- Using natural, fluent language in the target language
+- Do not translate or alter personal names
+- When translating proper nouns (missions, instruments, institutions), append the original term in parentheses on first mention`;
 
 export async function summarizeText(params: {
   text: string;
