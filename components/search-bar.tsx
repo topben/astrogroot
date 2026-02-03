@@ -212,8 +212,44 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
       form.addEventListener('submit', function(e) {
         var q = document.getElementById('search-input');
         if (q && !q.value.trim()) e.preventDefault();
+        var filterType = document.getElementById('filter-type');
+        if (filterType && filterType instanceof HTMLSelectElement) {
+          filterType.disabled = true;
+        }
       });
     }
+    var filterType = document.getElementById('filter-type');
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('.content-type-tabs input[name="type"]'));
+    function setActiveTab(value) {
+      tabs.forEach(function(input) {
+        var label = input.closest('label');
+        if (label) label.classList.toggle('active', input.value === value);
+        input.checked = input.value === value;
+      });
+    }
+    function maybeSubmit() {
+      var q = document.getElementById('search-input');
+      if (form && q && q.value.trim()) {
+        form.submit();
+      }
+    }
+    if (filterType && filterType instanceof HTMLSelectElement) {
+      filterType.addEventListener('change', function() {
+        var value = filterType.value || 'all';
+        setActiveTab(value);
+        maybeSubmit();
+      });
+    }
+    tabs.forEach(function(input) {
+      input.addEventListener('change', function() {
+        var value = input.value || 'all';
+        if (filterType && filterType instanceof HTMLSelectElement) {
+          filterType.value = value;
+        }
+        setActiveTab(value);
+        maybeSubmit();
+      });
+    });
   }
   function initCalendar() {
     var backdrop = document.getElementById('calendar-modal-backdrop');
