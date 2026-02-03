@@ -31,6 +31,7 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
   const labelPaper = d?.common.paper ?? "Paper";
   const labelVideo = d?.common.video ?? "Video";
   const labelNasa = d?.common.nasa ?? "NASA";
+  const labelMore = d?.common.more ?? "More";
   return (
     <Layout pageClass="search-page" activeNav="search" headerVariant="search" locale={locale} dict={d}>
       <main class="main-content main-content-narrow">
@@ -60,6 +61,7 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
             data-label-paper={labelPaper}
             data-label-video={labelVideo}
             data-label-nasa={labelNasa}
+            data-label-more={labelMore}
             data-error-tpl={errorTpl}
           >
             {query ? (
@@ -88,6 +90,7 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
   var labelPaper = el.getAttribute('data-label-paper') || 'Paper';
   var labelVideo = el.getAttribute('data-label-video') || 'Video';
   var labelNasa = el.getAttribute('data-label-nasa') || 'NASA';
+  var labelMore = el.getAttribute('data-label-more') || 'More';
   var errorTpl = el.getAttribute('data-error-tpl') || 'Search failed';
   if (!q) return;
   var loading = document.getElementById('search-results-loading');
@@ -113,8 +116,10 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
         var title = (item.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         var snippet = (item.snippet || '').slice(0, 200).replace(/</g, '&lt;').replace(/>/g, '&gt;');
         var url = (item.url || '#').replace(/"/g, '&quot;');
+        var detailUrl = '/detail?type=' + encodeURIComponent(item.type || '') + '&id=' + encodeURIComponent(item.id || '') + '&lang=' + encodeURIComponent(locale);
         var date = item.publishedDate ? ' <span class="search-result-date">' + item.publishedDate + '</span>' : '';
-        return '<div class="search-result-card"><span class="search-result-type">' + label + '</span><a href="' + url + '" target="_blank" rel="noopener" class="search-result-title">' + title + '</a>' + date + (snippet ? '<p class="search-result-snippet">' + snippet + '…</p>' : '') + '</div>';
+        var moreBtn = '<a href="' + detailUrl + '" class="search-result-more">' + labelMore + '</a>';
+        return '<div class="search-result-card"><span class="search-result-type">' + label + '</span><a href="' + url + '" target="_blank" rel="noopener" class="search-result-title">' + title + '</a>' + date + (snippet ? '<p class="search-result-snippet">' + snippet + '…</p>' : '') + '<div class="search-result-actions">' + moreBtn + '</div></div>';
       }
       papers.forEach(function(p) { html += itemHtml(p, labelPaper); });
       videos.forEach(function(v) { html += itemHtml(v, labelVideo); });
@@ -144,6 +149,9 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
 .search-result-title { display: block; font-size: 1.125rem; font-weight: 600; color: #e0e7ff; text-decoration: none; margin-bottom: 0.35rem; transition: color 0.2s ease; }
 .search-result-title:hover { color: #a78bfa; }
 .search-result-date { font-size: 0.875rem; color: #64748b; font-weight: 400; }
+.search-result-actions { margin-top: 0.75rem; display: flex; gap: 0.6rem; }
+.search-result-more { display: inline-flex; align-items: center; padding: 0.4rem 0.9rem; border-radius: 999px; font-size: 0.85rem; color: #e0e7ff; text-decoration: none; border: 1px solid rgba(34,211,238,0.35); background: rgba(15,23,42,0.7); transition: all 0.2s ease; }
+.search-result-more:hover { border-color: rgba(34,211,238,0.7); background: rgba(34,211,238,0.12); }
 .search-result-snippet { font-size: 0.9375rem; color: #94a3b8; line-height: 1.5; margin-top: 0.5rem; margin-bottom: 0; }
 `,
         }}

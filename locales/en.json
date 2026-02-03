@@ -52,7 +52,11 @@
   "common": {
     "paper": "Paper",
     "video": "Video",
-    "nasa": "NASA"
+    "nasa": "NASA",
+    "more": "More",
+    "back": "Back",
+    "fullSummary": "Full Summary",
+    "source": "Source"
   },
   "error404": {
     "title": "Lost in Space",

@@ -4,7 +4,7 @@ import { SUPPORTED_LOCALES } from "../lib/i18n.ts";
 
 const SHARED_STYLES = `
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  .dashboard, .search-page, .error-page {
+  .dashboard, .search-page, .error-page, .detail-page {
     min-height: 100vh;
     background: #050816;
     color: #e0e7ff;
@@ -100,6 +100,14 @@ const SHARED_STYLES = `
   .main-content-narrow { max-width: 900px; }
   .section-title { margin-bottom: 2rem; font-size: 2rem; font-weight: 600; background: linear-gradient(135deg, #22d3ee 0%, #a855f7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-shadow: 0 0 30px rgba(168,85,247,0.3); }
   .stats-section, .info-section, .search-container { background: rgba(5,8,22,0.7); border-radius: 20px; padding: 2.5rem; margin-bottom: 2rem; border: 1px solid rgba(34,211,238,0.2); backdrop-filter: blur(20px); box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 40px rgba(34,211,238,0.08), inset 0 1px 0 rgba(255,255,255,0.05); }
+  .detail-section { background: rgba(5,8,22,0.7); border-radius: 20px; padding: 2.5rem; margin-bottom: 2rem; border: 1px solid rgba(34,211,238,0.2); backdrop-filter: blur(20px); box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 40px rgba(34,211,238,0.08), inset 0 1px 0 rgba(255,255,255,0.05); }
+  .detail-title { font-size: 2rem; font-weight: 700; margin-bottom: 0.75rem; color: #e0e7ff; }
+  .detail-meta { display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.95rem; color: #94a3b8; margin-bottom: 1.5rem; }
+  .detail-summary-label { font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.08em; color: #22d3ee; margin-bottom: 0.5rem; }
+  .detail-summary { white-space: pre-wrap; line-height: 1.8; color: #c7d2fe; font-size: 1.05rem; }
+  .detail-actions { display: flex; gap: 0.75rem; margin-top: 1.75rem; flex-wrap: wrap; }
+  .detail-button { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.1rem; border-radius: 10px; border: 1px solid rgba(34,211,238,0.3); background: rgba(15,23,42,0.6); color: #e0e7ff; text-decoration: none; transition: all 0.2s ease; }
+  .detail-button:hover { border-color: rgba(34,211,238,0.6); background: rgba(34,211,238,0.1); }
   .section-title-search { margin-bottom: 0.75rem; }
   .search-description { color: #a5b4fc; margin-bottom: 2rem; font-size: 1.0625rem; }
   .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }

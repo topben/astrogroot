@@ -43,7 +43,15 @@ export interface LocaleDict {
     sources: { papers: string; videos: string; nasa: string };
     ai: string;
   };
-  common: { paper: string; video: string; nasa: string };
+  common: {
+    paper: string;
+    video: string;
+    nasa: string;
+    more: string;
+    back: string;
+    fullSummary: string;
+    source: string;
+  };
   error404: { title: string; message: string; returnButton: string };
   calendar: {
     weekdays: [string, string, string, string, string, string, string];

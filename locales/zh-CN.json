@@ -52,7 +52,11 @@
   "common": {
     "paper": "论文",
     "video": "视频",
-    "nasa": "NASA"
+    "nasa": "NASA",
+    "more": "更多",
+    "back": "返回",
+    "fullSummary": "完整摘要",
+    "source": "来源"
   },
   "error404": {
     "title": "迷失太空",

@@ -5,9 +5,13 @@ import { handleMCPRequest } from "./lib/mcp.ts";
 import { getLibraryStats } from "./lib/stats.ts";
 import { searchLibrary } from "./lib/search.ts";
 import { getLocaleFromRequest, loadDictionary } from "./lib/i18n.ts";
+import { db } from "./db/client.ts";
+import { nasaContent, papers, translations, videos } from "./db/schema.ts";
+import { and, eq } from "drizzle-orm";
 import { DashboardPage } from "./components/pages/dashboard.tsx";
 import { SearchPage } from "./components/pages/search.tsx";
 import { NotFoundPage } from "./components/pages/not-found.tsx";
+import { DetailPage } from "./components/pages/detail.tsx";
 
 const defaultPort = Number(Deno.env.get("PORT")) || 8000;
 const maxPortAttempts = 10;
@@ -83,6 +87,80 @@ app.get("/search", async (c) => {
       dict={dict}
     />
   );
+});
+
+app.get("/detail", async (c) => {
+  const type = (c.req.query("type") ?? "") as "paper" | "video" | "nasa";
+  const id = c.req.query("id") ?? "";
+  const locale = getLocaleFromRequest(
+    c.req.query("lang"),
+    c.req.header("Accept-Language"),
+  );
+  const dict = await loadDictionary(locale);
+  if (!id || !type) {
+    return c.html(<NotFoundPage locale={locale} dict={dict} />);
+  }
+
+  const trans = await db.query.translations.findFirst({
+    where: and(eq(translations.itemType, type), eq(translations.itemId, id), eq(translations.lang, locale)),
+    columns: { title: true, summary: true },
+  });
+
+  if (type === "paper") {
+    const row = await db.query.papers.findFirst({ where: eq(papers.id, id) });
+    if (!row) return c.html(<NotFoundPage locale={locale} dict={dict} />);
+    const summary = trans?.summary ?? row.summary ?? row.abstract ?? "";
+    const title = trans?.title ?? row.title;
+    return c.html(
+      <DetailPage
+        title={title}
+        typeLabel={dict.common.paper}
+        publishedDate={row.publishedDate ? new Date(row.publishedDate).toISOString().slice(0, 10) : undefined}
+        summary={summary}
+        sourceUrl={row.arxivUrl ?? row.pdfUrl ?? undefined}
+        locale={locale}
+        dict={dict}
+      />,
+    );
+  }
+
+  if (type === "video") {
+    const row = await db.query.videos.findFirst({ where: eq(videos.id, id) });
+    if (!row) return c.html(<NotFoundPage locale={locale} dict={dict} />);
+    const summary = trans?.summary ?? row.summary ?? row.description ?? "";
+    const title = trans?.title ?? row.title;
+    return c.html(
+      <DetailPage
+        title={title}
+        typeLabel={dict.common.video}
+        publishedDate={row.publishedDate ? new Date(row.publishedDate).toISOString().slice(0, 10) : undefined}
+        summary={summary}
+        sourceUrl={row.videoUrl}
+        locale={locale}
+        dict={dict}
+      />,
+    );
+  }
+
+  if (type === "nasa") {
+    const row = await db.query.nasaContent.findFirst({ where: eq(nasaContent.id, id) });
+    if (!row) return c.html(<NotFoundPage locale={locale} dict={dict} />);
+    const summary = trans?.summary ?? row.summary ?? row.explanation ?? row.description ?? "";
+    const title = trans?.title ?? row.title;
+    return c.html(
+      <DetailPage
+        title={title}
+        typeLabel={dict.common.nasa}
+        publishedDate={row.date ? new Date(row.date).toISOString().slice(0, 10) : undefined}
+        summary={summary}
+        sourceUrl={row.url}
+        locale={locale}
+        dict={dict}
+      />,
+    );
+  }
+
+  return c.html(<NotFoundPage locale={locale} dict={dict} />);
 });
 
 app.post("/api/mcp", async (c) => {
