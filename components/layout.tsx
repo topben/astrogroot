@@ -80,9 +80,9 @@ const SHARED_STYLES = `
   .lang-switcher a.lang-active { color: #22d3ee; border-color: rgba(34,211,238,0.6); background: rgba(34,211,238,0.15); box-shadow: 0 0 12px rgba(34,211,238,0.25); }
   .brand-link { display: inline-flex; flex-direction: column; align-items: center; gap: 0.75rem; text-decoration: none; color: inherit; transition: opacity 0.3s ease; }
   .brand-link:hover { opacity: 0.95; }
-  .logo-img { height: 120px; width: auto; object-fit: contain; filter: drop-shadow(0 0 30px rgba(34,211,238,0.5)) drop-shadow(0 0 60px rgba(168,85,247,0.4)); transition: filter 0.3s ease; }
+  .logo-img { height: 180px; width: auto; object-fit: contain; filter: drop-shadow(0 0 30px rgba(34,211,238,0.5)) drop-shadow(0 0 60px rgba(168,85,247,0.4)); transition: filter 0.3s ease; }
   .brand-link:hover .logo-img { filter: drop-shadow(0 0 40px rgba(34,211,238,0.7)) drop-shadow(0 0 80px rgba(168,85,247,0.5)); }
-  .header-search .logo-img { height: 90px; }
+  .header-search .logo-img { height: 120px; }
   .gradient-text { font-size: 3.5rem; font-weight: 700; margin-bottom: 0; letter-spacing: -0.02em; text-shadow: 0 0 40px rgba(34,211,238,0.4), 0 0 80px rgba(168,85,247,0.3); }
   .header-search .gradient-text { font-size: 2.75rem; }
   .gradient-text a { text-decoration: none; }
@@ -197,13 +197,9 @@ export const Layout: FC<LayoutProps> = (props) => {
             src="/static/astrogroot-logo.png"
             alt="AstroGroot"
             class="logo-img"
-            width="280"
-            height="120"
+            width="420"
+            height="180"
           />
-          <h1 class="gradient-text">
-            <span class="text-astro">Astro</span>
-            <span class="text-groot">Groot</span>
-          </h1>
         </a>
         {headerVariant === "default" && (
           <>
