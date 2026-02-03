@@ -12,6 +12,7 @@
     "worker": "deno run --allow-all --env workers/crawler.ts",
     "rebuild-vectors": "deno run --allow-all --env scripts/rebuild-vectors.ts",
     "reindex-all": "deno run --allow-all --env scripts/reindex-all.ts",
+    "reindex-one": "deno run --allow-all --env scripts/reindex-one.ts",
     "fly:deploy": "./scripts/deploy-fly.sh all",
     "fly:chromadb": "./scripts/deploy-fly.sh chromadb",
     "fly:crawler": "./scripts/deploy-fly.sh crawler",
