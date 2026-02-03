@@ -7,7 +7,7 @@ import { initializeCollections } from "../lib/vector.ts";
 import { processMultilingualContent } from "../lib/ai/processor.ts";
 import type { Locale } from "../lib/i18n.ts";
 import { SUPPORTED_LOCALES } from "../lib/i18n.ts";
-import { collectAstronomyPapers } from "../lib/collectors/arxiv.ts";
+import { collectAstronomyPapers, collectRocketPapers } from "../lib/collectors/arxiv.ts";
 import { collectNasaContent } from "../lib/collectors/nasa.ts";
 import {
   collectAstronomyVideos,
@@ -38,6 +38,7 @@ export interface CrawlerDeps {
   initializeCollections: typeof initializeCollections;
   processMultilingualContent: typeof processMultilingualContent;
   collectAstronomyPapers: typeof collectAstronomyPapers;
+  collectRocketPapers: typeof collectRocketPapers;
   collectRocketReports: typeof collectRocketReports;
   collectAstronomyVideos: typeof collectAstronomyVideos;
   fetchCompleteVideoData: typeof fetchCompleteVideoData;
@@ -50,6 +51,7 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
   const initCollections_ = deps?.initializeCollections ?? initializeCollections;
   const processMultilingual_ = deps?.processMultilingualContent ?? processMultilingualContent;
   const collectAstronomyPapers_ = deps?.collectAstronomyPapers ?? collectAstronomyPapers;
+  const collectRocketPapers_ = deps?.collectRocketPapers ?? collectRocketPapers;
   const collectRocketReports_ = deps?.collectRocketReports ?? collectRocketReports;
   const collectAstronomyVideos_ = deps?.collectAstronomyVideos ?? collectAstronomyVideos;
   const fetchCompleteVideoData_ = deps?.fetchCompleteVideoData ?? fetchCompleteVideoData;
@@ -151,6 +153,83 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
   } catch (error) {
     console.error("❌ Error collecting arXiv papers:", error);
     stats.errors.push(`arXiv collection: ${error}`);
+  }
+
+  // Collect rocket / launch system papers
+  try {
+    console.log("\n🛰️ Collecting rocket/launch system papers...");
+    const rocketPapers = await collectRocketPapers_({
+      maxResults: Math.min(MAX_ITEMS_PER_SOURCE, 20),
+      daysBack: 14,
+    });
+
+    for (const paper of rocketPapers) {
+      try {
+        const existing = await db_.query.papers.findFirst({
+          where: eq(papers.id, paper.id),
+        });
+
+        if (existing) {
+          console.log(`  ⏭️  Paper ${paper.id} already exists, skipping`);
+          continue;
+        }
+
+        console.log(`  🤖 Processing paper: ${paper.title.substring(0, 50)}...`);
+        const { baseSummary, translations: trans } = await processMultilingual_({
+          text: paper.summary,
+          title: paper.title,
+          sourceType: "paper",
+        });
+
+        await db_.insert(papers).values({
+          id: paper.id,
+          title: paper.title,
+          authors: JSON.stringify(paper.authors),
+          abstract: paper.summary,
+          summary: baseSummary,
+          publishedDate: new Date(paper.published),
+          updatedDate: paper.updated ? new Date(paper.updated) : null,
+          categories: JSON.stringify(paper.categories),
+          pdfUrl: paper.pdfUrl,
+          arxivUrl: paper.arxivUrl,
+          processed: true,
+          vectorId: paper.id,
+        });
+
+        for (const t of trans) {
+          await db_.insert(translations).values({
+            itemType: "paper",
+            itemId: paper.id,
+            lang: t.lang,
+            title: t.title,
+            summary: t.summary,
+          });
+        }
+
+        for (const t of trans) {
+          const locale = t.lang as Locale;
+          if (!SUPPORTED_LOCALES.includes(locale)) continue;
+          await collections.papers[locale].add({
+            id: paper.id,
+            text: `${t.title}\n\n${t.summary}\n\n${paper.summary}`,
+            metadata: {
+              title: t.title,
+              published: paper.published,
+              categories: paper.categories.join(", "),
+            },
+          });
+        }
+
+        stats.papersCollected++;
+        console.log(`  ✅ Saved paper: ${paper.id}`);
+      } catch (error) {
+        console.error(`  ❌ Error processing paper ${paper.id}:`, error);
+        stats.errors.push(`Rocket paper ${paper.id}: ${error}`);
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error collecting rocket papers:", error);
+    stats.errors.push(`Rocket arXiv collection: ${error}`);
   }
 
   // Collect NASA NTRS technical reports (rocket/propulsion focused)

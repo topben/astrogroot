@@ -217,6 +217,40 @@ export const ASTRO_CATEGORIES = [
   "physics.space-ph", // Space Physics
 ];
 
+// Rocket / launch systems related arXiv categories
+export const ROCKET_CATEGORIES = [
+  "physics.flu-dyn", // Fluid Dynamics
+  "physics.app-ph", // Applied Physics
+  "physics.ao-ph", // Atmospheric and Oceanic Physics
+  "physics.ins-det", // Instrumentation and Detectors
+  "physics.space-ph", // Space Physics
+  "cs.RO", // Robotics
+  "cs.SY", // Systems and Control
+  "math.OC", // Optimization and Control
+  "eess.SY", // Systems and Control
+];
+
+export const ROCKET_KEYWORDS = [
+  "rocket propulsion",
+  "liquid rocket engine",
+  "solid rocket motor",
+  "hybrid rocket",
+  "cryogenic propulsion",
+  "hypergolic propulsion",
+  "turbopump",
+  "combustion instability",
+  "thrust vector control",
+  "nozzle design",
+  "regenerative cooling",
+  "injector design",
+  "aerothermodynamics",
+  "thermal protection system",
+  "reentry heating",
+  "hypersonic flow",
+  "flight dynamics",
+  "guidance navigation control",
+];
+
 // Collect recent astronomy papers
 export function collectAstronomyPapers(params: {
   maxResults?: number;
@@ -231,6 +265,19 @@ export function collectAstronomyPapers(params: {
 
   return getRecentArxivPapers({
     categories,
+    maxResults,
+    daysBack,
+  });
+}
+
+// Collect recent rocket-related papers using a broad category filter
+export function collectRocketPapers(params: {
+  maxResults?: number;
+  daysBack?: number;
+}): Promise<ArxivEntry[]> {
+  const { maxResults = 20, daysBack = 14 } = params;
+  return getRecentArxivPapers({
+    categories: ROCKET_CATEGORIES,
     maxResults,
     daysBack,
   });

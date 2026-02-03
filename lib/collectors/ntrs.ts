@@ -143,41 +143,33 @@ export async function searchNtrs(params: {
 // Rocket/propulsion related search queries
 export const ROCKET_QUERIES = [
   // Propulsion fundamentals
+  "rocket propulsion",
   "liquid rocket engine",
   "solid rocket motor",
   "hybrid rocket propulsion",
-  "rocket propulsion",
-  "rocket engine design",
-  // Specific systems
-  "turbopump design",
-  "rocket nozzle",
-  "combustion chamber",
-  "injector design",
-  "thrust chamber",
-  // Propellants
-  "liquid oxygen hydrogen",
-  "RP-1 kerosene",
+  "cryogenic propulsion",
   "hypergolic propellant",
-  "cryogenic propellant",
-  "solid propellant",
-  // Advanced propulsion
-  "electric propulsion",
-  "ion engine",
-  "hall thruster",
+  "electric propulsion ion thruster",
   "nuclear thermal propulsion",
-  // Materials & structures
-  "rocket thermal protection",
-  "ablative material",
-  "composite propellant tank",
+  // Components & stability
+  "turbopump",
+  "combustion instability",
+  "thrust vector control",
+  "nozzle design",
+  "regenerative cooling",
+  "injector design",
+  // Aero / thermal
+  "aerothermodynamics reentry",
+  "thermal protection system",
+  "hypersonic flow",
+  // Structures & manufacturing
+  "structural analysis rocket",
+  "composite materials rocket",
   "additive manufacturing rocket",
-  // Flight dynamics
-  "launch vehicle dynamics",
-  "trajectory optimization",
-  "rocket guidance control",
-  // Testing
-  "static fire test",
-  "rocket engine testing",
-  "hot fire test",
+  // GNC & operations
+  "guidance navigation control",
+  "reaction control system",
+  "launch operations range safety",
 ];
 
 // Collect rocket/propulsion technical reports
