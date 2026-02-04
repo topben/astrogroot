@@ -179,24 +179,24 @@ export async function searchYouTubeVideos(params: {
 
 // Known astronomy/science education channel IDs
 const ASTRONOMY_CHANNELS = [
+  // Rocket & Space Launch focused channels (priority)
+  { id: "UCtI0Hodo5o5dUb67FeUjDeA", name: "SpaceX" },
+  { id: "UCLA_DiR1FfKNvjuUpBHmylQ", name: "NASA Video" },
+  { id: "UCSUu1lih2RifWkKtDOJdsBA", name: "Everyday Astronaut" },
+  { id: "UClZbmi9JzfnB2CEb0fG8V-w", name: "NASASpaceflight" },
+  { id: "UCVxTHEKKLxNjGcvVaZindlg", name: "Rocket Lab" },
+  { id: "UCUK0HBIBWgM2c4vsPhkYY4w", name: "Scott Manley" },
+  { id: "UC0e3QhIYukixgh5VVpKHH9Q", name: "Real Engineering" },
+  { id: "UCO-EL9rDTsqloBZpUqHmhdg", name: "Primal Space" },
+  // Astronomy & Space Science channels
   { id: "UC1znqKFL3jeR0eoA0pHpzvw", name: "NASA" },
-  { id: "UCXuqSBlHAE6Xw-yeJA0Tunw", name: "Linus Tech Tips" }, // Sometimes covers space
   { id: "UC7_gcs09iThXybpVgjHZ_7g", name: "PBS Space Time" },
-  { id: "UCvBqzzvUBLCs8Y7Axb-jZew", name: "Sixty Symbols" },
-  { id: "UCUHW94eEFW7hkUMVaZz4eDg", name: "Kurzgesagt" },
-  { id: "UC6nSFpj9HTCZ5t-N3Rm3-HA", name: "Vsauce" },
-  { id: "UCsXVk37bltHxD1rDPwtNM8Q", name: "Kurzgesagt – In a Nutshell" },
   { id: "UCZYTClx2T1of7BRZ86-8fow", name: "SciShow Space" },
   { id: "UCddiUEpeqJcYeBxX1IVBKvQ", name: "Dr. Becky" },
-  { id: "UC0e3QhIYukixgh5VVpKHH9Q", name: "Real Engineering" },
-  { id: "UC7DdEm33SyaTDtWYGO2CwdA", name: "Physics Girl" },
-  { id: "UCBbnbBWJtwsf0jLGUwX5Q3g", name: "Journey to the Microcosmos" },
-  { id: "UCYO_jab_esuFRV4b17AJtAw", name: "3Blue1Brown" },
+  { id: "UCUHW94eEFW7hkUMVaZz4eDg", name: "Kurzgesagt" },
   { id: "UCHnyfMqiRRG1u-2MsSQLbXA", name: "Veritasium" },
-  { id: "UCEIwxahdLz7bap-VDs9h35A", name: "Steve Mould" },
+  { id: "UCvBqzzvUBLCs8Y7Axb-jZew", name: "Sixty Symbols" },
   { id: "UC-3SbfTPJlsFZWxYGLHQnWA", name: "Space Engine" },
-  { id: "UCUK0HBIBWgM2c4vsPhkYY4w", name: "Scott Manley" },
-  { id: "UCmyxyuun7-mD37BYsKyEMgA", name: "Launch Pad Astronomy" },
 ];
 
 // Collect astronomy videos from specific channels or search
@@ -206,56 +206,47 @@ export async function collectAstronomyVideos(params: {
 }): Promise<Array<{ videoId: string; title: string; channelName: string }>> {
   const {
     searchQueries = [
-      // General astronomy - relevance sort
-      "astronomy lecture",
-      "space documentary",
-      "astrophysics explained",
-      "telescope observation guide",
-      // Specific topics - relevance sort
+      // Rocket & Launch (priority - first 8 for relevance search)
+      "SpaceX Starship launch",
+      "rocket engine test fire",
+      "Falcon 9 landing",
+      "rocket launch compilation",
+      "how rockets work explained",
+      "liquid rocket engine",
+      "rocket propulsion explained",
+      "Raptor engine SpaceX",
+      // Rocket tech (next 8 for date search - newest content)
+      "rocket static fire test",
+      "turbopump rocket engine",
+      "solid rocket motor",
+      "Merlin engine",
+      "BE-4 engine Blue Origin",
+      "RS-25 engine SLS",
+      "rocket nozzle design",
+      "thrust vector control rocket",
+      // Space missions & events (next batch for viewCount)
+      "Artemis moon mission",
+      "SpaceX Crew Dragon",
+      "ISS expedition",
+      "Mars Perseverance rover",
+      "James Webb telescope images",
+      "Starlink satellite deployment",
+      "rocket stage separation",
+      "orbital mechanics explained",
+      // Astronomy & astrophysics
       "black hole documentary",
       "neutron star explanation",
-      "exoplanet discovery news",
-      "james webb telescope images",
-      "hubble deep field",
-      "mars perseverance rover",
-      // Educational content
-      "universe scale explained",
-      "cosmology for beginners",
-      "solar system formation",
+      "exoplanet discovery",
       "galaxy collision simulation",
       "gravitational waves explained",
+      "cosmology lecture",
+      "universe documentary",
       "dark matter evidence",
-      "dark energy cosmology",
-      // Recent events & missions
-      "artemis moon mission",
-      "SpaceX starship",
-      "asteroid bennu sample",
-      "europa clipper mission",
-      // Phenomena
-      "aurora borealis explained",
-      "solar eclipse 2024",
-      "meteor shower guide",
-      "pulsar magnetar",
-      // History
-      "apollo mission documentary",
-      "voyager golden record",
-      "carl sagan cosmos",
-      // Rocket / launch systems
-      "rocket propulsion explained",
-      "liquid rocket engine",
-      "solid rocket motor",
-      "hybrid rocket",
-      "turbopump",
-      "combustion instability",
-      "thrust vector control",
-      "reentry heat shield",
-      "thermal protection system",
-      "hypersonic aerodynamics",
-      "rocket guidance navigation control",
-      "additive manufacturing rocket",
-      "hot fire test",
-      "static fire test stand",
-      "propellant management",
+      // Historical & educational
+      "Apollo mission documentary",
+      "Saturn V rocket",
+      "Space Shuttle history",
+      "Voyager golden record",
     ],
     maxResultsPerQuery = 10,
   } = params;
