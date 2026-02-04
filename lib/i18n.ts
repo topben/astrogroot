@@ -36,6 +36,8 @@ export interface LocaleDict {
     found: string;
     noResults: string;
     error: string;
+    relatedNotice: string;
+    relatedLabel: string;
   };
   about: {
     title: string;

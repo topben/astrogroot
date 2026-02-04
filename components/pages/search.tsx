@@ -28,6 +28,8 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
   const foundTpl = d?.search.found ?? "Found {count} result(s)";
   const noResultsText = d?.search.noResults ?? "No results. Try different keywords or filters.";
   const errorTpl = d?.search.error ?? "Search failed";
+  const relatedNotice = d?.search.relatedNotice ?? "No exact matches found. Showing related content:";
+  const relatedLabel = d?.search.relatedLabel ?? "Related";
   const labelPaper = d?.common.paper ?? "Paper";
   const labelVideo = d?.common.video ?? "Video";
   const labelNasa = d?.common.nasa ?? "NASA";
@@ -63,6 +65,8 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
             data-label-nasa={labelNasa}
             data-label-more={labelMore}
             data-error-tpl={errorTpl}
+            data-related-notice={relatedNotice}
+            data-related-label={relatedLabel}
           >
             {query ? (
               <p class="search-results-loading" id="search-results-loading">
@@ -92,6 +96,8 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
   var labelNasa = el.getAttribute('data-label-nasa') || 'NASA';
   var labelMore = el.getAttribute('data-label-more') || 'More';
   var errorTpl = el.getAttribute('data-error-tpl') || 'Search failed';
+  var relatedNotice = el.getAttribute('data-related-notice') || 'No exact matches found. Showing related content:';
+  var relatedLabel = el.getAttribute('data-related-label') || 'Related';
   if (!q) return;
   var loading = document.getElementById('search-results-loading');
   var params = new URLSearchParams({ q: q, type: type, limit: '20', lang: locale });
@@ -110,8 +116,12 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
       var papers = data.papers || [];
       var videos = data.videos || [];
       var nasa = data.nasa || [];
+      var showingRelated = data.showingRelated || false;
       var countText = foundTpl.split('{count}').join(String(total));
       var html = '<p class="search-results-count">' + countText + '</p>';
+      if (showingRelated && total > 0) {
+        html += '<p class="search-results-related-notice">' + relatedNotice + '</p>';
+      }
       function itemHtml(item, label) {
         var title = (item.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         var snippet = (item.snippet || '').slice(0, 200).replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -119,7 +129,10 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
         var detailUrl = '/detail?type=' + encodeURIComponent(item.type || '') + '&id=' + encodeURIComponent(item.id || '') + '&lang=' + encodeURIComponent(locale);
         var date = item.publishedDate ? ' <span class="search-result-date">' + item.publishedDate + '</span>' : '';
         var moreBtn = '<a href="' + detailUrl + '" class="search-result-more">' + labelMore + '</a>';
-        return '<div class="search-result-card"><span class="search-result-type">' + label + '</span><a href="' + url + '" target="_blank" rel="noopener" class="search-result-title">' + title + '</a>' + date + (snippet ? '<p class="search-result-snippet">' + snippet + '…</p>' : '') + '<div class="search-result-actions">' + moreBtn + '</div></div>';
+        var isLowRelevance = item.lowRelevance || false;
+        var cardClass = 'search-result-card' + (isLowRelevance ? ' search-result-card-low-relevance' : '');
+        var relatedBadge = isLowRelevance ? '<span class="search-result-related-badge">' + relatedLabel + '</span>' : '';
+        return '<div class="' + cardClass + '"><div class="search-result-header"><span class="search-result-type">' + label + '</span>' + relatedBadge + '</div><a href="' + url + '" target="_blank" rel="noopener" class="search-result-title">' + title + '</a>' + date + (snippet ? '<p class="search-result-snippet">' + snippet + '…</p>' : '') + '<div class="search-result-actions">' + moreBtn + '</div></div>';
       }
       papers.forEach(function(p) { html += itemHtml(p, labelPaper); });
       videos.forEach(function(v) { html += itemHtml(v, labelVideo); });
@@ -153,6 +166,11 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
 .search-result-more { display: inline-flex; align-items: center; padding: 0.4rem 0.9rem; border-radius: 999px; font-size: 0.85rem; color: #e0e7ff; text-decoration: none; border: 1px solid rgba(34,211,238,0.35); background: rgba(15,23,42,0.7); transition: all 0.2s ease; }
 .search-result-more:hover { border-color: rgba(34,211,238,0.7); background: rgba(34,211,238,0.12); }
 .search-result-snippet { font-size: 0.9375rem; color: #94a3b8; line-height: 1.5; margin-top: 0.5rem; margin-bottom: 0; }
+.search-result-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.search-results-related-notice { color: #fbbf24; font-size: 0.9375rem; margin-bottom: 1.25rem; padding: 0.75rem 1rem; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 8px; }
+.search-result-card-low-relevance { opacity: 0.75; border-color: rgba(251, 191, 36, 0.25); }
+.search-result-card-low-relevance:hover { border-color: rgba(251, 191, 36, 0.5); box-shadow: 0 0 25px rgba(251, 191, 36, 0.15); }
+.search-result-related-badge { display: inline-block; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #fbbf24; background: rgba(251, 191, 36, 0.15); padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid rgba(251, 191, 36, 0.3); }
 `,
         }}
       />

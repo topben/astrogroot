@@ -37,7 +37,9 @@
     "searching": "Searching…",
     "found": "Found {count} result(s)",
     "noResults": "No results. Try different keywords or filters.",
-    "error": "Search failed"
+    "error": "Search failed",
+    "relatedNotice": "No exact matches found. Showing related content:",
+    "relatedLabel": "Related"
   },
   "about": {
     "title": "About AstroGroot",

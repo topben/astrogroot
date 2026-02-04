@@ -16,6 +16,8 @@ export interface SearchResultItem {
   url?: string;
   publishedDate?: string;
   meta?: Record<string, unknown>;
+  /** True if this result is below the relevance threshold (shown as "related" content) */
+  lowRelevance?: boolean;
 }
 
 export interface SearchResponse {
@@ -24,6 +26,8 @@ export interface SearchResponse {
   videos: SearchResultItem[];
   nasa: SearchResultItem[];
   total: number;
+  /** True if no highly relevant results were found and showing related content instead */
+  showingRelated?: boolean;
 }
 
 const DEFAULT_LIMIT = 20;
@@ -388,9 +392,9 @@ export async function searchLibrary(params: {
     return hits / terms.length;
   };
 
-  const rerank = (items: SearchResultItem[]): SearchResultItem[] => {
+  const rerank = (items: SearchResultItem[], keepLowRelevance = false): SearchResultItem[] => {
     const terms = tokenizeQuery(trimmed);
-    return items
+    const scored = items
       .map((item, index) => {
         const baseScore = Math.max(0, Math.min(1, item.score ?? 0));
         const haystack = `${item.title} ${item.snippet ?? ""}`.toLowerCase();
@@ -399,17 +403,42 @@ export async function searchLibrary(params: {
         const combined = terms.length
           ? baseScore * 0.5 + keywordScore * 0.5
           : baseScore;
-        return { item: { ...item, score: combined }, index, combined };
+        const isLowRelevance = combined < MIN_RELEVANCE_SCORE;
+        return {
+          item: { ...item, score: combined, lowRelevance: isLowRelevance },
+          index,
+          combined,
+          isLowRelevance
+        };
       })
-      // Filter out results below minimum relevance threshold
-      .filter((entry) => entry.combined >= MIN_RELEVANCE_SCORE)
-      .sort((a, b) => (b.combined - a.combined) || (a.index - b.index))
-      .map((entry) => entry.item);
+      .sort((a, b) => (b.combined - a.combined) || (a.index - b.index));
+
+    // First pass: get only high-relevance items
+    const highRelevance = scored.filter((entry) => !entry.isLowRelevance);
+
+    // If keepLowRelevance is true, return all items (marking low relevance ones)
+    // Otherwise only return high relevance items
+    if (keepLowRelevance) {
+      return scored.map((entry) => entry.item);
+    }
+    return highRelevance.map((entry) => entry.item);
   };
 
-  const paperItems = rerank(filteredPapers.map(toPaperItem));
-  const videoItems = rerank(filteredVideos.map(toVideoItem));
-  const nasaItems = rerank(filteredNasa.map(toNasaItem));
+  // First pass: only high-relevance results
+  let paperItems = rerank(filteredPapers.map(toPaperItem), false);
+  let videoItems = rerank(filteredVideos.map(toVideoItem), false);
+  let nasaItems = rerank(filteredNasa.map(toNasaItem), false);
+
+  const hasHighRelevance = paperItems.length > 0 || videoItems.length > 0 || nasaItems.length > 0;
+  let showingRelated = false;
+
+  // If no high-relevance results, show low-relevance items marked as "related"
+  if (!hasHighRelevance) {
+    paperItems = rerank(filteredPapers.map(toPaperItem), true);
+    videoItems = rerank(filteredVideos.map(toVideoItem), true);
+    nasaItems = rerank(filteredNasa.map(toNasaItem), true);
+    showingRelated = paperItems.length > 0 || videoItems.length > 0 || nasaItems.length > 0;
+  }
 
   return {
     query: trimmed,
@@ -417,5 +446,6 @@ export async function searchLibrary(params: {
     videos: videoItems,
     nasa: nasaItems,
     total: paperItems.length + videoItems.length + nasaItems.length,
+    showingRelated,
   };
 }

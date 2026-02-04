@@ -37,7 +37,9 @@
     "searching": "搜索中…",
     "found": "共 {count} 条结果",
     "noResults": "没有结果，请尝试其他关键词或筛选条件。",
-    "error": "搜索失败"
+    "error": "搜索失败",
+    "relatedNotice": "找不到精确匹配，显示相关内容：",
+    "relatedLabel": "相关"
   },
   "about": {
     "title": "关于 AstroGroot",
