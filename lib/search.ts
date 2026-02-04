@@ -29,6 +29,7 @@ export interface SearchResponse {
 const DEFAULT_LIMIT = 20;
 const PER_COLLECTION_LIMIT = 15;
 const DEFAULT_LOCALE: Locale = "en";
+const MIN_RELEVANCE_SCORE = 0.15;
 
 export interface SearchDeps {
   db?: typeof db;
@@ -179,56 +180,61 @@ export async function searchLibrary(params: {
     }
   }
 
-  // Fallback 3: keyword-based SQL search when vector search returns nothing
+  // Fallback 3: keyword-based SQL search PER TYPE when vector search returns nothing
+  // or when the best vector score is too low (below MIN_RELEVANCE_SCORE)
   // This catches cases where the query term isn't well-represented in vector embeddings
-  hasNoResults = paperIds.length === 0 && videoIds.length === 0 && nasaIds.length === 0;
-  if (hasNoResults) {
-    const keywordPattern = `%${trimmed}%`;
-    const [keywordPapers, keywordVideos, keywordNasa] = await Promise.all([
-      searchPapers
-        ? db_.query.papers.findMany({
-            where: or(
-              like(papers.title, keywordPattern),
-              like(papers.summary, keywordPattern),
-              like(papers.abstract, keywordPattern),
-            ),
-            limit: n,
-          })
-        : [],
-      searchVideos
-        ? db_.query.videos.findMany({
-            where: or(
-              like(videos.title, keywordPattern),
-              like(videos.summary, keywordPattern),
-            ),
-            limit: n,
-          })
-        : [],
-      searchNasa
-        ? db_.query.nasaContent.findMany({
-            where: or(
-              like(nasaContent.title, keywordPattern),
-              like(nasaContent.summary, keywordPattern),
-              like(nasaContent.explanation, keywordPattern),
-            ),
-            limit: n,
-          })
-        : [],
-    ]);
-    // Add keyword results with a base score of 0.5 (keyword match)
-    keywordPapers.forEach((p) => {
-      paperIds.push(p.id);
-      paperScores[p.id] = 0.5;
-    });
-    keywordVideos.forEach((v) => {
-      videoIds.push(v.id);
-      videoScores[v.id] = 0.5;
-    });
-    keywordNasa.forEach((n) => {
-      nasaIds.push(n.id);
-      nasaScores[n.id] = 0.5;
-    });
-  }
+  const bestPaperScore = Math.max(0, ...Object.values(paperScores));
+  const bestVideoScore = Math.max(0, ...Object.values(videoScores));
+  const bestNasaScore = Math.max(0, ...Object.values(nasaScores));
+  const needsPaperFallback = paperIds.length === 0 || bestPaperScore < MIN_RELEVANCE_SCORE;
+  const needsVideoFallback = videoIds.length === 0 || bestVideoScore < MIN_RELEVANCE_SCORE;
+  const needsNasaFallback = nasaIds.length === 0 || bestNasaScore < MIN_RELEVANCE_SCORE;
+
+  const keywordPattern = `%${trimmed}%`;
+  const [keywordPapers, keywordVideos, keywordNasa] = await Promise.all([
+    searchPapers && needsPaperFallback
+      ? db_.query.papers.findMany({
+          where: or(
+            like(papers.title, keywordPattern),
+            like(papers.summary, keywordPattern),
+            like(papers.abstract, keywordPattern),
+          ),
+          limit: n,
+        })
+      : [],
+    searchVideos && needsVideoFallback
+      ? db_.query.videos.findMany({
+          where: or(
+            like(videos.title, keywordPattern),
+            like(videos.summary, keywordPattern),
+          ),
+          limit: n,
+        })
+      : [],
+    searchNasa && needsNasaFallback
+      ? db_.query.nasaContent.findMany({
+          where: or(
+            like(nasaContent.title, keywordPattern),
+            like(nasaContent.summary, keywordPattern),
+            like(nasaContent.explanation, keywordPattern),
+          ),
+          limit: n,
+        })
+      : [],
+  ]);
+  // Add keyword results with a base score of 0.5 (keyword match)
+  keywordPapers.forEach((p) => {
+    paperIds.push(p.id);
+    paperScores[p.id] = 0.5;
+  });
+  keywordVideos.forEach((v) => {
+    videoIds.push(v.id);
+    videoScores[v.id] = 0.5;
+  });
+  keywordNasa.forEach((item) => {
+    nasaIds.push(item.id);
+    nasaScores[item.id] = 0.5;
+  });
 
   const [paperRows, videoRows, nasaRows] = await Promise.all([
     paperIds.length
@@ -381,9 +387,6 @@ export async function searchLibrary(params: {
     const hits = terms.filter((term) => lowerText.includes(term)).length;
     return hits / terms.length;
   };
-
-  // Minimum score threshold to filter out irrelevant results
-  const MIN_RELEVANCE_SCORE = 0.15;
 
   const rerank = (items: SearchResultItem[]): SearchResultItem[] => {
     const terms = tokenizeQuery(trimmed);
