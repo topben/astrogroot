@@ -34,7 +34,6 @@ export interface SearchDeps {
   db?: typeof db;
   initializeCollections?: typeof initializeCollections;
   initializeLegacyCollections?: typeof initializeLegacyCollections;
-  environment?: string;
 }
 
 /** Run vector search in the given locale's collections; then load full rows and localized title/snippet from DB. */
@@ -48,8 +47,8 @@ export async function searchLibrary(params: {
 }, deps?: SearchDeps): Promise<SearchResponse> {
   const { q, type = "all", limit = DEFAULT_LIMIT, locale: requestedLocale, dateFrom, dateTo } =
     params;
-  const env = deps?.environment ?? Deno.env.get("ENVIRONMENT") ?? "development";
-  const disableVideoNasa = env === "production";
+  // Video and NASA search now enabled in all environments
+  // (previously disabled in production when ChromaDB collections were empty)
   const db_ = deps?.db ?? db;
   const initializeCollections_ = deps?.initializeCollections ?? initializeCollections;
   const initializeLegacyCollections_ = deps?.initializeLegacyCollections ?? initializeLegacyCollections;
@@ -67,8 +66,8 @@ export async function searchLibrary(params: {
   }
 
   const searchPapers = type === "all" || type === "papers";
-  const searchVideos = !disableVideoNasa && (type === "all" || type === "videos");
-  const searchNasa = !disableVideoNasa && (type === "all" || type === "nasa");
+  const searchVideos = type === "all" || type === "videos";
+  const searchNasa = type === "all" || type === "nasa";
 
   if (!searchPapers && !searchVideos && !searchNasa) {
     return { query: trimmed, papers: [], videos: [], nasa: [], total: 0 };
