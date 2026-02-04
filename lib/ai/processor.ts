@@ -24,36 +24,69 @@ export interface ProcessMultilingualResult {
   translations: MultilingualTranslation[];
 }
 
-const SUMMARIZE_SYSTEM_PROMPT = `You are an expert astronomy and space science communicator with training in information science and scientific knowledge synthesis. Your task is to produce high-value research summaries of academic papers, articles, and video-based scientific content.
+const SUMMARIZE_SYSTEM_PROMPT = `You are an expert aerospace engineering and space science researcher specializing in rocket propulsion, launch systems, and astronautics. Your task is to produce high-value research summaries optimized for knowledge retrieval and semantic search.
 
-Your summary must function as a compound abstract, simultaneously fulfilling:
-- Critical: state the research problem, knowledge gap, or scientific significance
-- Descriptive: describe the methodology, data sources, and key findings
-- Instrumental: explain how results can be used, applied, or extended
+DOMAIN EXPERTISE:
+Focus areas include: rocket engines, propulsion systems, turbopumps, combustion, nozzle design, guidance navigation and control, thermal protection, aerodynamics, orbital mechanics, spacecraft systems, astronomy, astrophysics, and space exploration.
 
-Structure (IMRaD-inspired):
-- Background / Motivation
-- Methods
-- Results
-- Implications / Applications
+SUMMARY STRUCTURE (Emerald-Style Compound Abstract):
 
-Writing guidelines:
-- Be demand-oriented: why it matters, what was done, what can be done with the results
+1. PURPOSE / BACKGROUND
+   - State the research problem, knowledge gap, or scientific significance
+   - Explain why this research matters and its relevance to the field
+   - Identify the specific objectives or questions addressed
+
+2. METHODOLOGY / APPROACH
+   - Describe the research design, data sources, and analytical framework
+   - Specify experimental setup, simulations, observations, or theoretical models
+   - Note key instruments, facilities, missions, or datasets used
+
+3. FINDINGS / RESULTS
+   - Present main discoveries, measurements, or outcomes clearly and precisely
+   - Include quantitative results where available (performance metrics, measurements)
+   - Highlight patterns, comparisons, or unexpected findings
+
+4. ORIGINALITY / IMPLICATIONS
+   - Articulate the study's novelty and contribution to the field
+   - Explain practical applications: engineering, mission planning, technology development
+   - Suggest future research directions or open questions
+
+WRITING GUIDELINES:
+- Maximize keyword density for searchability: use specific technical terms (e.g., "LOX/LH2 turbopump", "regenerative cooling", "Mach number")
+- Include synonyms and related terms to improve retrieval (e.g., "rocket engine" and "propulsion system")
 - Maintain strict scientific accuracy with clear, accessible language
-- Highlight key concepts, discoveries, and breakthroughs
-- Emphasize practical, observational, theoretical, or technological implications
-- Keep concise but information-dense (2-4 coherent paragraphs)
-- Do not translate or alter personal names
-- On first mention of proper nouns (missions, instruments, institutions), append the original term in parentheses
+- Keep information-dense: 3-4 coherent paragraphs, 200-350 words
+- NEVER alter personal names (authors, researchers)
+- On first mention of proper nouns (missions, instruments, institutions), keep original term
 - Avoid speculation not supported by the source material`;
 
-const TRANSLATE_SYSTEM_PROMPT = `You are a professional translator specializing in astronomy and space science content. Translate the following summary while:
-- Maintaining scientific accuracy and terminology
-- Adapting idioms and expressions appropriately
-- Preserving the structure and key points
-- Using natural, fluent language in the target language
-- Do not translate or alter personal names
-- When translating proper nouns (missions, instruments, institutions), append the original term in parentheses on first mention`;
+const TRANSLATE_SYSTEM_PROMPT = `You are a professional aerospace and astronomy translator with expertise in rocket propulsion, space systems, and astrophysics terminology.
+
+TRANSLATION RULES (STRICT):
+
+1. PERSONAL NAMES
+   - NEVER translate or alter personal names (authors, researchers, astronauts)
+   - Keep original: "von Braun", "錢學森 (Qian Xuesen)" → keep as-is
+
+2. TECHNICAL TERMS & PROPER NOUNS
+   - Translate the term, then append the original in parentheses on FIRST mention
+   - Examples:
+     • "turbopump" → 「渦輪泵（turbopump）」
+     • "regenerative cooling" → 「再生冷卻（regenerative cooling）」
+     • "SpaceX Starship" → 「SpaceX 星艦（Starship）」
+     • "NASA NTRS" → 「NASA 技術報告伺服器（NTRS）」
+
+3. PRESERVE STRUCTURE
+   - Maintain the 4-part structure: Purpose, Methodology, Findings, Implications
+   - Keep parallel sentence structure and logical flow
+   - Preserve all quantitative data and measurements exactly
+
+4. LANGUAGE QUALITY
+   - Use formal academic tone appropriate for the target language
+   - Ensure terminological consistency throughout
+   - Adapt idioms naturally while preserving technical precision
+   - For Traditional Chinese: use 「」for quotations, maintain technical register
+   - For Simplified Chinese: use ""for quotations, follow mainland conventions`;
 
 export async function summarizeText(params: {
   text: string;
@@ -63,12 +96,28 @@ export async function summarizeText(params: {
 }): Promise<string> {
   const { text, title, sourceType, maxLength } = params;
 
-  const prompt = `Summarize this ${sourceType} about "${title}".
+  const sourceLabel = {
+    paper: "research paper/technical report",
+    video: "educational video or lecture",
+    article: "article or news item",
+  }[sourceType];
 
-Content:
-${text.slice(0, 50000)} ${text.length > 50000 ? "..." : ""}
+  const prompt = `Analyze and summarize this ${sourceLabel}:
 
-Provide a ${maxLength ? `${maxLength}-word` : "concise"} summary that captures the main points, methodology, and significance.`;
+TITLE: "${title}"
+
+CONTENT:
+${text.slice(0, 50000)}${text.length > 50000 ? "\n[Content truncated...]" : ""}
+
+Generate a structured summary following the Emerald-style format:
+1. PURPOSE: Research problem, objectives, and significance
+2. METHODOLOGY: Approach, data, methods, or analytical framework
+3. FINDINGS: Key results, discoveries, or insights
+4. IMPLICATIONS: Contributions, applications, and future directions
+
+${maxLength ? `Target length: approximately ${maxLength} words.` : "Keep concise but comprehensive (200-350 words)."}
+
+Optimize for semantic search by including relevant technical keywords.`;
 
   try {
     const summary = await sendMessage({
@@ -129,11 +178,18 @@ ${text}`;
 }
 
 export async function extractKeyPoints(text: string, count = 5): Promise<string[]> {
-  const prompt = `Extract the ${count} most important key points from this astronomy/space science content:
+  const prompt = `Extract the ${count} most important technical keywords and key concepts from this aerospace/space science content.
+
+Focus on:
+- Specific technologies (e.g., "regenerative cooling", "turbopump cavitation")
+- Propulsion types (e.g., "LOX/RP-1", "solid rocket motor", "electric propulsion")
+- Missions, spacecraft, or instruments mentioned
+- Physical phenomena or measurements
+- Engineering parameters or performance metrics
 
 ${text.slice(0, 30000)}
 
-Return only a numbered list of key points.`;
+Return only a numbered list of key terms/concepts, each 1-5 words, optimized for search indexing.`;
 
   try {
     const response = await sendMessage({
