@@ -289,19 +289,50 @@ export async function searchLibrary(params: {
     };
   };
 
+  // Common Chinese-English keyword mappings for better cross-language search
+  const keywordMappings: Record<string, string[]> = {
+    "火箭": ["rocket", "launch", "propulsion", "engine", "booster"],
+    "引擎": ["engine", "motor", "propulsion"],
+    "推進": ["propulsion", "thrust", "propellant"],
+    "燃料": ["fuel", "propellant", "combustion"],
+    "太空": ["space", "spacecraft", "satellite"],
+    "衛星": ["satellite", "orbital"],
+    "黑洞": ["black hole", "blackhole"],
+    "恆星": ["star", "stellar"],
+    "行星": ["planet", "planetary"],
+    "星系": ["galaxy", "galactic"],
+  };
+
   const tokenizeQuery = (query: string): string[] => {
     const lower = query.toLowerCase();
-    if (/[\u4e00-\u9fff]/.test(lower)) {
-      return [lower];
+    const terms: string[] = [];
+
+    // Check for Chinese keywords and expand to English equivalents
+    for (const [chinese, english] of Object.entries(keywordMappings)) {
+      if (lower.includes(chinese.toLowerCase()) || lower.includes(chinese)) {
+        terms.push(...english);
+      }
     }
-    return lower.split(/[^a-z0-9]+/i).filter((term) => term.length >= 2);
+
+    // Also include original terms
+    if (/[\u4e00-\u9fff]/.test(lower)) {
+      terms.push(lower);
+    } else {
+      terms.push(...lower.split(/[^a-z0-9]+/i).filter((term) => term.length >= 2));
+    }
+
+    return [...new Set(terms)]; // Remove duplicates
   };
 
   const computeKeywordScore = (text: string, terms: string[]): number => {
     if (terms.length === 0) return 0;
-    const hits = terms.filter((term) => text.includes(term)).length;
+    const lowerText = text.toLowerCase();
+    const hits = terms.filter((term) => lowerText.includes(term)).length;
     return hits / terms.length;
   };
+
+  // Minimum score threshold to filter out irrelevant results
+  const MIN_RELEVANCE_SCORE = 0.15;
 
   const rerank = (items: SearchResultItem[]): SearchResultItem[] => {
     const terms = tokenizeQuery(trimmed);
@@ -310,9 +341,14 @@ export async function searchLibrary(params: {
         const baseScore = Math.max(0, Math.min(1, item.score ?? 0));
         const haystack = `${item.title} ${item.snippet ?? ""}`.toLowerCase();
         const keywordScore = computeKeywordScore(haystack, terms);
-        const combined = terms.length ? baseScore * 0.7 + keywordScore * 0.3 : baseScore;
+        // Higher weight for keyword match when vector score is low
+        const combined = terms.length
+          ? baseScore * 0.5 + keywordScore * 0.5
+          : baseScore;
         return { item: { ...item, score: combined }, index, combined };
       })
+      // Filter out results below minimum relevance threshold
+      .filter((entry) => entry.combined >= MIN_RELEVANCE_SCORE)
       .sort((a, b) => (b.combined - a.combined) || (a.index - b.index))
       .map((entry) => entry.item);
   };
