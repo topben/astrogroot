@@ -30,6 +30,13 @@ const DEFAULT_LIMIT = 20;
 const PER_COLLECTION_LIMIT = 15;
 const DEFAULT_LOCALE: Locale = "en";
 
+export interface SearchDeps {
+  db?: typeof db;
+  initializeCollections?: typeof initializeCollections;
+  initializeLegacyCollections?: typeof initializeLegacyCollections;
+  environment?: string;
+}
+
 /** Run vector search in the given locale's collections; then load full rows and localized title/snippet from DB. */
 export async function searchLibrary(params: {
   q: string;
@@ -38,9 +45,14 @@ export async function searchLibrary(params: {
   locale?: Locale;
   dateFrom?: string;
   dateTo?: string;
-}): Promise<SearchResponse> {
+}, deps?: SearchDeps): Promise<SearchResponse> {
   const { q, type = "all", limit = DEFAULT_LIMIT, locale: requestedLocale, dateFrom, dateTo } =
     params;
+  const env = deps?.environment ?? Deno.env.get("ENVIRONMENT") ?? "development";
+  const disableVideoNasa = env === "production";
+  const db_ = deps?.db ?? db;
+  const initializeCollections_ = deps?.initializeCollections ?? initializeCollections;
+  const initializeLegacyCollections_ = deps?.initializeLegacyCollections ?? initializeLegacyCollections;
   const locale = requestedLocale && SUPPORTED_LOCALES.includes(requestedLocale)
     ? requestedLocale
     : DEFAULT_LOCALE;
@@ -54,7 +66,15 @@ export async function searchLibrary(params: {
     return { query: trimmed, papers: [], videos: [], nasa: [], total: 0 };
   }
 
-  const collections = await initializeCollections();
+  const searchPapers = type === "all" || type === "papers";
+  const searchVideos = !disableVideoNasa && (type === "all" || type === "videos");
+  const searchNasa = !disableVideoNasa && (type === "all" || type === "nasa");
+
+  if (!searchPapers && !searchVideos && !searchNasa) {
+    return { query: trimmed, papers: [], videos: [], nasa: [], total: 0 };
+  }
+
+  const collections = await initializeCollections_();
   const n = Math.min(PER_COLLECTION_LIMIT, Math.max(1, limit));
   const paperIds: string[] = [];
   const videoIds: string[] = [];
@@ -62,10 +82,6 @@ export async function searchLibrary(params: {
   const paperScores: Record<string, number> = {};
   const videoScores: Record<string, number> = {};
   const nasaScores: Record<string, number> = {};
-
-  const searchPapers = type === "all" || type === "papers";
-  const searchVideos = type === "all" || type === "videos";
-  const searchNasa = type === "all" || type === "nasa";
 
   const [paperRes, videoRes, nasaRes] = await Promise.all([
     searchPapers
@@ -135,7 +151,7 @@ export async function searchLibrary(params: {
   // Fallback 2: query legacy collections (pre-i18n) if still no results
   hasNoResults = paperIds.length === 0 && videoIds.length === 0 && nasaIds.length === 0;
   if (hasNoResults) {
-    const legacy = await initializeLegacyCollections();
+    const legacy = await initializeLegacyCollections_();
     const [legacyPaperRes, legacyVideoRes, legacyNasaRes] = await Promise.all([
       searchPapers ? legacy.papers.query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
       searchVideos ? legacy.videos.query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
@@ -166,13 +182,13 @@ export async function searchLibrary(params: {
 
   const [paperRows, videoRows, nasaRows] = await Promise.all([
     paperIds.length
-      ? db.query.papers.findMany({ where: inArray(papers.id, paperIds) })
+      ? db_.query.papers.findMany({ where: inArray(papers.id, paperIds) })
       : [],
     videoIds.length
-      ? db.query.videos.findMany({ where: inArray(videos.id, videoIds) })
+      ? db_.query.videos.findMany({ where: inArray(videos.id, videoIds) })
       : [],
     nasaIds.length
-      ? db.query.nasaContent.findMany({ where: inArray(nasaContent.id, nasaIds) })
+      ? db_.query.nasaContent.findMany({ where: inArray(nasaContent.id, nasaIds) })
       : [],
   ]);
 
@@ -216,7 +232,7 @@ export async function searchLibrary(params: {
       ...filteredVideos.map((r) => ({ type: "video" as const, id: r.id })),
       ...filteredNasa.map((r) => ({ type: "nasa" as const, id: r.id })),
     ];
-    const transRows = await db.query.translations.findMany({
+    const transRows = await db_.query.translations.findMany({
       where: and(
         eq(translations.lang, locale),
         inArray(

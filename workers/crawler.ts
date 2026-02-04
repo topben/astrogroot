@@ -32,6 +32,137 @@ export interface CrawlerStats {
   errors: string[];
 }
 
+// Sync missing vectors from Turso to ChromaDB
+interface SyncStats {
+  synced: number;
+  skipped: number;
+  errors: string[];
+}
+
+async function syncMissingVectors(
+  collections: {
+    papers: Record<Locale, { add: (params: { id: string; text: string; metadata?: Record<string, string> }) => Promise<void>; get: (id: string) => Promise<unknown> }>;
+    videos: Record<Locale, { add: (params: { id: string; text: string; metadata?: Record<string, string> }) => Promise<void>; get: (id: string) => Promise<unknown> }>;
+    nasa: Record<Locale, { add: (params: { id: string; text: string; metadata?: Record<string, string> }) => Promise<void>; get: (id: string) => Promise<unknown> }>;
+  },
+  database: typeof db,
+): Promise<SyncStats> {
+  const stats: SyncStats = { synced: 0, skipped: 0, errors: [] };
+
+  // Helper to get translations for an item
+  async function getTranslations(itemId: string): Promise<Map<Locale, { title: string; summary: string }>> {
+    const trans = await database.query.translations.findMany({
+      where: eq(translations.itemId, itemId),
+    });
+    const result = new Map<Locale, { title: string; summary: string }>();
+    for (const t of trans) {
+      if (SUPPORTED_LOCALES.includes(t.lang as Locale)) {
+        result.set(t.lang as Locale, { title: t.title || "", summary: t.summary || "" });
+      }
+    }
+    return result;
+  }
+
+  // Sync papers
+  const allPapers = await database.select().from(papers);
+  for (const paper of allPapers) {
+    try {
+      // Check if exists in first locale (if missing in one, likely missing in all)
+      const existing = await collections.papers["en"].get(paper.id);
+      if (existing) {
+        stats.skipped++;
+        continue;
+      }
+
+      const trans = await getTranslations(paper.id);
+      for (const locale of SUPPORTED_LOCALES) {
+        const t = trans.get(locale);
+        const title = t?.title || paper.title;
+        const summary = t?.summary || paper.summary || "";
+        await collections.papers[locale].add({
+          id: paper.id,
+          text: `${title}\n\n${summary}\n\n${paper.abstract || ""}`,
+          metadata: {
+            title,
+            published: paper.publishedDate?.toISOString() || "",
+            categories: paper.categories || "[]",
+            source: paper.id.startsWith("ntrs-") ? "NASA NTRS" : "arXiv",
+          },
+        });
+      }
+      stats.synced++;
+    } catch (error) {
+      stats.errors.push(`Paper ${paper.id}: ${error}`);
+    }
+  }
+
+  // Sync videos
+  const allVideos = await database.select().from(videos);
+  for (const video of allVideos) {
+    try {
+      const existing = await collections.videos["en"].get(video.id);
+      if (existing) {
+        stats.skipped++;
+        continue;
+      }
+
+      const trans = await getTranslations(video.id);
+      const transcriptPreview = (video.transcript || "").substring(0, 5000);
+      for (const locale of SUPPORTED_LOCALES) {
+        const t = trans.get(locale);
+        const title = t?.title || video.title;
+        const summary = t?.summary || video.summary || "";
+        await collections.videos[locale].add({
+          id: video.id,
+          text: `${title}\n\n${summary}\n\n${transcriptPreview}`,
+          metadata: {
+            title,
+            channelName: video.channelName || "",
+            published: video.publishedDate?.toISOString() || "",
+          },
+        });
+      }
+      stats.synced++;
+    } catch (error) {
+      stats.errors.push(`Video ${video.id}: ${error}`);
+    }
+  }
+
+  // Sync NASA content
+  const allNasa = await database.select().from(nasaContent);
+  for (const item of allNasa) {
+    try {
+      const existing = await collections.nasa["en"].get(item.id);
+      if (existing) {
+        stats.skipped++;
+        continue;
+      }
+
+      const trans = await getTranslations(item.id);
+      const description = item.explanation || item.description || "";
+      for (const locale of SUPPORTED_LOCALES) {
+        const t = trans.get(locale);
+        const title = t?.title || item.title;
+        const summary = t?.summary || item.summary || "";
+        await collections.nasa[locale].add({
+          id: item.id,
+          text: `${title}\n\n${summary}\n\n${description}`,
+          metadata: {
+            title,
+            date: item.date?.toISOString() || "",
+            type: item.contentType || "",
+          },
+        });
+      }
+      stats.synced++;
+    } catch (error) {
+      stats.errors.push(`NASA ${item.id}: ${error}`);
+    }
+  }
+
+  return stats;
+}
+
 /** Optional dependencies for testing (when provided, used instead of real db/collectors/vector). */
 export interface CrawlerDeps {
   db: typeof db;
@@ -561,6 +692,23 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
   } catch (error) {
     console.error("❌ Error collecting NASA content:", error);
     stats.errors.push(`NASA collection: ${error}`);
+  }
+
+  // Sync missing vectors (ensures ChromaDB has all Turso data)
+  // Skip if running with mocked dependencies (testing)
+  if (!deps) {
+    try {
+      console.log("\n🔄 Syncing missing vectors...");
+      const syncStats = await syncMissingVectors(collections, db_);
+      console.log(`✅ Vector sync: ${syncStats.synced} items synced, ${syncStats.skipped} already exist`);
+      if (syncStats.errors.length > 0) {
+        console.log(`⚠️  Sync errors: ${syncStats.errors.length}`);
+        stats.errors.push(...syncStats.errors);
+      }
+    } catch (error) {
+      console.error("❌ Error syncing vectors:", error);
+      stats.errors.push(`Vector sync: ${error}`);
+    }
   }
 
   return stats;

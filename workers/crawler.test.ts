@@ -14,12 +14,22 @@ import { SUPPORTED_LOCALES } from "../lib/i18n.ts";
 
 const asyncNoop = () => Promise.resolve();
 
-function createMockDb() {
+function createMockDb(overrides?: {
+  papersFindFirst?: () => Promise<unknown>;
+  videosFindFirst?: () => Promise<unknown>;
+  nasaFindFirst?: () => Promise<unknown>;
+}) {
   return {
     query: {
-      papers: { findFirst: () => Promise.resolve(undefined) },
-      videos: { findFirst: () => Promise.resolve(undefined) },
-      nasaContent: { findFirst: () => Promise.resolve(undefined) },
+      papers: {
+        findFirst: overrides?.papersFindFirst ?? (() => Promise.resolve(undefined)),
+      },
+      videos: {
+        findFirst: overrides?.videosFindFirst ?? (() => Promise.resolve(undefined)),
+      },
+      nasaContent: {
+        findFirst: overrides?.nasaFindFirst ?? (() => Promise.resolve(undefined)),
+      },
     },
     insert: () => ({ values: asyncNoop }),
   };
@@ -52,6 +62,7 @@ function createMockProcessMultilingual(
 }
 
 const emptyArxiv: ArxivEntry[] = [];
+const emptyRocketPapers: ArxivEntry[] = [];
 const onePaper: ArxivEntry[] = [
   {
     id: "2401.00001",
@@ -61,6 +72,17 @@ const onePaper: ArxivEntry[] = [
     published: "2024-01-01T00:00:00Z",
     categories: ["astro-ph.CO"],
     arxivUrl: "https://arxiv.org/abs/2401.00001",
+  },
+];
+const oneRocketPaper: ArxivEntry[] = [
+  {
+    id: "2401.00002",
+    title: "Rocket Paper Title",
+    summary: "Rocket abstract here.",
+    authors: ["Carol"],
+    published: "2024-01-02T00:00:00Z",
+    categories: ["physics.space-ph"],
+    arxivUrl: "https://arxiv.org/abs/2401.00002",
   },
 ];
 
@@ -88,6 +110,7 @@ Deno.test("runCrawler with empty mocks returns zero counts and no errors", async
     initializeCollections: () => Promise.resolve(createMockCollections()),
     processMultilingualContent: createMockProcessMultilingual(),
     collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
+    collectRocketPapers: () => Promise.resolve(emptyRocketPapers),
     collectRocketReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
@@ -109,6 +132,7 @@ Deno.test("runCrawler with one arXiv paper increments papersCollected", async ()
     initializeCollections: () => Promise.resolve(createMockCollections()),
     processMultilingualContent: createMockProcessMultilingual(),
     collectAstronomyPapers: () => Promise.resolve(onePaper),
+    collectRocketPapers: () => Promise.resolve(emptyRocketPapers),
     collectRocketReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
@@ -124,6 +148,83 @@ Deno.test("runCrawler with one arXiv paper increments papersCollected", async ()
   assertEquals(stats.errors.length, 0);
 });
 
+Deno.test("runCrawler with one rocket paper increments papersCollected", async () => {
+  const deps = {
+    db: createMockDb(),
+    initializeCollections: () => Promise.resolve(createMockCollections()),
+    processMultilingualContent: createMockProcessMultilingual(),
+    collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
+    collectRocketPapers: () => Promise.resolve(oneRocketPaper),
+    collectRocketReports: () => Promise.resolve(emptyNtrs),
+    collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
+    fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
+    collectNasaContent: () => Promise.resolve(emptyNasa),
+  } as unknown as CrawlerDeps;
+
+  const stats = await runCrawler(deps);
+
+  assertEquals(stats.papersCollected, 1);
+  assertEquals(stats.ntrsReportsCollected, 0);
+  assertEquals(stats.videosCollected, 0);
+  assertEquals(stats.nasaItemsCollected, 0);
+  assertEquals(stats.errors.length, 0);
+});
+
+Deno.test("runCrawler with one NTRS report increments ntrsReportsCollected", async () => {
+  const report: NtrsEntry = {
+    id: 12345,
+    title: "NTRS Report",
+    abstract: "Report abstract.",
+    authors: ["Doe"],
+    publishedDate: "2024-01-03",
+    keywords: ["rocket"],
+    subjectCategories: ["ENGINEERING"],
+    pdfUrl: "https://ntrs.nasa.gov/api/citations/12345/downloads/12345.pdf",
+    ntrsUrl: "https://ntrs.nasa.gov/citations/12345",
+    documentType: "TECHNICAL",
+  };
+  const deps = {
+    db: createMockDb(),
+    initializeCollections: () => Promise.resolve(createMockCollections()),
+    processMultilingualContent: createMockProcessMultilingual(),
+    collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
+    collectRocketPapers: () => Promise.resolve(emptyRocketPapers),
+    collectRocketReports: () => Promise.resolve([report]),
+    collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
+    fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
+    collectNasaContent: () => Promise.resolve(emptyNasa),
+  } as unknown as CrawlerDeps;
+
+  const stats = await runCrawler(deps);
+
+  assertEquals(stats.papersCollected, 0);
+  assertEquals(stats.ntrsReportsCollected, 1);
+  assertEquals(stats.videosCollected, 0);
+  assertEquals(stats.nasaItemsCollected, 0);
+  assertEquals(stats.errors.length, 0);
+});
+
+Deno.test("runCrawler skips existing paper without processing", async () => {
+  const deps = {
+    db: createMockDb({
+      papersFindFirst: () => Promise.resolve({ id: "2401.00001" }),
+    }),
+    initializeCollections: () => Promise.resolve(createMockCollections()),
+    processMultilingualContent: () => Promise.reject(new Error("should not be called")),
+    collectAstronomyPapers: () => Promise.resolve(onePaper),
+    collectRocketPapers: () => Promise.resolve(emptyRocketPapers),
+    collectRocketReports: () => Promise.resolve(emptyNtrs),
+    collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
+    fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
+    collectNasaContent: () => Promise.resolve(emptyNasa),
+  } as unknown as CrawlerDeps;
+
+  const stats = await runCrawler(deps);
+
+  assertEquals(stats.papersCollected, 0);
+  assertEquals(stats.errors.length, 0);
+});
+
 Deno.test("runCrawler with one video increments videosCollected", async () => {
   const videoList = [
     { videoId: "abc123", title: "Test Video", channelName: "Channel" },
@@ -133,6 +234,7 @@ Deno.test("runCrawler with one video increments videosCollected", async () => {
     initializeCollections: () => Promise.resolve(createMockCollections()),
     processMultilingualContent: createMockProcessMultilingual(),
     collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
+    collectRocketPapers: () => Promise.resolve(emptyRocketPapers),
     collectRocketReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(videoList),
     fetchCompleteVideoData: () =>
@@ -172,6 +274,7 @@ Deno.test("runCrawler with APOD increments nasaItemsCollected", async () => {
     initializeCollections: () => Promise.resolve(createMockCollections()),
     processMultilingualContent: createMockProcessMultilingual(),
     collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
+    collectRocketPapers: () => Promise.resolve(emptyRocketPapers),
     collectRocketReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
@@ -193,6 +296,7 @@ Deno.test("runCrawler with NASA library item increments nasaItemsCollected", asy
     initializeCollections: () => Promise.resolve(createMockCollections()),
     processMultilingualContent: createMockProcessMultilingual(),
     collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
+    collectRocketPapers: () => Promise.resolve(emptyRocketPapers),
     collectRocketReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
@@ -218,6 +322,7 @@ Deno.test("runCrawler records errors when processMultilingualContent throws", as
     initializeCollections: () => Promise.resolve(createMockCollections()),
     processMultilingualContent: () => Promise.reject(new Error("AI processing failed")),
     collectAstronomyPapers: () => Promise.resolve(onePaper),
+    collectRocketPapers: () => Promise.resolve(emptyRocketPapers),
     collectRocketReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),

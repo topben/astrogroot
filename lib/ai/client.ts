@@ -1,13 +1,23 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+// Lazy initialization to allow importing without env vars (for tests)
+let _anthropic: Anthropic | null = null;
 
-if (!apiKey) {
-  throw new Error("ANTHROPIC_API_KEY is not set");
+function getAnthropic(): Anthropic {
+  if (!_anthropic) {
+    const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!apiKey) {
+      throw new Error("ANTHROPIC_API_KEY is not set");
+    }
+    _anthropic = new Anthropic({ apiKey });
+  }
+  return _anthropic;
 }
 
-export const anthropic = new Anthropic({
-  apiKey,
+export const anthropic = new Proxy({} as Anthropic, {
+  get(_, prop) {
+    return Reflect.get(getAnthropic(), prop);
+  },
 });
 
 // Use ANTHROPIC_MODEL in .env to override. If 404, try claude-3-5-sonnet-20240620
