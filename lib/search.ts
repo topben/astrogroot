@@ -1,6 +1,6 @@
 import { db } from "../db/client.ts";
 import { papers, videos, nasaContent, translations } from "../db/schema.ts";
-import { inArray, and, eq } from "drizzle-orm";
+import { inArray, and, eq, like, or } from "drizzle-orm";
 import { initializeCollections, initializeLegacyCollections } from "./vector.ts";
 import type { Locale } from "./i18n.ts";
 import { SUPPORTED_LOCALES } from "./i18n.ts";
@@ -177,6 +177,57 @@ export async function searchLibrary(params: {
         if (dist != null) nasaScores[id] = 1 - dist / 2;
       });
     }
+  }
+
+  // Fallback 3: keyword-based SQL search when vector search returns nothing
+  // This catches cases where the query term isn't well-represented in vector embeddings
+  hasNoResults = paperIds.length === 0 && videoIds.length === 0 && nasaIds.length === 0;
+  if (hasNoResults) {
+    const keywordPattern = `%${trimmed}%`;
+    const [keywordPapers, keywordVideos, keywordNasa] = await Promise.all([
+      searchPapers
+        ? db_.query.papers.findMany({
+            where: or(
+              like(papers.title, keywordPattern),
+              like(papers.summary, keywordPattern),
+              like(papers.abstract, keywordPattern),
+            ),
+            limit: n,
+          })
+        : [],
+      searchVideos
+        ? db_.query.videos.findMany({
+            where: or(
+              like(videos.title, keywordPattern),
+              like(videos.summary, keywordPattern),
+            ),
+            limit: n,
+          })
+        : [],
+      searchNasa
+        ? db_.query.nasaContent.findMany({
+            where: or(
+              like(nasaContent.title, keywordPattern),
+              like(nasaContent.summary, keywordPattern),
+              like(nasaContent.explanation, keywordPattern),
+            ),
+            limit: n,
+          })
+        : [],
+    ]);
+    // Add keyword results with a base score of 0.5 (keyword match)
+    keywordPapers.forEach((p) => {
+      paperIds.push(p.id);
+      paperScores[p.id] = 0.5;
+    });
+    keywordVideos.forEach((v) => {
+      videoIds.push(v.id);
+      videoScores[v.id] = 0.5;
+    });
+    keywordNasa.forEach((n) => {
+      nasaIds.push(n.id);
+      nasaScores[n.id] = 0.5;
+    });
   }
 
   const [paperRows, videoRows, nasaRows] = await Promise.all([
