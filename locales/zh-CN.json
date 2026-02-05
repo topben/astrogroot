@@ -62,7 +62,8 @@
     "more": "更多",
     "back": "返回",
     "fullSummary": "完整摘要",
-    "source": "来源"
+    "source": "来源",
+    "recommendedPapers": "推荐论文"
   },
   "error404": {
     "title": "迷失太空",

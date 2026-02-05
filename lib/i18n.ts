@@ -57,6 +57,7 @@ export interface LocaleDict {
     back: string;
     fullSummary: string;
     source: string;
+    recommendedPapers: string;
   };
   error404: { title: string; message: string; returnButton: string };
   calendar: {

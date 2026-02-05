@@ -62,7 +62,8 @@
     "more": "More",
     "back": "Back",
     "fullSummary": "Full Summary",
-    "source": "Source"
+    "source": "Source",
+    "recommendedPapers": "Recommended Papers"
   },
   "error404": {
     "title": "Lost in Space",
