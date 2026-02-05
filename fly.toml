@@ -11,7 +11,7 @@ primary_region = 'nrt'
 
 [env]
   CRAWLER_INTERVAL_HOURS = '1'
-  MAX_ITEMS_PER_SOURCE = '20'
+  MAX_ITEMS_PER_SOURCE = '50'
   PORT = '8080'
 
 # HTTP service for health checks (keeps machine alive)

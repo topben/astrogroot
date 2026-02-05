@@ -207,7 +207,7 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
     console.log("\n📄 Collecting arXiv papers...");
     const arxivPapers = await collectAstronomyPapers_({
       maxResults: MAX_ITEMS_PER_SOURCE,
-      daysBack: 7,
+      daysBack: 1095, // 3 years
     });
 
     for (const paper of arxivPapers) {
@@ -290,8 +290,8 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
   try {
     console.log("\n🛰️ Collecting rocket/launch system papers...");
     const rocketPapers = await collectRocketPapers_({
-      maxResults: Math.min(MAX_ITEMS_PER_SOURCE, 20),
-      daysBack: 14,
+      maxResults: MAX_ITEMS_PER_SOURCE,
+      daysBack: 1095, // 3 years
     });
 
     for (const paper of rocketPapers) {

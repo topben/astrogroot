@@ -199,6 +199,12 @@ const ASTRONOMY_CHANNELS = [
   { id: "UC-3SbfTPJlsFZWxYGLHQnWA", name: "Space Engine" },
 ];
 
+// Check if error indicates YouTube API quota exhaustion
+function isQuotaExhausted(error: unknown): boolean {
+  const msg = String(error);
+  return msg.includes("Forbidden") || msg.includes("quotaExceeded") || msg.includes("dailyLimitExceeded");
+}
+
 // Collect astronomy videos from specific channels or search
 export async function collectAstronomyVideos(params: {
   searchQueries?: string[];
@@ -257,11 +263,12 @@ export async function collectAstronomyVideos(params: {
   // Each search costs 100 units, so we limit to ~30-40 searches per run
   const maxSearches = 30;
   let searchCount = 0;
+  let quotaExhausted = false;
 
   // Strategy 1: Search with relevance sort (popular videos) - 8 searches
   console.log("  📡 Searching by relevance...");
   for (const query of searchQueries.slice(0, 8)) {
-    if (searchCount >= maxSearches) break;
+    if (searchCount >= maxSearches || quotaExhausted) break;
     try {
       const videos = await searchYouTubeVideos({
         query,
@@ -271,8 +278,9 @@ export async function collectAstronomyVideos(params: {
       allVideos.push(...videos);
       searchCount++;
     } catch (error) {
-      if (String(error).includes("Forbidden")) {
-        console.warn("  ⚠️ YouTube API quota exceeded, stopping searches");
+      if (isQuotaExhausted(error)) {
+        console.warn("  ⚠️ YouTube API quota exceeded, stopping all searches");
+        quotaExhausted = true;
         break;
       }
       console.error(`Failed to search for "${query}":`, error);
@@ -280,10 +288,10 @@ export async function collectAstronomyVideos(params: {
   }
 
   // Strategy 2: Search with date sort (newest videos) - 8 searches
-  if (searchCount < maxSearches) {
+  if (searchCount < maxSearches && !quotaExhausted) {
     console.log("  📅 Searching by date...");
     for (const query of searchQueries.slice(8, 16)) {
-      if (searchCount >= maxSearches) break;
+      if (searchCount >= maxSearches || quotaExhausted) break;
       try {
         const videos = await searchYouTubeVideos({
           query,
@@ -293,8 +301,9 @@ export async function collectAstronomyVideos(params: {
         allVideos.push(...videos);
         searchCount++;
       } catch (error) {
-        if (String(error).includes("Forbidden")) {
-          console.warn("  ⚠️ YouTube API quota exceeded, stopping searches");
+        if (isQuotaExhausted(error)) {
+          console.warn("  ⚠️ YouTube API quota exceeded, stopping all searches");
+          quotaExhausted = true;
           break;
         }
         console.error(`Failed to search for "${query}" (date):`, error);
@@ -303,10 +312,10 @@ export async function collectAstronomyVideos(params: {
   }
 
   // Strategy 3: Search with viewCount sort (most viewed) - 8 searches
-  if (searchCount < maxSearches) {
+  if (searchCount < maxSearches && !quotaExhausted) {
     console.log("  👀 Searching by view count...");
     for (const query of searchQueries.slice(16)) {
-      if (searchCount >= maxSearches) break;
+      if (searchCount >= maxSearches || quotaExhausted) break;
       try {
         const videos = await searchYouTubeVideos({
           query,
@@ -316,8 +325,9 @@ export async function collectAstronomyVideos(params: {
         allVideos.push(...videos);
         searchCount++;
       } catch (error) {
-        if (String(error).includes("Forbidden")) {
-          console.warn("  ⚠️ YouTube API quota exceeded, stopping searches");
+        if (isQuotaExhausted(error)) {
+          console.warn("  ⚠️ YouTube API quota exceeded, stopping all searches");
+          quotaExhausted = true;
           break;
         }
         console.error(`Failed to search for "${query}" (viewCount):`, error);
@@ -326,13 +336,13 @@ export async function collectAstronomyVideos(params: {
   }
 
   // Strategy 4: Search specific channels - only if quota allows
-  if (searchCount < maxSearches - 5) {
+  if (searchCount < maxSearches - 5 && !quotaExhausted) {
     console.log("  📺 Searching astronomy channels...");
     const channelQueries = ["astronomy", "space"];
-    for (const channel of ASTRONOMY_CHANNELS.slice(0, 4)) {
-      if (searchCount >= maxSearches) break;
+    outerLoop: for (const channel of ASTRONOMY_CHANNELS.slice(0, 4)) {
+      if (searchCount >= maxSearches || quotaExhausted) break;
       for (const query of channelQueries) {
-        if (searchCount >= maxSearches) break;
+        if (searchCount >= maxSearches || quotaExhausted) break outerLoop;
         try {
           const videos = await searchYouTubeVideos({
             query,
@@ -343,9 +353,10 @@ export async function collectAstronomyVideos(params: {
           allVideos.push(...videos);
           searchCount++;
         } catch (error) {
-          if (String(error).includes("Forbidden")) {
-            console.warn("  ⚠️ YouTube API quota exceeded");
-            break;
+          if (isQuotaExhausted(error)) {
+            console.warn("  ⚠️ YouTube API quota exceeded, stopping all searches");
+            quotaExhausted = true;
+            break outerLoop;
           }
           // Channel search may fail, continue
         }
@@ -353,7 +364,7 @@ export async function collectAstronomyVideos(params: {
     }
   }
 
-  console.log(`  📊 Completed ${searchCount} searches`);
+  console.log(`  📊 Completed ${searchCount} searches${quotaExhausted ? " (quota exhausted)" : ""}`);
 
   // Remove duplicates
   const uniqueVideos = Array.from(
