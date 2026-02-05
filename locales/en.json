@@ -65,6 +65,17 @@
     "source": "Source",
     "recommendedPapers": "Recommend Papers to Library"
   },
+  "seo": {
+    "siteName": "AstroGroot",
+    "homeTitle": "AstroGroot - Astronomy Research Library",
+    "homeDescription": "Explore astronomy papers, videos, and NASA content with AI-powered search",
+    "searchTitle": "Search - AstroGroot",
+    "searchDescription": "Search astronomy research papers, videos, and NASA content",
+    "searchResultsTitle": "\"{query}\" - Search - AstroGroot",
+    "searchResultsDescription": "Search results for \"{query}\" in astronomy papers, videos, and NASA content",
+    "notFoundTitle": "Page Not Found - AstroGroot",
+    "notFoundDescription": "The requested page could not be found."
+  },
   "error404": {
     "title": "Lost in Space",
     "message": "The page you're looking for doesn't exist in this galaxy.",

@@ -1,4 +1,5 @@
 import type { FC, PropsWithChildren } from "hono/jsx";
+import { raw } from "hono/html";
 import type { Locale, LocaleDict } from "../lib/i18n.ts";
 import { SUPPORTED_LOCALES } from "../lib/i18n.ts";
 
@@ -143,12 +144,30 @@ const SHARED_STYLES = `
   .calendar-day.other-month:hover { background: rgba(34, 211, 238, 0.1); color: #94a3b8; }
 `;
 
+export type AlternateUrls = {
+  en: string;
+  "zh-TW": string;
+  "zh-CN": string;
+  xDefault?: string;
+};
+
 type LayoutProps = PropsWithChildren<{
   pageClass: string;
   activeNav?: "dashboard" | "search";
   headerVariant?: "default" | "search";
   locale?: Locale;
   dict?: LocaleDict;
+  pageTitle: string;
+  pageDescription: string;
+  canonicalUrl: string;
+  alternateUrls: AlternateUrls;
+  ogImage?: string;
+  ogType?: "website" | "article";
+  twitterCard?: "summary" | "summary_large_image";
+  robots?: string;
+  showHeader?: boolean;
+  showNav?: boolean;
+  showFooter?: boolean;
 }>;
 
 function searchHref(locale?: Locale): string {
@@ -172,9 +191,28 @@ function currentPageHref(activeNav: "dashboard" | "search" | undefined, locale: 
 }
 
 export const Layout: FC<LayoutProps> = (props) => {
-  const { pageClass, activeNav = "dashboard", headerVariant = "default", locale, dict, children } = props;
+  const {
+    pageClass,
+    activeNav = "dashboard",
+    headerVariant = "default",
+    locale,
+    dict,
+    children,
+    pageTitle,
+    pageDescription,
+    canonicalUrl,
+    alternateUrls,
+    ogImage,
+    ogType = "website",
+    twitterCard = "summary",
+    robots,
+    showHeader = true,
+    showNav = true,
+    showFooter = true,
+  } = props;
   const headerClass = headerVariant === "search" ? "header header-search" : "header";
   const currentLocale = locale ?? "en";
+  const ogLocale = currentLocale === "en" ? "en_US" : currentLocale === "zh-TW" ? "zh_TW" : "zh_CN";
   const navDashboard = dict?.nav.dashboard ?? "Dashboard";
   const navSearch = dict?.nav.search ?? "Search";
   const headerSubtitle = dict?.header.subtitle ?? "Research Library";
@@ -186,95 +224,140 @@ export const Layout: FC<LayoutProps> = (props) => {
   const calendarNextMonth = dict?.calendar.nextMonth ?? "Next month";
   const calendarClose = dict?.calendar.close ?? "Close calendar";
   const calendarMonthsStr = calendarMonths.join("\u001F");
+  const fallbackOgImage = "/static/astrogroot-logo.png";
+  const ogImageUrl = (() => {
+    const image = ogImage ?? fallbackOgImage;
+    try {
+      return new URL(image, canonicalUrl).toString();
+    } catch {
+      return image;
+    }
+  })();
+  const xDefaultUrl = alternateUrls.xDefault ?? alternateUrls.en;
   return (
-    <div class={pageClass}>
-      <div class="starfield" />
-      <div class="starfield-2" />
-      <div id="starfield-js" class="starfield-js" aria-hidden="true" />
-      <div class="nebula nebula-1" />
-      <div class="nebula nebula-2" />
-      <header class={headerClass}>
-        <div class="lang-switcher" role="group" aria-label="Language">
-          {SUPPORTED_LOCALES.map((loc) => (
-            <a
-              href={currentPageHref(activeNav, loc)}
-              class={currentLocale === loc ? "lang-active" : ""}
-              aria-current={currentLocale === loc ? "true" : undefined}
-              aria-label={loc === "en" ? "English" : loc === "zh-TW" ? "繁體中文" : "简体中文"}
-            >
-              {LOCALE_LABELS[loc]}
-            </a>
-          ))}
-        </div>
-        <a href={homeHref(locale)} class="brand-link" aria-label="AstroGroot home">
-          <img
-            src="/static/astrogroot-logo.png"
-            alt="AstroGroot"
-            class="logo-img"
-            width="420"
-            height="180"
-          />
-        </a>
-        {headerVariant === "default" && (
-          <>
-            <p class="header-subtitle">{headerSubtitle}</p>
-            <p class="header-description">{headerDescription}</p>
-          </>
-        )}
-      </header>
-      {(activeNav === "dashboard" || activeNav === "search") && (
-        <nav class="navigation">
-          <a href={homeHref(locale)} class={activeNav === "dashboard" ? "nav-link active" : "nav-link"}>
-            <span class="nav-glow">{navDashboard}</span>
-          </a>
-          <a href={searchHref(locale)} class={activeNav === "search" ? "nav-link active" : "nav-link"}>
-            <span class="nav-glow">{navSearch}</span>
-          </a>
-        </nav>
-      )}
-      {children}
-      <footer class="site-footer">
-        <div class="footer-links">
-          <a href="https://github.com/topben/astrogroot" target="_blank" rel="noopener" class="footer-link">
-            <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-            GitHub
-          </a>
-          <a href="https://docs.google.com/spreadsheets/d/1tc5hTo12MniREvjuCuKNT03Qss7ovJecBMWrU9dnQRQ/edit?usp=sharing" target="_blank" rel="noopener" class="footer-link">
-            <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0112.25 16h-8.5A1.75 1.75 0 012 14.25V1.75zm1.75-.25a.25.25 0 00-.25.25v12.5c0 .138.112.25.25.25h8.5a.25.25 0 00.25-.25V4.664a.25.25 0 00-.073-.177l-2.914-2.914a.25.25 0 00-.177-.073H3.75zM5.5 7a.75.75 0 000 1.5h5a.75.75 0 000-1.5h-5zm0 3a.75.75 0 000 1.5h5a.75.75 0 000-1.5h-5z"/></svg>
-            {dict?.common.recommendedPapers ?? "Recommended Papers"}
-          </a>
-        </div>
-      </footer>
-      <div id="calendar-modal-backdrop" class="calendar-modal-backdrop" hidden aria-hidden="true">
-        <div
-          id="calendar-popover"
-          class="calendar-popover"
-          role="dialog"
-          aria-modal="true"
-          aria-label={calendarPickDate}
-          data-weekdays={calendarWeekdays.join("\u001F")}
-          data-months={calendarMonthsStr}
-          data-pick-date={calendarPickDate}
-          data-prev-month={calendarPrevMonth}
-          data-next-month={calendarNextMonth}
-          data-close={calendarClose}
-        >
-          <button type="button" class="calendar-close" aria-label={calendarClose}>×</button>
-          <div class="calendar-header">
-            <button type="button" class="calendar-nav calendar-prev" aria-label={calendarPrevMonth}>‹</button>
-            <div class="calendar-month-year" id="calendar-month-year"></div>
-            <button type="button" class="calendar-nav calendar-next" aria-label={calendarNextMonth}>›</button>
+    <>
+      {raw("<!DOCTYPE html>")}
+      <html lang={currentLocale}>
+        <head>
+          <meta charSet="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>{pageTitle}</title>
+          <meta name="description" content={pageDescription} />
+          <link rel="canonical" href={canonicalUrl} />
+          <link rel="alternate" hreflang="en" href={alternateUrls.en} />
+          <link rel="alternate" hreflang="zh-Hant" href={alternateUrls["zh-TW"]} />
+          <link rel="alternate" hreflang="zh-Hans" href={alternateUrls["zh-CN"]} />
+          <link rel="alternate" hreflang="x-default" href={xDefaultUrl} />
+          <link rel="icon" href="/static/favicon.png" type="image/png" />
+          {robots ? <meta name="robots" content={robots} /> : null}
+          <meta property="og:type" content={ogType} />
+          <meta property="og:title" content={pageTitle} />
+          <meta property="og:description" content={pageDescription} />
+          <meta property="og:image" content={ogImageUrl} />
+          <meta property="og:url" content={canonicalUrl} />
+          <meta property="og:site_name" content="AstroGroot" />
+          <meta property="og:locale" content={ogLocale} />
+          <meta name="twitter:card" content={twitterCard} />
+          <meta name="twitter:title" content={pageTitle} />
+          <meta name="twitter:description" content={pageDescription} />
+          <meta name="twitter:image" content={ogImageUrl} />
+          <style dangerouslySetInnerHTML={{ __html: SHARED_STYLES }} />
+        </head>
+        <body>
+          <div class={pageClass}>
+            <div class="starfield" />
+            <div class="starfield-2" />
+            <div id="starfield-js" class="starfield-js" aria-hidden="true" />
+            <div class="nebula nebula-1" />
+            <div class="nebula nebula-2" />
+            {showHeader ? (
+              <header class={headerClass}>
+                <div class="lang-switcher" role="group" aria-label="Language">
+                  {SUPPORTED_LOCALES.map((loc) => (
+                    <a
+                      href={currentPageHref(activeNav, loc)}
+                      class={currentLocale === loc ? "lang-active" : ""}
+                      aria-current={currentLocale === loc ? "true" : undefined}
+                      aria-label={loc === "en" ? "English" : loc === "zh-TW" ? "繁體中文" : "简体中文"}
+                    >
+                      {LOCALE_LABELS[loc]}
+                    </a>
+                  ))}
+                </div>
+                <a href={homeHref(locale)} class="brand-link" aria-label="AstroGroot home">
+                  <img
+                    src="/static/astrogroot-logo.png"
+                    alt="AstroGroot - Astronomy Research Library"
+                    class="logo-img"
+                    width="420"
+                    height="180"
+                  />
+                </a>
+                {headerVariant === "default" && (
+                  <>
+                    <p class="header-subtitle">{headerSubtitle}</p>
+                    <p class="header-description">{headerDescription}</p>
+                  </>
+                )}
+              </header>
+            ) : null}
+            {showNav && (activeNav === "dashboard" || activeNav === "search") ? (
+              <nav class="navigation">
+                <a href={homeHref(locale)} class={activeNav === "dashboard" ? "nav-link active" : "nav-link"}>
+                  <span class="nav-glow">{navDashboard}</span>
+                </a>
+                <a href={searchHref(locale)} class={activeNav === "search" ? "nav-link active" : "nav-link"}>
+                  <span class="nav-glow">{navSearch}</span>
+                </a>
+              </nav>
+            ) : null}
+            {children}
+            {showFooter ? (
+              <footer class="site-footer">
+                <div class="footer-links">
+                  <a href="https://github.com/topben/astrogroot" target="_blank" rel="noopener" class="footer-link">
+                    <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                    GitHub
+                  </a>
+                  <a href="https://docs.google.com/spreadsheets/d/1tc5hTo12MniREvjuCuKNT03Qss7ovJecBMWrU9dnQRQ/edit?usp=sharing" target="_blank" rel="noopener" class="footer-link">
+                    <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0112.25 16h-8.5A1.75 1.75 0 012 14.25V1.75zm1.75-.25a.25.25 0 00-.25.25v12.5c0 .138.112.25.25.25h8.5a.25.25 0 00.25-.25V4.664a.25.25 0 00-.073-.177l-2.914-2.914a.25.25 0 00-.177-.073H3.75zM5.5 7a.75.75 0 000 1.5h5a.75.75 0 000-1.5h-5zm0 3a.75.75 0 000 1.5h5a.75.75 0 000-1.5h-5z"/></svg>
+                    {dict?.common.recommendedPapers ?? "Recommended Papers"}
+                  </a>
+                </div>
+              </footer>
+            ) : null}
+            {showFooter ? (
+              <div id="calendar-modal-backdrop" class="calendar-modal-backdrop" hidden aria-hidden="true">
+                <div
+                  id="calendar-popover"
+                  class="calendar-popover"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={calendarPickDate}
+                  data-weekdays={calendarWeekdays.join("\u001F")}
+                  data-months={calendarMonthsStr}
+                  data-pick-date={calendarPickDate}
+                  data-prev-month={calendarPrevMonth}
+                  data-next-month={calendarNextMonth}
+                  data-close={calendarClose}
+                >
+                  <button type="button" class="calendar-close" aria-label={calendarClose}>×</button>
+                  <div class="calendar-header">
+                    <button type="button" class="calendar-nav calendar-prev" aria-label={calendarPrevMonth}>‹</button>
+                    <div class="calendar-month-year" id="calendar-month-year"></div>
+                    <button type="button" class="calendar-nav calendar-next" aria-label={calendarNextMonth}>›</button>
+                  </div>
+                  <div class="calendar-weekdays">
+                    {calendarWeekdays.map((w) => <span key={w}>{w}</span>)}
+                  </div>
+                  <div class="calendar-days" id="calendar-days"></div>
+                </div>
+              </div>
+            ) : null}
           </div>
-          <div class="calendar-weekdays">
-            {calendarWeekdays.map((w) => <span key={w}>{w}</span>)}
-          </div>
-          <div class="calendar-days" id="calendar-days"></div>
-        </div>
-      </div>
-      <style dangerouslySetInnerHTML={{ __html: SHARED_STYLES }} />
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
 (function() {
   var container = document.getElementById('starfield-js');
   if (!container) return;
@@ -297,8 +380,10 @@ export const Layout: FC<LayoutProps> = (props) => {
   }
 })();
 `,
-        }}
-      />
-    </div>
+            }}
+          />
+        </body>
+      </html>
+    </>
   );
 };

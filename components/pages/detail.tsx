@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
 import type { Locale, LocaleDict } from "../../lib/i18n.ts";
-import { Layout } from "../layout.tsx";
+import { Layout, type AlternateUrls } from "../layout.tsx";
 
 export interface DetailPageProps {
   title: string;
@@ -10,6 +10,12 @@ export interface DetailPageProps {
   sourceUrl?: string;
   locale?: Locale;
   dict?: LocaleDict;
+  pageTitle: string;
+  pageDescription: string;
+  canonicalUrl: string;
+  alternateUrls: AlternateUrls;
+  ogImage?: string;
+  jsonLd?: Record<string, unknown>;
 }
 
 export const DetailPage: FC<DetailPageProps> = (props) => {
@@ -20,7 +26,20 @@ export const DetailPage: FC<DetailPageProps> = (props) => {
   const sourceLabel = d?.common.source ?? "Source";
   const searchHref = locale !== "en" ? `/search?lang=${encodeURIComponent(locale)}` : "/search";
   return (
-    <Layout pageClass="detail-page" activeNav="search" headerVariant="search" locale={locale} dict={d}>
+    <Layout
+      pageClass="detail-page"
+      activeNav="search"
+      headerVariant="search"
+      locale={locale}
+      dict={d}
+      pageTitle={props.pageTitle}
+      pageDescription={props.pageDescription}
+      canonicalUrl={props.canonicalUrl}
+      alternateUrls={props.alternateUrls}
+      ogImage={props.ogImage}
+      ogType="article"
+      twitterCard={props.ogImage ? "summary_large_image" : "summary"}
+    >
       <main class="main-content main-content-narrow">
         <section class="detail-section">
           <div class="detail-meta">
@@ -40,6 +59,12 @@ export const DetailPage: FC<DetailPageProps> = (props) => {
           </div>
         </section>
       </main>
+      {props.jsonLd ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(props.jsonLd) }}
+        />
+      ) : null}
     </Layout>
   );
 };

@@ -65,6 +65,17 @@
     "source": "来源",
     "recommendedPapers": "推荐论文给知识库"
   },
+  "seo": {
+    "siteName": "AstroGroot",
+    "homeTitle": "AstroGroot - 天文学研究图书馆",
+    "homeDescription": "使用 AI 搜索探索天文论文、视频与 NASA 内容",
+    "searchTitle": "搜索 - AstroGroot",
+    "searchDescription": "搜索天文研究论文、视频与 NASA 内容",
+    "searchResultsTitle": "“{query}” - 搜索 - AstroGroot",
+    "searchResultsDescription": "“{query}” 的搜索结果，涵盖天文论文、视频与 NASA 内容",
+    "notFoundTitle": "页面未找到 - AstroGroot",
+    "notFoundDescription": "未找到您请求的页面。"
+  },
   "error404": {
     "title": "迷失太空",
     "message": "找不到您要的页面。",

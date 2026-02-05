@@ -65,6 +65,17 @@
     "source": "來源",
     "recommendedPapers": "推薦論文給知識庫"
   },
+  "seo": {
+    "siteName": "AstroGroot",
+    "homeTitle": "AstroGroot - 天文研究圖書館",
+    "homeDescription": "使用 AI 搜尋探索天文論文、影片與 NASA 內容",
+    "searchTitle": "搜尋 - AstroGroot",
+    "searchDescription": "搜尋天文研究論文、影片與 NASA 內容",
+    "searchResultsTitle": "「{query}」 - 搜尋 - AstroGroot",
+    "searchResultsDescription": "「{query}」的搜尋結果，涵蓋天文論文、影片與 NASA 內容",
+    "notFoundTitle": "找不到頁面 - AstroGroot",
+    "notFoundDescription": "找不到您要的頁面。"
+  },
   "error404": {
     "title": "迷失太空",
     "message": "找不到您要的頁面。",

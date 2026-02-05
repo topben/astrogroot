@@ -59,6 +59,17 @@ export interface LocaleDict {
     source: string;
     recommendedPapers: string;
   };
+  seo: {
+    siteName: string;
+    homeTitle: string;
+    homeDescription: string;
+    searchTitle: string;
+    searchDescription: string;
+    searchResultsTitle: string;
+    searchResultsDescription: string;
+    notFoundTitle: string;
+    notFoundDescription: string;
+  };
   error404: { title: string; message: string; returnButton: string };
   calendar: {
     weekdays: [string, string, string, string, string, string, string];

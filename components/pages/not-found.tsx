@@ -1,5 +1,6 @@
 import type { FC } from "hono/jsx";
 import type { Locale, LocaleDict } from "../../lib/i18n.ts";
+import { Layout, type AlternateUrls } from "../layout.tsx";
 
 function homeHref(locale?: Locale): string {
   if (locale && locale !== "en") return `/?lang=${encodeURIComponent(locale)}`;
@@ -27,57 +28,47 @@ const ERROR_STYLES = `
   .return-button:hover { transform: translateY(-2px); box-shadow: 0 6px 35px rgba(168,85,247,0.5), 0 0 50px rgba(34,211,238,0.3); filter: brightness(1.1); }
 `;
 
-export const NotFoundPage: FC<{ locale?: Locale; dict?: LocaleDict }> = (props) => {
+export interface NotFoundPageProps {
+  locale?: Locale;
+  dict?: LocaleDict;
+  pageTitle: string;
+  pageDescription: string;
+  canonicalUrl: string;
+  alternateUrls: AlternateUrls;
+}
+
+export const NotFoundPage: FC<NotFoundPageProps> = (props) => {
   const locale = props.locale ?? "en";
   const d = props.dict;
   const title = d?.error404.title ?? "Lost in Space";
   const message = d?.error404.message ?? "The page you're looking for doesn't exist in this galaxy.";
   const returnButton = d?.error404.returnButton ?? "Return to Dashboard";
   return (
-  <div class="error-page">
-    <div class="starfield" />
-    <div class="starfield-2" />
-    <div id="starfield-js" class="starfield-js" aria-hidden="true" />
-    <div class="nebula nebula-1" />
-    <div class="nebula nebula-2" />
-    <div class="error-content">
-      <h1 class="error-title">
-        <span class="error-number">404</span>
-        <span class="error-text">{title}</span>
-      </h1>
-      <p class="error-message">{message}</p>
-      <a href={homeHref(locale)} class="return-button">
-        <span>{returnButton}</span>
-      </a>
-    </div>
-    <style dangerouslySetInnerHTML={{ __html: ERROR_STYLES }} />
-    <script
-      dangerouslySetInnerHTML={{
-        __html: `
-(function() {
-  var container = document.getElementById('starfield-js');
-  if (!container) return;
-  var colors = ['#fff', 'rgba(34,211,238,0.9)', 'rgba(255,215,0,0.7)', 'rgba(168,85,247,0.8)', 'rgba(255,255,255,0.85)'];
-  var count = 60 + Math.floor(Math.random() * 90);
-  for (var i = 0; i < count; i++) {
-    var star = document.createElement('div');
-    star.className = 'star';
-    var size = 1 + Math.random() * 2.5;
-    var left = Math.random() * 100;
-    var top = Math.random() * 100;
-    var tx = (Math.random() - 0.5) * 240;
-    var ty = (Math.random() - 0.5) * 240;
-    var duration = 25 + Math.random() * 55;
-    var delay = Math.random() * 12;
-    var op = 0.5 + Math.random() * 0.5;
-    var opMid = op * 0.5 + Math.random() * 0.3;
-    star.style.cssText = 'left:' + left + '%;top:' + top + '%;width:' + size + 'px;height:' + size + 'px;color:' + colors[Math.floor(Math.random() * colors.length)] + ';--tx:' + tx + 'px;--ty:' + ty + 'px;--op:' + op + ';--op-mid:' + opMid + ';animation-duration:' + duration + 's;animation-delay:-' + delay + 's;';
-    container.appendChild(star);
-  }
-})();
-`,
-      }}
-    />
-  </div>
+    <Layout
+      pageClass="error-page"
+      activeNav="dashboard"
+      locale={locale}
+      dict={d}
+      pageTitle={props.pageTitle}
+      pageDescription={props.pageDescription}
+      canonicalUrl={props.canonicalUrl}
+      alternateUrls={props.alternateUrls}
+      robots="noindex"
+      showHeader={false}
+      showNav={false}
+      showFooter={false}
+    >
+      <div class="error-content">
+        <h1 class="error-title">
+          <span class="error-number">404</span>
+          <span class="error-text">{title}</span>
+        </h1>
+        <p class="error-message">{message}</p>
+        <a href={homeHref(locale)} class="return-button">
+          <span>{returnButton}</span>
+        </a>
+      </div>
+      <style dangerouslySetInnerHTML={{ __html: ERROR_STYLES }} />
+    </Layout>
   );
 };

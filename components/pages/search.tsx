@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
 import type { Locale, LocaleDict } from "../../lib/i18n.ts";
-import { Layout } from "../layout.tsx";
+import { Layout, type AlternateUrls } from "../layout.tsx";
 import { SearchBar } from "../search-bar.tsx";
 
 interface SearchPageProps {
@@ -11,6 +11,11 @@ interface SearchPageProps {
   dateTo?: string;
   locale?: Locale;
   dict?: LocaleDict;
+  pageTitle: string;
+  pageDescription: string;
+  canonicalUrl: string;
+  alternateUrls: AlternateUrls;
+  robots?: string;
 }
 
 export const SearchPage: FC<SearchPageProps> = (props) => {
@@ -39,7 +44,18 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
   const labelNasa = d?.common.nasa ?? "NASA";
   const labelMore = d?.common.more ?? "More";
   return (
-    <Layout pageClass="search-page" activeNav="search" headerVariant="search" locale={locale} dict={d}>
+    <Layout
+      pageClass="search-page"
+      activeNav="search"
+      headerVariant="search"
+      locale={locale}
+      dict={d}
+      pageTitle={props.pageTitle}
+      pageDescription={props.pageDescription}
+      canonicalUrl={props.canonicalUrl}
+      alternateUrls={props.alternateUrls}
+      robots={props.robots}
+    >
       <main class="main-content main-content-narrow">
         <div class="search-container">
           <h2 class="section-title section-title-search">{searchTitle}</h2>
