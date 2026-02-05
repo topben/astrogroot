@@ -39,7 +39,11 @@
     "noResults": "沒有結果，請嘗試其他關鍵字或篩選條件。",
     "error": "搜尋失敗",
     "relatedNotice": "找不到精確匹配，顯示相關內容：",
-    "relatedLabel": "相關"
+    "relatedLabel": "相關",
+    "page": "頁",
+    "of": "/",
+    "prev": "上一頁",
+    "next": "下一頁"
   },
   "about": {
     "title": "關於 AstroGroot",

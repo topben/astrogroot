@@ -30,6 +30,10 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
   const errorTpl = d?.search.error ?? "Search failed";
   const relatedNotice = d?.search.relatedNotice ?? "No exact matches found. Showing related content:";
   const relatedLabel = d?.search.relatedLabel ?? "Related";
+  const pageLabel = d?.search.page ?? "Page";
+  const ofLabel = d?.search.of ?? "of";
+  const prevLabel = d?.search.prev ?? "Previous";
+  const nextLabel = d?.search.next ?? "Next";
   const labelPaper = d?.common.paper ?? "Paper";
   const labelVideo = d?.common.video ?? "Video";
   const labelNasa = d?.common.nasa ?? "NASA";
@@ -67,6 +71,10 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
             data-error-tpl={errorTpl}
             data-related-notice={relatedNotice}
             data-related-label={relatedLabel}
+            data-page-label={pageLabel}
+            data-of-label={ofLabel}
+            data-prev-label={prevLabel}
+            data-next-label={nextLabel}
           >
             {query ? (
               <p class="search-results-loading" id="search-results-loading">
@@ -98,53 +106,93 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
   var errorTpl = el.getAttribute('data-error-tpl') || 'Search failed';
   var relatedNotice = el.getAttribute('data-related-notice') || 'No exact matches found. Showing related content:';
   var relatedLabel = el.getAttribute('data-related-label') || 'Related';
+  var pageLabel = el.getAttribute('data-page-label') || 'Page';
+  var ofLabel = el.getAttribute('data-of-label') || 'of';
+  var prevLabel = el.getAttribute('data-prev-label') || 'Previous';
+  var nextLabel = el.getAttribute('data-next-label') || 'Next';
   if (!q) return;
-  var loading = document.getElementById('search-results-loading');
-  var params = new URLSearchParams({ q: q, type: type, limit: '20', lang: locale });
-  if (dateFrom) params.set('dateFrom', dateFrom);
-  if (dateTo) params.set('dateTo', dateTo);
-  fetch('/api/search?' + params.toString())
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (loading) loading.remove();
-      if (data.error) {
-        var errMsg = (data.error || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        el.insertAdjacentHTML('beforeend', '<p class="search-results-error">' + errorTpl + ': ' + errMsg + '</p>');
-        return;
-      }
-      var total = data.total || 0;
-      var papers = data.papers || [];
-      var videos = data.videos || [];
-      var nasa = data.nasa || [];
-      var showingRelated = data.showingRelated || false;
-      var countText = foundTpl.split('{count}').join(String(total));
-      var html = '<p class="search-results-count">' + countText + '</p>';
-      if (showingRelated && total > 0) {
-        html += '<p class="search-results-related-notice">' + relatedNotice + '</p>';
-      }
-      function itemHtml(item, label) {
-        var title = (item.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        var snippet = (item.snippet || '').slice(0, 200).replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        var url = (item.url || '#').replace(/"/g, '&quot;');
-        var detailUrl = '/detail?type=' + encodeURIComponent(item.type || '') + '&id=' + encodeURIComponent(item.id || '') + '&lang=' + encodeURIComponent(locale);
-        var date = item.publishedDate ? ' <span class="search-result-date">' + item.publishedDate + '</span>' : '';
-        var moreBtn = '<a href="' + detailUrl + '" class="search-result-more">' + labelMore + '</a>';
-        var isLowRelevance = item.lowRelevance || false;
-        var cardClass = 'search-result-card' + (isLowRelevance ? ' search-result-card-low-relevance' : '');
-        var relatedBadge = isLowRelevance ? '<span class="search-result-related-badge">' + relatedLabel + '</span>' : '';
-        return '<div class="' + cardClass + '"><div class="search-result-header"><span class="search-result-type">' + label + '</span>' + relatedBadge + '</div><a href="' + url + '" target="_blank" rel="noopener" class="search-result-title">' + title + '</a>' + date + (snippet ? '<p class="search-result-snippet">' + snippet + '…</p>' : '') + '<div class="search-result-actions">' + moreBtn + '</div></div>';
-      }
-      papers.forEach(function(p) { html += itemHtml(p, labelPaper); });
-      videos.forEach(function(v) { html += itemHtml(v, labelVideo); });
-      nasa.forEach(function(n) { html += itemHtml(n, labelNasa); });
-      if (total === 0) html += '<p class="search-results-empty">' + noResults + '</p>';
-      el.insertAdjacentHTML('beforeend', html);
-    })
-    .catch(function(err) {
-      if (loading) loading.remove();
-      var msg = (err && err.message) ? err.message : String(err);
-      el.insertAdjacentHTML('beforeend', '<p class="search-results-error">' + errorTpl + ': ' + msg.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</p>');
-    });
+  var urlParams = new URLSearchParams(window.location.search || '');
+  var initialPage = parseInt(urlParams.get('page') || '1', 10) || 1;
+  var currentPage = initialPage;
+  var perPage = 20;
+
+  function updateUrl(page) {
+    var params = new URLSearchParams(window.location.search || '');
+    params.set('q', q);
+    params.set('type', type);
+    params.set('lang', locale);
+    if (dateFrom) params.set('dateFrom', dateFrom); else params.delete('dateFrom');
+    if (dateTo) params.set('dateTo', dateTo); else params.delete('dateTo');
+    params.set('page', String(page));
+    var newUrl = window.location.pathname + '?' + params.toString();
+    history.replaceState(null, '', newUrl);
+  }
+
+  function doSearch(page) {
+    currentPage = page;
+    el.innerHTML = '<p class="search-results-loading">...</p>';
+    var params = new URLSearchParams({ q: q, type: type, limit: String(perPage), page: String(page), lang: locale });
+    if (dateFrom) params.set('dateFrom', dateFrom);
+    if (dateTo) params.set('dateTo', dateTo);
+    fetch('/api/search?' + params.toString())
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        el.innerHTML = '';
+        if (data.error) {
+          var errMsg = (data.error || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          el.insertAdjacentHTML('beforeend', '<p class="search-results-error">' + errorTpl + ': ' + errMsg + '</p>');
+          return;
+        }
+        var total = data.total || 0;
+        var papers = data.papers || [];
+        var videos = data.videos || [];
+        var nasa = data.nasa || [];
+        var showingRelated = data.showingRelated || false;
+        var pagination = data.pagination || { page: 1, totalPages: 1, hasNext: false, hasPrev: false };
+        var countText = foundTpl.split('{count}').join(String(total));
+        var html = '<p class="search-results-count">' + countText + '</p>';
+        if (showingRelated && total > 0) {
+          html += '<p class="search-results-related-notice">' + relatedNotice + '</p>';
+        }
+        function itemHtml(item, label) {
+          var title = (item.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          var snippet = (item.snippet || '').slice(0, 200).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          var url = (item.url || '#').replace(/"/g, '&quot;');
+          var detailUrl = '/detail?type=' + encodeURIComponent(item.type || '') + '&id=' + encodeURIComponent(item.id || '') + '&lang=' + encodeURIComponent(locale);
+          var date = item.publishedDate ? ' <span class="search-result-date">' + item.publishedDate + '</span>' : '';
+          var moreBtn = '<a href="' + detailUrl + '" class="search-result-more">' + labelMore + '</a>';
+          var isLowRelevance = item.lowRelevance || false;
+          var cardClass = 'search-result-card' + (isLowRelevance ? ' search-result-card-low-relevance' : '');
+          var relatedBadge = isLowRelevance ? '<span class="search-result-related-badge">' + relatedLabel + '</span>' : '';
+          return '<div class="' + cardClass + '"><div class="search-result-header"><span class="search-result-type">' + label + '</span>' + relatedBadge + '</div><a href="' + url + '" target="_blank" rel="noopener" class="search-result-title">' + title + '</a>' + date + (snippet ? '<p class="search-result-snippet">' + snippet + '…</p>' : '') + '<div class="search-result-actions">' + moreBtn + '</div></div>';
+        }
+        papers.forEach(function(p) { html += itemHtml(p, labelPaper); });
+        videos.forEach(function(v) { html += itemHtml(v, labelVideo); });
+        nasa.forEach(function(n) { html += itemHtml(n, labelNasa); });
+        if (total === 0) {
+          html += '<p class="search-results-empty">' + noResults + '</p>';
+        } else if (pagination.totalPages > 1) {
+          html += '<div class="search-pagination">';
+          html += '<button class="pagination-btn pagination-prev" ' + (pagination.hasPrev ? '' : 'disabled') + '>' + prevLabel + '</button>';
+          html += '<span class="pagination-info">' + pageLabel + ' ' + pagination.page + ' ' + ofLabel + ' ' + pagination.totalPages + '</span>';
+          html += '<button class="pagination-btn pagination-next" ' + (pagination.hasNext ? '' : 'disabled') + '>' + nextLabel + '</button>';
+          html += '</div>';
+        }
+        el.insertAdjacentHTML('beforeend', html);
+        var prevBtn = el.querySelector('.pagination-prev');
+        var nextBtn = el.querySelector('.pagination-next');
+        if (prevBtn) prevBtn.addEventListener('click', function() { if (pagination.hasPrev) doSearch(currentPage - 1); });
+        if (nextBtn) nextBtn.addEventListener('click', function() { if (pagination.hasNext) doSearch(currentPage + 1); });
+        updateUrl(pagination.page || page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      })
+      .catch(function(err) {
+        el.innerHTML = '';
+        var msg = (err && err.message) ? err.message : String(err);
+        el.insertAdjacentHTML('beforeend', '<p class="search-results-error">' + errorTpl + ': ' + msg.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</p>');
+      });
+  }
+  doSearch(currentPage);
 })();
 `,
         }}
@@ -171,6 +219,11 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
 .search-result-card-low-relevance { opacity: 0.75; border-color: rgba(251, 191, 36, 0.25); }
 .search-result-card-low-relevance:hover { border-color: rgba(251, 191, 36, 0.5); box-shadow: 0 0 25px rgba(251, 191, 36, 0.15); }
 .search-result-related-badge { display: inline-block; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #fbbf24; background: rgba(251, 191, 36, 0.15); padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid rgba(251, 191, 36, 0.3); }
+.search-pagination { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 1.5rem; }
+.pagination-btn { border: 1px solid rgba(34, 211, 238, 0.35); background: rgba(15, 23, 42, 0.7); color: #e0e7ff; padding: 0.4rem 1rem; border-radius: 999px; cursor: pointer; transition: all 0.2s ease; }
+.pagination-btn:hover { border-color: rgba(34, 211, 238, 0.7); background: rgba(34, 211, 238, 0.12); }
+.pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.pagination-info { color: #94a3b8; font-size: 0.9rem; }
 `,
         }}
       />

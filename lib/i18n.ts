@@ -38,6 +38,10 @@ export interface LocaleDict {
     error: string;
     relatedNotice: string;
     relatedLabel: string;
+    page: string;
+    of: string;
+    prev: string;
+    next: string;
   };
   about: {
     title: string;

@@ -39,7 +39,11 @@
     "noResults": "No results. Try different keywords or filters.",
     "error": "Search failed",
     "relatedNotice": "No exact matches found. Showing related content:",
-    "relatedLabel": "Related"
+    "relatedLabel": "Related",
+    "page": "Page",
+    "of": "of",
+    "prev": "Previous",
+    "next": "Next"
   },
   "about": {
     "title": "About AstroGroot",

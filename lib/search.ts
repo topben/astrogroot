@@ -28,10 +28,19 @@ export interface SearchResponse {
   total: number;
   /** True if no highly relevant results were found and showing related content instead */
   showingRelated?: boolean;
+  /** Pagination info */
+  pagination?: {
+    page: number;
+    perPage: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
 }
 
 const DEFAULT_LIMIT = 20;
 const PER_COLLECTION_LIMIT = 15;
+const MAX_COLLECTION_LIMIT = 60;
 const DEFAULT_LOCALE: Locale = "en";
 const MIN_RELEVANCE_SCORE = 0.15;
 
@@ -46,11 +55,12 @@ export async function searchLibrary(params: {
   q: string;
   type?: SearchType;
   limit?: number;
+  page?: number;
   locale?: Locale;
   dateFrom?: string;
   dateTo?: string;
 }, deps?: SearchDeps): Promise<SearchResponse> {
-  const { q, type = "all", limit = DEFAULT_LIMIT, locale: requestedLocale, dateFrom, dateTo } =
+  const { q, type = "all", limit = DEFAULT_LIMIT, page = 1, locale: requestedLocale, dateFrom, dateTo } =
     params;
   // Video and NASA search now enabled in all environments
   // (previously disabled in production when ChromaDB collections were empty)
@@ -78,8 +88,10 @@ export async function searchLibrary(params: {
     return { query: trimmed, papers: [], videos: [], nasa: [], total: 0 };
   }
 
+  const perPage = Math.max(1, limit);
+  const requestedResults = perPage * Math.max(1, page);
   const collections = await initializeCollections_();
-  const n = Math.min(PER_COLLECTION_LIMIT, Math.max(1, limit));
+  const n = Math.min(MAX_COLLECTION_LIMIT, Math.max(PER_COLLECTION_LIMIT, requestedResults));
   const paperIds: string[] = [];
   const videoIds: string[] = [];
   const nasaIds: string[] = [];
@@ -440,12 +452,40 @@ export async function searchLibrary(params: {
     showingRelated = paperItems.length > 0 || videoItems.length > 0 || nasaItems.length > 0;
   }
 
+  // Combine all results and sort by score for pagination
+  const allItems = [
+    ...paperItems,
+    ...videoItems,
+    ...nasaItems,
+  ].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+
+  const totalItems = allItems.length;
+  const totalPages = Math.ceil(totalItems / perPage);
+  const currentPage = Math.max(1, Math.min(page, totalPages || 1));
+  const startIndex = (currentPage - 1) * perPage;
+  const endIndex = startIndex + perPage;
+
+  // Paginate the combined results
+  const paginatedItems = allItems.slice(startIndex, endIndex);
+
+  // Split paginated items back by type
+  const paginatedPapers = paginatedItems.filter((item): item is SearchResultItem => item.type === "paper");
+  const paginatedVideos = paginatedItems.filter((item): item is SearchResultItem => item.type === "video");
+  const paginatedNasa = paginatedItems.filter((item): item is SearchResultItem => item.type === "nasa");
+
   return {
     query: trimmed,
-    papers: paperItems,
-    videos: videoItems,
-    nasa: nasaItems,
-    total: paperItems.length + videoItems.length + nasaItems.length,
+    papers: paginatedPapers,
+    videos: paginatedVideos,
+    nasa: paginatedNasa,
+    total: totalItems,
     showingRelated,
+    pagination: {
+      page: currentPage,
+      perPage,
+      totalPages,
+      hasNext: currentPage < totalPages,
+      hasPrev: currentPage > 1,
+    },
   };
 }

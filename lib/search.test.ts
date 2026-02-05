@@ -133,3 +133,47 @@ Deno.test("searchLibrary only searches papers when type=papers", async () => {
   assertEquals(videosQueried, false, "videos collection should NOT be queried");
   assertEquals(nasaQueried, false, "nasa collection should NOT be queried");
 });
+
+Deno.test("searchLibrary paginates combined results and returns pagination info", async () => {
+  const ids = ["p1", "p2", "p3", "p4", "p5"];
+  const distances = [0.0, 0.4, 0.8, 1.2, 1.6]; // higher distance => lower score
+  const collections = createCollections({
+    papersQuery: () => Promise.resolve({ ids: [ids], distances: [distances] }),
+  });
+  const legacyCollections = createLegacyCollections();
+  const dbMock = createDbMock({
+    papersFindMany: () =>
+      Promise.resolve(
+        ids.map((id, i) => ({
+          id,
+          title: `Paper ${i + 1}`,
+          summary: "",
+          abstract: "",
+          arxivUrl: "",
+          pdfUrl: "",
+          publishedDate: "2024-01-01",
+        })),
+      ),
+  });
+
+  const result = await searchLibrary(
+    { q: "zz", type: "papers", locale: "en", limit: 2, page: 2 },
+    {
+      db: dbMock as unknown as typeof import("../db/client.ts").db,
+      initializeCollections: (() => Promise.resolve(
+        collections as unknown as Awaited<ReturnType<typeof import("./vector.ts").initializeCollections>>,
+      )) as unknown as typeof import("./vector.ts").initializeCollections,
+      initializeLegacyCollections: (() => Promise.resolve(
+        legacyCollections as unknown as Awaited<ReturnType<typeof import("./vector.ts").initializeLegacyCollections>>,
+      )) as unknown as typeof import("./vector.ts").initializeLegacyCollections,
+    },
+  );
+
+  assertEquals(result.total, 4);
+  assertEquals(result.papers.map((p) => p.id), ["p3", "p4"]);
+  assertEquals(result.pagination?.page, 2);
+  assertEquals(result.pagination?.perPage, 2);
+  assertEquals(result.pagination?.totalPages, 2);
+  assertEquals(result.pagination?.hasPrev, true);
+  assertEquals(result.pagination?.hasNext, false);
+});
