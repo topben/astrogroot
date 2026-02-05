@@ -1,10 +1,23 @@
 #!/usr/bin/env -S deno run --allow-all
 
 import { Hono } from "hono";
+import { secureHeaders } from "hono/secure-headers";
+import { cors } from "hono/cors";
+import { bodyLimit } from "hono/body-limit";
+import { timeout } from "hono/timeout";
 import { handleMCPRequest } from "./lib/mcp.ts";
 import { getLibraryStats } from "./lib/stats.ts";
 import { searchLibrary } from "./lib/search.ts";
 import { getLocaleFromRequest, interpolate, loadDictionary } from "./lib/i18n.ts";
+import {
+  INCLUDE_ERROR_DATA,
+  MAX_SEARCH_QUERY_LENGTH,
+  MCP_ALLOWED_ORIGINS,
+  MCP_MAX_BODY_BYTES,
+  RATE_LIMITS,
+  REQUEST_TIMEOUT_MS,
+} from "./lib/config.ts";
+import { rateLimit } from "./lib/rate-limit.ts";
 import { db } from "./db/client.ts";
 import { nasaContent, papers, translations, videos } from "./db/schema.ts";
 import { and, eq } from "drizzle-orm";
@@ -20,6 +33,42 @@ const app = new Hono();
 const HTML_CACHE_CONTROL = "public, max-age=300, stale-while-revalidate=600";
 const API_CACHE_CONTROL = "public, max-age=60";
 const STATIC_CACHE_CONTROL = "public, max-age=604800";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Global Security Headers
+// ─────────────────────────────────────────────────────────────────────────────
+app.use("*", secureHeaders());
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Rate Limiting per Route Group
+// ─────────────────────────────────────────────────────────────────────────────
+app.use("/", rateLimit(RATE_LIMITS.html));
+app.use("/search", rateLimit(RATE_LIMITS.html));
+app.use("/detail", rateLimit(RATE_LIMITS.html));
+app.use("/api/health", rateLimit(RATE_LIMITS.health));
+app.use("/sitemap.xml", rateLimit(RATE_LIMITS.html));
+app.use("/api/search", rateLimit(RATE_LIMITS.api));
+app.use("/api/stats", rateLimit(RATE_LIMITS.api));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MCP Middleware Stack
+// ─────────────────────────────────────────────────────────────────────────────
+app.use(
+  "/api/mcp",
+  cors({
+    origin: MCP_ALLOWED_ORIGINS,
+    allowMethods: ["POST", "OPTIONS"],
+    allowHeaders: ["Content-Type"],
+  }),
+);
+app.use("/api/mcp", bodyLimit({ maxSize: MCP_MAX_BODY_BYTES }));
+app.use("/api/mcp", rateLimit(RATE_LIMITS.mcp));
+app.use("/api/mcp", timeout(REQUEST_TIMEOUT_MS));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Timeout on Search API
+// ─────────────────────────────────────────────────────────────────────────────
+app.use("/api/search", timeout(REQUEST_TIMEOUT_MS));
 
 function normalizeUrl(url: URL): string {
   if ([...url.searchParams.keys()].length === 0) {
@@ -103,8 +152,10 @@ function setHtmlHeaders(c: { header: (name: string, value: string) => void }, lo
 }
 
 app.use("/api/*", async (c, next) => {
-  c.header("Cache-Control", API_CACHE_CONTROL);
   await next();
+  if (c.req.method === "GET") {
+    c.header("Cache-Control", API_CACHE_CONTROL);
+  }
 });
 
 // Static: logo
@@ -210,6 +261,18 @@ app.get("/api/stats", async (c) => c.json(await getLibraryStats()));
 
 app.get("/api/search", async (c) => {
   const q = c.req.query("q") ?? "";
+
+  // Query length validation
+  if (q.length > MAX_SEARCH_QUERY_LENGTH) {
+    return c.json(
+      {
+        error: "Bad Request",
+        message: `Query exceeds maximum length of ${MAX_SEARCH_QUERY_LENGTH} characters`,
+      },
+      400,
+    );
+  }
+
   const type = (c.req.query("type") ?? "all") as "all" | "papers" | "videos" | "nasa";
   const limit = parseInt(c.req.query("limit") ?? "20", 10) || 20;
   const page = parseInt(c.req.query("page") ?? "1", 10) || 1;
@@ -225,8 +288,15 @@ app.get("/api/search", async (c) => {
   } catch (err) {
     console.error("Search error:", err);
     return c.json(
-      { query: q, papers: [], videos: [], nasa: [], total: 0, error: String(err) },
-      500
+      {
+        query: q,
+        papers: [],
+        videos: [],
+        nasa: [],
+        total: 0,
+        error: INCLUDE_ERROR_DATA ? String(err) : "Internal server error",
+      },
+      500,
     );
   }
 });
@@ -262,6 +332,28 @@ app.get("/", async (c) => {
 });
 app.get("/search", async (c) => {
   const q = c.req.query("q") ?? "";
+
+  // Query length validation
+  if (q.length > MAX_SEARCH_QUERY_LENGTH) {
+    const locale = getLocaleFromRequest(
+      c.req.query("lang"),
+      c.req.header("Accept-Language"),
+    );
+    const dict = await loadDictionary(locale);
+    setHtmlHeaders(c, locale);
+    return c.html(
+      <NotFoundPage
+        locale={locale}
+        dict={dict}
+        pageTitle="Bad Request - AstroGroot"
+        pageDescription={`Query exceeds maximum length of ${MAX_SEARCH_QUERY_LENGTH} characters`}
+        canonicalUrl={buildCanonicalUrl(c.req.url)}
+        alternateUrls={buildAlternateUrls(c.req.url)}
+      />,
+      400,
+    );
+  }
+
   const type = c.req.query("type") ?? "all";
   const sortBy = c.req.query("sortBy") ?? "relevance";
   const dateFrom = c.req.query("dateFrom") ?? "";
@@ -521,31 +613,39 @@ app.get("/detail", async (c) => {
 
 app.post("/api/mcp", async (c) => {
   try {
-    const body = await c.req.json();
-    const response = await handleMCPRequest(body);
-    return c.json(response, 200, {
-      "Access-Control-Allow-Origin": "*",
-    });
-  } catch (error) {
-    return c.json(
-      {
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch (error) {
+      const response = {
+        jsonrpc: "2.0",
+        id: null,
         error: {
-          code: -32603,
-          message: `Internal error: ${error}`,
+          code: -32700,
+          message: "Parse error",
+          data: INCLUDE_ERROR_DATA ? String(error) : undefined,
         },
-      },
-      500
-    );
-  }
-});
+      };
+      return c.json(response, 400);
+    }
 
-app.get("/api/mcp", async (c) => {
-  const method = c.req.query("method");
-  if (!method) {
-    return c.text("Method parameter required", 400);
+    const response = await handleMCPRequest(body);
+    if (response === null) {
+      return c.body(null, 202);
+    }
+    return c.json(response, 200);
+  } catch (error) {
+    const response = {
+      jsonrpc: "2.0",
+      id: null,
+      error: {
+        code: -32603,
+        message: "Internal error",
+        data: INCLUDE_ERROR_DATA ? String(error) : undefined,
+      },
+    };
+    return c.json(response, 500);
   }
-  const result = await handleMCPRequest({ method });
-  return c.json(result);
 });
 
 // 404
