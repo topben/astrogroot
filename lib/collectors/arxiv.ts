@@ -168,20 +168,54 @@ export async function getArxivPapers(ids: string[]): Promise<ArxivEntry[]> {
   }
 }
 
-// Get recent papers in specific categories
-export async function getRecentArxivPapers(params: {
+// Format date as YYYYMMDD for arXiv query
+function formatArxivDate(date: Date): string {
+  return date.toISOString().split("T")[0].replace(/-/g, "");
+}
+
+// Generate monthly date segments for a given range
+function generateDateSegments(daysBack: number): Array<{ start: Date; end: Date }> {
+  const segments: Array<{ start: Date; end: Date }> = [];
+  const now = new Date();
+  const finalStart = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
+
+  // For short ranges (<=30 days), use a single segment
+  if (daysBack <= 30) {
+    segments.push({ start: finalStart, end: now });
+    return segments;
+  }
+
+  // For longer ranges, split into monthly segments (newest first)
+  let segmentEnd = now;
+  while (segmentEnd > finalStart) {
+    const segmentStart = new Date(segmentEnd);
+    segmentStart.setMonth(segmentStart.getMonth() - 1);
+
+    // Don't go before the final start date
+    if (segmentStart < finalStart) {
+      segmentStart.setTime(finalStart.getTime());
+    }
+
+    segments.push({ start: segmentStart, end: segmentEnd });
+
+    // Move to next segment
+    segmentEnd = new Date(segmentStart.getTime() - 1); // 1ms before segment start
+  }
+
+  return segments;
+}
+
+// Query arXiv for a single date segment
+async function queryArxivSegment(params: {
   categories: string[];
-  maxResults?: number;
-  daysBack?: number;
+  startDate: Date;
+  endDate: Date;
+  maxResults: number;
 }): Promise<ArxivEntry[]> {
-  const { categories, maxResults = 30, daysBack = 7 } = params;
+  const { categories, startDate, endDate, maxResults } = params;
   const capped = Math.min(maxResults, 30);
 
-  const endDate = new Date();
-  const startDate = new Date(endDate.getTime() - daysBack * 24 * 60 * 60 * 1000);
-  const dateQuery = `submittedDate:[${startDate.toISOString().split("T")[0]}0000 TO ${
-    endDate.toISOString().split("T")[0]
-  }2359]`;
+  const dateQuery = `submittedDate:[${formatArxivDate(startDate)}0000 TO ${formatArxivDate(endDate)}2359]`;
   const catQuery = categories.map((cat) => `cat:${cat}`).join(" OR ");
   const fullQuery = `${dateQuery} AND (${catQuery})`;
 
@@ -192,17 +226,87 @@ export async function getRecentArxivPapers(params: {
       sortBy: "submittedDate",
       sortOrder: "descending",
     });
-  } catch (err) {
-    // arXiv often returns 500 on complex date+category queries; fallback to simpler query
-    console.warn("arXiv full query failed, trying fallback (categories only, no date filter):", err);
-    const fallbackResults = await searchArxiv({
-      query: catQuery,
-      maxResults: Math.min(capped, 20),
-      sortBy: "submittedDate",
-      sortOrder: "descending",
-    });
-    return fallbackResults;
+  } catch {
+    // arXiv often returns 500 on complex queries; try category-only fallback for this segment
+    console.warn(`  arXiv segment query failed for ${formatArxivDate(startDate)}-${formatArxivDate(endDate)}, skipping`);
+    return [];
   }
+}
+
+// Get recent papers in specific categories with segmented date queries
+export async function getRecentArxivPapers(params: {
+  categories: string[];
+  maxResults?: number;
+  daysBack?: number;
+}): Promise<ArxivEntry[]> {
+  const { categories, maxResults = 30, daysBack = 7 } = params;
+
+  // For short ranges, use single query (original behavior)
+  if (daysBack <= 30) {
+    const capped = Math.min(maxResults, 30);
+    const endDate = new Date();
+    const startDate = new Date(endDate.getTime() - daysBack * 24 * 60 * 60 * 1000);
+    const dateQuery = `submittedDate:[${formatArxivDate(startDate)}0000 TO ${formatArxivDate(endDate)}2359]`;
+    const catQuery = categories.map((cat) => `cat:${cat}`).join(" OR ");
+    const fullQuery = `${dateQuery} AND (${catQuery})`;
+
+    try {
+      return await searchArxiv({
+        query: fullQuery,
+        maxResults: capped,
+        sortBy: "submittedDate",
+        sortOrder: "descending",
+      });
+    } catch (err) {
+      console.warn("arXiv full query failed, trying fallback (categories only, no date filter):", err);
+      return await searchArxiv({
+        query: catQuery,
+        maxResults: Math.min(capped, 20),
+        sortBy: "submittedDate",
+        sortOrder: "descending",
+      });
+    }
+  }
+
+  // For long ranges, use segmented queries
+  const segments = generateDateSegments(daysBack);
+  const allPapers: ArxivEntry[] = [];
+  const seenIds = new Set<string>();
+
+  // Calculate papers per segment to distribute maxResults across time
+  const papersPerSegment = Math.max(5, Math.ceil(maxResults / segments.length));
+
+  console.log(`  📅 Querying ${segments.length} monthly segments (${papersPerSegment} papers each)...`);
+
+  for (const segment of segments) {
+    // Stop if we have enough papers
+    if (allPapers.length >= maxResults) break;
+
+    // Rate limit: arXiv asks for 3 second delay between requests
+    if (allPapers.length > 0) {
+      await new Promise((r) => setTimeout(r, 3000));
+    }
+
+    const papers = await queryArxivSegment({
+      categories,
+      startDate: segment.start,
+      endDate: segment.end,
+      maxResults: papersPerSegment,
+    });
+
+    // Deduplicate
+    for (const paper of papers) {
+      if (!seenIds.has(paper.id) && allPapers.length < maxResults) {
+        seenIds.add(paper.id);
+        allPapers.push(paper);
+      }
+    }
+
+    console.log(`    ${formatArxivDate(segment.start)}-${formatArxivDate(segment.end)}: ${papers.length} papers`);
+  }
+
+  console.log(`  📊 Total unique papers from segmented queries: ${allPapers.length}`);
+  return allPapers;
 }
 
 // Common astronomy/astrophysics categories
