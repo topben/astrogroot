@@ -77,9 +77,11 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
             data-next-label={nextLabel}
           >
             {query ? (
-              <p class="search-results-loading" id="search-results-loading">
-                {searchingText}
-              </p>
+              <div class="search-skeleton" id="search-results-loading">
+                <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-title"></div><div class="skeleton-line"></div><div class="skeleton-line skeleton-line-short"></div></div>
+                <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-title"></div><div class="skeleton-line"></div><div class="skeleton-line skeleton-line-short"></div></div>
+                <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-title"></div><div class="skeleton-line"></div><div class="skeleton-line skeleton-line-short"></div></div>
+              </div>
             ) : (
               <p class="search-results-hint">{hintText}</p>
             )}
@@ -130,7 +132,7 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
 
   function doSearch(page) {
     currentPage = page;
-    el.innerHTML = '<p class="search-results-loading">...</p>';
+    el.innerHTML = '<div class="search-skeleton"><div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-title"></div><div class="skeleton-line"></div><div class="skeleton-line skeleton-line-short"></div></div><div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-title"></div><div class="skeleton-line"></div><div class="skeleton-line skeleton-line-short"></div></div><div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-title"></div><div class="skeleton-line"></div><div class="skeleton-line skeleton-line-short"></div></div></div>';
     var params = new URLSearchParams({ q: q, type: type, limit: String(perPage), page: String(page), lang: locale });
     if (dateFrom) params.set('dateFrom', dateFrom);
     if (dateTo) params.set('dateTo', dateTo);
@@ -224,6 +226,14 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
 .pagination-btn:hover { border-color: rgba(34, 211, 238, 0.7); background: rgba(34, 211, 238, 0.12); }
 .pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .pagination-info { color: #94a3b8; font-size: 0.9rem; }
+@keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+.search-skeleton { display: flex; flex-direction: column; gap: 1rem; }
+.skeleton-card { background: rgba(5, 8, 22, 0.85); border: 1px solid rgba(34, 211, 238, 0.12); border-radius: 14px; padding: 1.25rem 1.5rem; }
+.skeleton-badge, .skeleton-title, .skeleton-line { border-radius: 6px; background: linear-gradient(90deg, rgba(30, 41, 59, 0.5) 0%, rgba(51, 65, 85, 0.6) 50%, rgba(30, 41, 59, 0.5) 100%); background-size: 800px 100%; animation: shimmer 1.5s infinite linear; }
+.skeleton-badge { width: 52px; height: 14px; margin-bottom: 0.75rem; }
+.skeleton-title { width: 70%; height: 18px; margin-bottom: 0.75rem; }
+.skeleton-line { width: 100%; height: 12px; margin-bottom: 0.5rem; }
+.skeleton-line-short { width: 55%; }
 `,
         }}
       />
