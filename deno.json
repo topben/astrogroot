@@ -25,6 +25,7 @@
     "drizzle-orm": "npm:drizzle-orm@^0.36.0",
     "drizzle-kit": "npm:drizzle-kit@^0.28.0",
     "hono": "npm:hono@^4.6.0",
+    "marked": "npm:marked@^15.0.0",
     "youtube-transcript": "npm:youtube-transcript@^1.2.1",
     "xml2js": "npm:xml2js@^0.6.2",
     "zod": "npm:zod@^3.23.0"

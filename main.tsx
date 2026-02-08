@@ -25,6 +25,7 @@ import { DashboardPage } from "./components/pages/dashboard.tsx";
 import { SearchPage } from "./components/pages/search.tsx";
 import { NotFoundPage } from "./components/pages/not-found.tsx";
 import { DetailPage } from "./components/pages/detail.tsx";
+import { renderMarkdown } from "./lib/markdown.ts";
 
 const defaultPort = Number(Deno.env.get("PORT")) || 8000;
 const maxPortAttempts = 10;
@@ -464,7 +465,7 @@ app.get("/detail", async (c) => {
         title={title}
         typeLabel={dict.common.paper}
         publishedDate={row.publishedDate ? new Date(row.publishedDate).toISOString().slice(0, 10) : undefined}
-        summary={summary}
+        summaryHtml={renderMarkdown(summary)}
         sourceUrl={row.arxivUrl ?? row.pdfUrl ?? undefined}
         locale={locale}
         dict={dict}
@@ -517,7 +518,7 @@ app.get("/detail", async (c) => {
         title={title}
         typeLabel={dict.common.video}
         publishedDate={row.publishedDate ? new Date(row.publishedDate).toISOString().slice(0, 10) : undefined}
-        summary={summary}
+        summaryHtml={renderMarkdown(summary)}
         sourceUrl={row.videoUrl}
         locale={locale}
         dict={dict}
@@ -583,7 +584,7 @@ app.get("/detail", async (c) => {
         title={title}
         typeLabel={dict.common.nasa}
         publishedDate={row.date ? new Date(row.date).toISOString().slice(0, 10) : undefined}
-        summary={summary}
+        summaryHtml={renderMarkdown(summary)}
         sourceUrl={row.url}
         locale={locale}
         dict={dict}

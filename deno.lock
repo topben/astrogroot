@@ -11,6 +11,7 @@
     "npm:drizzle-kit@0.28": "0.28.1_esbuild@0.19.12",
     "npm:drizzle-orm@0.36": "0.36.4_@libsql+client@0.14.0",
     "npm:hono@^4.6.0": "4.11.7",
+    "npm:marked@15": "15.0.12",
     "npm:xml2js@~0.6.2": "0.6.2",
     "npm:youtube-transcript@^1.2.1": "1.2.1",
     "npm:zod@^3.23.0": "3.25.76"
@@ -707,6 +708,10 @@
       "os": ["darwin", "linux", "win32"],
       "cpu": ["x64", "arm64", "wasm32"]
     },
+    "marked@15.0.12": {
+      "integrity": "sha512-8dD6FusOQSrpv9Z1rdNMdlSgQOIP880DHqnohobOmYLElGEqAL/JvxvuxZO16r4HtjTlfPRDC1hbvxC9dPN2nA==",
+      "bin": true
+    },
     "math-intrinsics@1.1.0": {
       "integrity": "sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g=="
     },
@@ -882,6 +887,7 @@
       "npm:drizzle-kit@0.28",
       "npm:drizzle-orm@0.36",
       "npm:hono@^4.6.0",
+      "npm:marked@15",
       "npm:xml2js@~0.6.2",
       "npm:youtube-transcript@^1.2.1",
       "npm:zod@^3.23.0"

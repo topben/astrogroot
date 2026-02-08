@@ -105,7 +105,28 @@ const SHARED_STYLES = `
   .detail-title { font-size: 2rem; font-weight: 700; margin-bottom: 0.75rem; color: #e0e7ff; }
   .detail-meta { display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.95rem; color: #94a3b8; margin-bottom: 1.5rem; }
   .detail-summary-label { font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.08em; color: #22d3ee; margin-bottom: 0.5rem; }
-  .detail-summary { white-space: pre-wrap; line-height: 1.8; color: #c7d2fe; font-size: 1.05rem; }
+  .detail-summary { line-height: 1.8; color: #c7d2fe; font-size: 1.05rem; }
+  .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 { color: #e0e7ff; margin-top: 1.25em; margin-bottom: 0.5em; font-weight: 600; }
+  .markdown-body h1 { font-size: 1.4em; }
+  .markdown-body h2 { font-size: 1.25em; }
+  .markdown-body h3 { font-size: 1.1em; }
+  .markdown-body h4 { font-size: 1em; color: #a5b4fc; }
+  .markdown-body p { margin-bottom: 0.75em; }
+  .markdown-body ul, .markdown-body ol { margin-left: 1.5rem; margin-bottom: 0.75em; line-height: 1.8; }
+  .markdown-body li { margin-bottom: 0.25em; }
+  .markdown-body li::marker { color: #a855f7; }
+  .markdown-body strong { color: #e0e7ff; font-weight: 600; }
+  .markdown-body em { color: #c7d2fe; font-style: italic; }
+  .markdown-body code { background: rgba(34, 211, 238, 0.1); color: #67e8f9; padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.9em; font-family: "SF Mono", "Fira Code", monospace; }
+  .markdown-body pre { background: rgba(5, 8, 22, 0.9); border: 1px solid rgba(34, 211, 238, 0.2); border-radius: 8px; padding: 1rem; overflow-x: auto; margin-bottom: 0.75em; }
+  .markdown-body pre code { background: none; padding: 0; color: #c7d2fe; }
+  .markdown-body blockquote { border-left: 3px solid rgba(168, 85, 247, 0.5); padding-left: 1rem; margin-left: 0; margin-bottom: 0.75em; color: #a5b4fc; }
+  .markdown-body a { color: #22d3ee; text-decoration: underline; text-decoration-color: rgba(34, 211, 238, 0.4); transition: text-decoration-color 0.2s ease; }
+  .markdown-body a:hover { text-decoration-color: #22d3ee; }
+  .markdown-body hr { border: none; border-top: 1px solid rgba(34, 211, 238, 0.15); margin: 1.25em 0; }
+  .markdown-body table { border-collapse: collapse; width: 100%; margin-bottom: 0.75em; }
+  .markdown-body th, .markdown-body td { border: 1px solid rgba(34, 211, 238, 0.2); padding: 0.5rem 0.75rem; text-align: left; }
+  .markdown-body th { background: rgba(34, 211, 238, 0.08); color: #e0e7ff; font-weight: 600; }
   .detail-actions { display: flex; gap: 0.75rem; margin-top: 1.75rem; flex-wrap: wrap; }
   .detail-button { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.1rem; border-radius: 10px; border: 1px solid rgba(34,211,238,0.3); background: rgba(15,23,42,0.6); color: #e0e7ff; text-decoration: none; transition: all 0.2s ease; }
   .detail-button:hover { border-color: rgba(34,211,238,0.6); background: rgba(34,211,238,0.1); }

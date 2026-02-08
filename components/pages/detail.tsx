@@ -6,7 +6,7 @@ export interface DetailPageProps {
   title: string;
   typeLabel: string;
   publishedDate?: string;
-  summary: string;
+  summaryHtml: string;
   sourceUrl?: string;
   locale?: Locale;
   dict?: LocaleDict;
@@ -48,7 +48,7 @@ export const DetailPage: FC<DetailPageProps> = (props) => {
           </div>
           <h1 class="detail-title">{props.title}</h1>
           <div class="detail-summary-label">{summaryLabel}</div>
-          <div class="detail-summary">{props.summary}</div>
+          <div class="detail-summary markdown-body" dangerouslySetInnerHTML={{ __html: props.summaryHtml }} />
           <div class="detail-actions">
             <a class="detail-button" href={searchHref}>{backLabel}</a>
             {props.sourceUrl ? (
