@@ -63,6 +63,7 @@ function createMockProcessMultilingual(
 
 const emptyArxiv: ArxivEntry[] = [];
 const emptyRocketPapers: ArxivEntry[] = [];
+const emptyRoboticsPapers: ArxivEntry[] = [];
 const onePaper: ArxivEntry[] = [
   {
     id: "2401.00001",
@@ -112,6 +113,8 @@ Deno.test("runCrawler with empty mocks returns zero counts and no errors", async
     collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
     collectRocketPapers: () => Promise.resolve(emptyRocketPapers),
     collectRocketReports: () => Promise.resolve(emptyNtrs),
+    collectRoboticsPapers: () => Promise.resolve(emptyRoboticsPapers),
+    collectRoboticsReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () => Promise.resolve(emptyNasa),
@@ -134,6 +137,8 @@ Deno.test("runCrawler with one arXiv paper increments papersCollected", async ()
     collectAstronomyPapers: () => Promise.resolve(onePaper),
     collectRocketPapers: () => Promise.resolve(emptyRocketPapers),
     collectRocketReports: () => Promise.resolve(emptyNtrs),
+    collectRoboticsPapers: () => Promise.resolve(emptyRoboticsPapers),
+    collectRoboticsReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () => Promise.resolve(emptyNasa),
@@ -156,6 +161,8 @@ Deno.test("runCrawler with one rocket paper increments papersCollected", async (
     collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
     collectRocketPapers: () => Promise.resolve(oneRocketPaper),
     collectRocketReports: () => Promise.resolve(emptyNtrs),
+    collectRoboticsPapers: () => Promise.resolve(emptyRoboticsPapers),
+    collectRoboticsReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () => Promise.resolve(emptyNasa),
@@ -190,6 +197,8 @@ Deno.test("runCrawler with one NTRS report increments ntrsReportsCollected", asy
     collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
     collectRocketPapers: () => Promise.resolve(emptyRocketPapers),
     collectRocketReports: () => Promise.resolve([report]),
+    collectRoboticsPapers: () => Promise.resolve(emptyRoboticsPapers),
+    collectRoboticsReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () => Promise.resolve(emptyNasa),
@@ -214,6 +223,8 @@ Deno.test("runCrawler skips existing paper without processing", async () => {
     collectAstronomyPapers: () => Promise.resolve(onePaper),
     collectRocketPapers: () => Promise.resolve(emptyRocketPapers),
     collectRocketReports: () => Promise.resolve(emptyNtrs),
+    collectRoboticsPapers: () => Promise.resolve(emptyRoboticsPapers),
+    collectRoboticsReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () => Promise.resolve(emptyNasa),
@@ -236,6 +247,8 @@ Deno.test("runCrawler with one video increments videosCollected", async () => {
     collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
     collectRocketPapers: () => Promise.resolve(emptyRocketPapers),
     collectRocketReports: () => Promise.resolve(emptyNtrs),
+    collectRoboticsPapers: () => Promise.resolve(emptyRoboticsPapers),
+    collectRoboticsReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(videoList),
     fetchCompleteVideoData: () =>
       Promise.resolve({
@@ -276,6 +289,8 @@ Deno.test("runCrawler with APOD increments nasaItemsCollected", async () => {
     collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
     collectRocketPapers: () => Promise.resolve(emptyRocketPapers),
     collectRocketReports: () => Promise.resolve(emptyNtrs),
+    collectRoboticsPapers: () => Promise.resolve(emptyRoboticsPapers),
+    collectRoboticsReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () => Promise.resolve({ apod, libraryItems: [] }),
@@ -298,6 +313,8 @@ Deno.test("runCrawler with NASA library item increments nasaItemsCollected", asy
     collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
     collectRocketPapers: () => Promise.resolve(emptyRocketPapers),
     collectRocketReports: () => Promise.resolve(emptyNtrs),
+    collectRoboticsPapers: () => Promise.resolve(emptyRoboticsPapers),
+    collectRoboticsReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () =>
@@ -324,6 +341,8 @@ Deno.test("runCrawler records errors when processMultilingualContent throws", as
     collectAstronomyPapers: () => Promise.resolve(onePaper),
     collectRocketPapers: () => Promise.resolve(emptyRocketPapers),
     collectRocketReports: () => Promise.resolve(emptyNtrs),
+    collectRoboticsPapers: () => Promise.resolve(emptyRoboticsPapers),
+    collectRoboticsReports: () => Promise.resolve(emptyNtrs),
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () => Promise.resolve(emptyNasa),

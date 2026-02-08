@@ -20,6 +20,9 @@ const QUICK_SEARCHES = [
   { en: "exoplanets", "zh-TW": "系外行星", "zh-CN": "系外行星" },
   { en: "Mars rover", "zh-TW": "火星探測車", "zh-CN": "火星探测车" },
   { en: "gravitational waves", "zh-TW": "重力波", "zh-CN": "引力波" },
+  { en: "humanoid robot", "zh-TW": "人形機器人", "zh-CN": "人形机器人" },
+  { en: "robotic arm", "zh-TW": "機械臂", "zh-CN": "机械臂" },
+  { en: "Mars rover autonomy", "zh-TW": "火星探測車自主", "zh-CN": "火星探测车自主" },
 ];
 
 /** Static search form + vanilla JS for filter toggle and submit. No Preact. */

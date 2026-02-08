@@ -386,3 +386,45 @@ export function collectRocketPapers(params: {
     daysBack,
   });
 }
+
+// Robotics-focused arXiv categories
+export const ROBOTICS_CATEGORIES = [
+  "cs.RO", // Robotics
+  "cs.CV", // Computer Vision (robot perception)
+  "cs.AI", // Artificial Intelligence
+  "eess.SP", // Signal Processing
+];
+
+// Robotics keywords for filtering relevant papers
+export const ROBOTICS_KEYWORDS = [
+  "humanoid robot",
+  "legged locomotion",
+  "manipulation",
+  "grasping",
+  "SLAM",
+  "motion planning",
+  "robot perception",
+  "space robot",
+  "robotic arm",
+  "autonomous navigation",
+  "human-robot interaction",
+  "reinforcement learning robot",
+  "sim-to-real",
+  "whole-body control",
+  "bipedal",
+  "quadruped",
+  "dexterous hand",
+];
+
+// Collect recent robotics papers
+export function collectRoboticsPapers(params: {
+  maxResults?: number;
+  daysBack?: number;
+}): Promise<ArxivEntry[]> {
+  const { maxResults = 20, daysBack = 14 } = params;
+  return getRecentArxivPapers({
+    categories: ROBOTICS_CATEGORIES,
+    maxResults,
+    daysBack,
+  });
+}

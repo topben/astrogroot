@@ -7,13 +7,13 @@ import { initializeCollections } from "../lib/vector.ts";
 import { processMultilingualContent } from "../lib/ai/processor.ts";
 import type { Locale } from "../lib/i18n.ts";
 import { SUPPORTED_LOCALES } from "../lib/i18n.ts";
-import { collectAstronomyPapers, collectRocketPapers } from "../lib/collectors/arxiv.ts";
+import { collectAstronomyPapers, collectRocketPapers, collectRoboticsPapers } from "../lib/collectors/arxiv.ts";
 import { collectNasaContent } from "../lib/collectors/nasa.ts";
 import {
   collectAstronomyVideos,
   fetchCompleteVideoData,
 } from "../lib/collectors/youtube.ts";
-import { collectRocketReports, type NtrsEntry } from "../lib/collectors/ntrs.ts";
+import { collectRocketReports, collectRoboticsReports, type NtrsEntry } from "../lib/collectors/ntrs.ts";
 
 const CRAWLER_INTERVAL_HOURS = Number(Deno.env.get("CRAWLER_INTERVAL_HOURS")) || 24;
 const MAX_ITEMS_PER_SOURCE = Number(Deno.env.get("MAX_ITEMS_PER_SOURCE")) || 50;
@@ -171,6 +171,8 @@ export interface CrawlerDeps {
   collectAstronomyPapers: typeof collectAstronomyPapers;
   collectRocketPapers: typeof collectRocketPapers;
   collectRocketReports: typeof collectRocketReports;
+  collectRoboticsPapers: typeof collectRoboticsPapers;
+  collectRoboticsReports: typeof collectRoboticsReports;
   collectAstronomyVideos: typeof collectAstronomyVideos;
   fetchCompleteVideoData: typeof fetchCompleteVideoData;
   collectNasaContent: typeof collectNasaContent;
@@ -184,6 +186,8 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
   const collectAstronomyPapers_ = deps?.collectAstronomyPapers ?? collectAstronomyPapers;
   const collectRocketPapers_ = deps?.collectRocketPapers ?? collectRocketPapers;
   const collectRocketReports_ = deps?.collectRocketReports ?? collectRocketReports;
+  const collectRoboticsPapers_ = deps?.collectRoboticsPapers ?? collectRoboticsPapers;
+  const collectRoboticsReports_ = deps?.collectRoboticsReports ?? collectRoboticsReports;
   const collectAstronomyVideos_ = deps?.collectAstronomyVideos ?? collectAstronomyVideos;
   const fetchCompleteVideoData_ = deps?.fetchCompleteVideoData ?? fetchCompleteVideoData;
   const collectNasaContent_ = deps?.collectNasaContent ?? collectNasaContent;
@@ -363,6 +367,83 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
     stats.errors.push(`Rocket arXiv collection: ${error}`);
   }
 
+  // Collect robotics papers
+  try {
+    console.log("\n🤖 Collecting robotics papers...");
+    const roboticsPapers = await collectRoboticsPapers_({
+      maxResults: MAX_ITEMS_PER_SOURCE,
+      daysBack: 1095, // 3 years
+    });
+
+    for (const paper of roboticsPapers) {
+      try {
+        const existing = await db_.query.papers.findFirst({
+          where: eq(papers.id, paper.id),
+        });
+
+        if (existing) {
+          console.log(`  ⏭️  Paper ${paper.id} already exists, skipping`);
+          continue;
+        }
+
+        console.log(`  🤖 Processing paper: ${paper.title.substring(0, 50)}...`);
+        const { baseSummary, translations: trans } = await processMultilingual_({
+          text: paper.summary,
+          title: paper.title,
+          sourceType: "paper",
+        });
+
+        await db_.insert(papers).values({
+          id: paper.id,
+          title: paper.title,
+          authors: JSON.stringify(paper.authors),
+          abstract: paper.summary,
+          summary: baseSummary,
+          publishedDate: new Date(paper.published),
+          updatedDate: paper.updated ? new Date(paper.updated) : null,
+          categories: JSON.stringify(paper.categories),
+          pdfUrl: paper.pdfUrl,
+          arxivUrl: paper.arxivUrl,
+          processed: true,
+          vectorId: paper.id,
+        });
+
+        for (const t of trans) {
+          await db_.insert(translations).values({
+            itemType: "paper",
+            itemId: paper.id,
+            lang: t.lang,
+            title: t.title,
+            summary: t.summary,
+          });
+        }
+
+        for (const t of trans) {
+          const locale = t.lang as Locale;
+          if (!SUPPORTED_LOCALES.includes(locale)) continue;
+          await collections.papers[locale].add({
+            id: paper.id,
+            text: `${t.title}\n\n${t.summary}\n\n${paper.summary}`,
+            metadata: {
+              title: t.title,
+              published: paper.published,
+              categories: paper.categories.join(", "),
+            },
+          });
+        }
+
+        stats.papersCollected++;
+        console.log(`  ✅ Saved paper: ${paper.id}`);
+      } catch (error) {
+        console.error(`  ❌ Error processing paper ${paper.id}:`, error);
+        stats.errors.push(`Robotics paper ${paper.id}: ${error}`);
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error collecting robotics papers:", error);
+    stats.errors.push(`Robotics arXiv collection: ${error}`);
+  }
+
   // Collect NASA NTRS technical reports (rocket/propulsion focused)
   try {
     console.log("\n🚀 Collecting NASA NTRS technical reports...");
@@ -446,6 +527,86 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
   } catch (error) {
     console.error("❌ Error collecting NTRS reports:", error);
     stats.errors.push(`NTRS collection: ${error}`);
+  }
+
+  // Collect NASA NTRS robotics reports
+  try {
+    console.log("\n🤖 Collecting NASA NTRS robotics reports...");
+    const roboticsReports = await collectRoboticsReports_({
+      maxResultsPerQuery: Math.floor(MAX_ITEMS_PER_SOURCE / 10),
+    });
+
+    for (const report of roboticsReports.slice(0, MAX_ITEMS_PER_SOURCE)) {
+      try {
+        const reportId = `ntrs-${report.id}`;
+
+        const existing = await db_.query.papers.findFirst({
+          where: eq(papers.id, reportId),
+        });
+
+        if (existing) {
+          console.log(`  ⏭️  NTRS ${report.id} already exists, skipping`);
+          continue;
+        }
+
+        console.log(`  🤖 Processing NTRS: ${report.title.substring(0, 50)}...`);
+        const { baseSummary, translations: trans } = await processMultilingual_({
+          text: report.abstract || report.title,
+          title: report.title,
+          sourceType: "paper",
+        });
+
+        await db_.insert(papers).values({
+          id: reportId,
+          title: report.title,
+          authors: JSON.stringify(report.authors),
+          abstract: report.abstract || "",
+          summary: baseSummary,
+          publishedDate: report.publishedDate ? new Date(report.publishedDate) : new Date(),
+          categories: JSON.stringify(report.subjectCategories),
+          pdfUrl: report.pdfUrl,
+          arxivUrl: report.ntrsUrl,
+          processed: true,
+          vectorId: reportId,
+        });
+
+        for (const t of trans) {
+          await db_.insert(translations).values({
+            itemType: "paper",
+            itemId: reportId,
+            lang: t.lang,
+            title: t.title,
+            summary: t.summary,
+          });
+        }
+
+        for (const t of trans) {
+          const locale = t.lang as Locale;
+          if (!SUPPORTED_LOCALES.includes(locale)) continue;
+          await collections.papers[locale].add({
+            id: reportId,
+            text: `${t.title}\n\n${t.summary}\n\n${report.abstract || ""}`,
+            metadata: {
+              title: t.title,
+              published: report.publishedDate || "",
+              categories: report.subjectCategories.join(", "),
+              source: "NASA NTRS",
+            },
+          });
+        }
+
+        stats.ntrsReportsCollected++;
+        console.log(`  ✅ Saved NTRS robotics report: ${reportId}`);
+      } catch (error) {
+        console.error(`  ❌ Error processing NTRS ${report.id}:`, error);
+        stats.errors.push(`NTRS robotics ${report.id}: ${error}`);
+      }
+    }
+
+    console.log(`\n✅ Collected robotics NTRS reports`);
+  } catch (error) {
+    console.error("❌ Error collecting robotics NTRS reports:", error);
+    stats.errors.push(`NTRS robotics collection: ${error}`);
   }
 
   // Collect YouTube videos

@@ -5,7 +5,7 @@
   },
   "header": {
     "subtitle": "研究圖書館",
-    "description": "您的天文與太空科學知識庫"
+    "description": "您的天文、太空科學與機器人知識庫"
   },
   "stats": {
     "title": "圖書館統計",
@@ -16,8 +16,8 @@
   },
   "search": {
     "title": "搜尋圖書館",
-    "description": "探索天文論文、影片與 NASA 內容",
-    "placeholder": "搜尋天文論文、影片與 NASA 內容…",
+    "description": "探索天文、機器人論文、影片與 NASA 內容",
+    "placeholder": "搜尋天文、機器人論文、影片與 NASA 內容…",
     "button": "搜尋",
     "showFilters": "顯示篩選",
     "hideFilters": "隱藏篩選",
@@ -33,7 +33,7 @@
     "dateFrom": "開始日期",
     "dateTo": "結束日期",
     "try": "試試：",
-    "hint": "在上方輸入查詢並點擊搜尋（例如：暗能量、黑洞、火星）。",
+    "hint": "在上方輸入查詢並點擊搜尋（例如：暗能量、黑洞、人形機器人、機械臂）。",
     "searching": "搜尋中…",
     "found": "共 {count} 筆結果",
     "noResults": "沒有結果，請嘗試其他關鍵字或篩選條件。",
@@ -47,9 +47,9 @@
   },
   "about": {
     "title": "關於 AstroGroot",
-    "intro": "AstroGroot 是自動化天文研究圖書館，收錄、處理並索引來自多種來源的內容：",
+    "intro": "AstroGroot 是涵蓋天文學、太空科學與機器人領域的自動化研究圖書館，收錄、處理並索引來自多種來源的內容：",
     "sources": {
-      "papers": "arXiv 研究論文",
+      "papers": "arXiv 研究論文（天文、火箭與機器人）",
       "videos": "YouTube 科普影片",
       "nasa": "NASA 影像與內容"
     },
@@ -67,12 +67,12 @@
   },
   "seo": {
     "siteName": "AstroGroot",
-    "homeTitle": "AstroGroot - 天文研究圖書館",
-    "homeDescription": "使用 AI 搜尋探索天文論文、影片與 NASA 內容",
+    "homeTitle": "AstroGroot - 天文與機器人研究圖書館",
+    "homeDescription": "使用 AI 搜尋探索天文、機器人論文、影片與 NASA 內容",
     "searchTitle": "搜尋 - AstroGroot",
-    "searchDescription": "搜尋天文研究論文、影片與 NASA 內容",
+    "searchDescription": "搜尋天文與機器人研究論文、影片與 NASA 內容",
     "searchResultsTitle": "「{query}」 - 搜尋 - AstroGroot",
-    "searchResultsDescription": "「{query}」的搜尋結果，涵蓋天文論文、影片與 NASA 內容",
+    "searchResultsDescription": "「{query}」的搜尋結果，涵蓋天文、機器人論文、影片與 NASA 內容",
     "notFoundTitle": "找不到頁面 - AstroGroot",
     "notFoundDescription": "找不到您要的頁面。"
   },

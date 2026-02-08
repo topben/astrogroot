@@ -222,6 +222,66 @@ export async function collectRocketReports(params: {
   return allEntries;
 }
 
+// Robotics-related search queries for NASA NTRS
+export const ROBOTICS_QUERIES = [
+  "space robotics",
+  "robotic arm spacecraft",
+  "Mars rover autonomy",
+  "orbital servicing robot",
+  "humanoid robot NASA",
+  "teleoperation",
+  "robotic assembly space",
+  "autonomous inspection robot",
+  "Canadarm Dextre",
+  "Robonaut",
+];
+
+// Collect robotics technical reports from NASA NTRS
+export async function collectRoboticsReports(params: {
+  queries?: string[];
+  maxResultsPerQuery?: number;
+}): Promise<NtrsEntry[]> {
+  const {
+    queries = ROBOTICS_QUERIES,
+    maxResultsPerQuery = 10,
+  } = params;
+
+  const allEntries: NtrsEntry[] = [];
+  const seenIds = new Set<number>();
+
+  const maxQueries = 10;
+  let queryCount = 0;
+
+  for (const query of queries) {
+    if (queryCount >= maxQueries) {
+      console.log(`  ⚠️ Reached query limit (${maxQueries}), stopping NTRS robotics searches`);
+      break;
+    }
+
+    try {
+      const { entries } = await searchNtrs({
+        query,
+        pageSize: maxResultsPerQuery,
+      });
+
+      for (const entry of entries) {
+        if (!seenIds.has(entry.id)) {
+          seenIds.add(entry.id);
+          allEntries.push(entry);
+        }
+      }
+
+      queryCount++;
+      await new Promise((r) => setTimeout(r, 200));
+    } catch (error) {
+      console.error(`Failed to search NTRS for "${query}":`, error);
+    }
+  }
+
+  console.log(`  📊 Found ${allEntries.length} unique NTRS robotics reports from ${queryCount} queries`);
+  return allEntries;
+}
+
 // Fetch full text content for a document
 export async function fetchNtrsFullText(entry: NtrsEntry): Promise<string | null> {
   if (!entry.fulltextUrl) {

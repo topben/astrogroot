@@ -5,7 +5,7 @@
   },
   "header": {
     "subtitle": "Research Library",
-    "description": "Your astronomy and space science knowledge hub"
+    "description": "Your astronomy, space science & robotics knowledge hub"
   },
   "stats": {
     "title": "Library Statistics",
@@ -16,8 +16,8 @@
   },
   "search": {
     "title": "Search the Library",
-    "description": "Explore astronomy papers, videos, and NASA content",
-    "placeholder": "Search astronomy papers, videos, and NASA content...",
+    "description": "Explore astronomy, robotics papers, videos, and NASA content",
+    "placeholder": "Search astronomy, robotics papers, videos, and NASA content...",
     "button": "Search",
     "showFilters": "Show Filters",
     "hideFilters": "Hide Filters",
@@ -33,7 +33,7 @@
     "dateFrom": "Date From",
     "dateTo": "Date To",
     "try": "Try:",
-    "hint": "Enter a query above and click Search (e.g. dark energy, black holes, Mars).",
+    "hint": "Enter a query above and click Search (e.g. dark energy, black holes, humanoid robot, robotic arm).",
     "searching": "Searching…",
     "found": "Found {count} result(s)",
     "noResults": "No results. Try different keywords or filters.",
@@ -47,9 +47,9 @@
   },
   "about": {
     "title": "About AstroGroot",
-    "intro": "AstroGroot is an automated astronomy research library that collects, processes, and indexes content from multiple sources:",
+    "intro": "AstroGroot is an automated research library covering astronomy, space science, and robotics. It collects, processes, and indexes content from multiple sources:",
     "sources": {
-      "papers": "Research papers from arXiv",
+      "papers": "Research papers from arXiv (astronomy, rockets & robotics)",
       "videos": "Educational videos from YouTube",
       "nasa": "NASA imagery and content"
     },
@@ -67,12 +67,12 @@
   },
   "seo": {
     "siteName": "AstroGroot",
-    "homeTitle": "AstroGroot - Astronomy Research Library",
-    "homeDescription": "Explore astronomy papers, videos, and NASA content with AI-powered search",
+    "homeTitle": "AstroGroot - Astronomy & Robotics Research Library",
+    "homeDescription": "Explore astronomy, robotics papers, videos, and NASA content with AI-powered search",
     "searchTitle": "Search - AstroGroot",
-    "searchDescription": "Search astronomy research papers, videos, and NASA content",
+    "searchDescription": "Search astronomy & robotics research papers, videos, and NASA content",
     "searchResultsTitle": "\"{query}\" - Search - AstroGroot",
-    "searchResultsDescription": "Search results for \"{query}\" in astronomy papers, videos, and NASA content",
+    "searchResultsDescription": "Search results for \"{query}\" in astronomy, robotics papers, videos, and NASA content",
     "notFoundTitle": "Page Not Found - AstroGroot",
     "notFoundDescription": "The requested page could not be found."
   },

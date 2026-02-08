@@ -5,7 +5,7 @@
   },
   "header": {
     "subtitle": "研究图书馆",
-    "description": "您的天文与太空科学知识库"
+    "description": "您的天文、太空科学与机器人知识库"
   },
   "stats": {
     "title": "图书馆统计",
@@ -16,8 +16,8 @@
   },
   "search": {
     "title": "搜索图书馆",
-    "description": "探索天文论文、视频与 NASA 内容",
-    "placeholder": "搜索天文论文、视频与 NASA 内容…",
+    "description": "探索天文、机器人论文、视频与 NASA 内容",
+    "placeholder": "搜索天文、机器人论文、视频与 NASA 内容…",
     "button": "搜索",
     "showFilters": "显示筛选",
     "hideFilters": "隐藏筛选",
@@ -33,7 +33,7 @@
     "dateFrom": "开始日期",
     "dateTo": "结束日期",
     "try": "试试：",
-    "hint": "在上方输入查询并点击搜索（例如：暗能量、黑洞、火星）。",
+    "hint": "在上方输入查询并点击搜索（例如：暗能量、黑洞、人形机器人、机械臂）。",
     "searching": "搜索中…",
     "found": "共 {count} 条结果",
     "noResults": "没有结果，请尝试其他关键词或筛选条件。",
@@ -47,9 +47,9 @@
   },
   "about": {
     "title": "关于 AstroGroot",
-    "intro": "AstroGroot 是自动化天文研究图书馆，收录、处理并索引来自多种来源的内容：",
+    "intro": "AstroGroot 是涵盖天文学、太空科学与机器人领域的自动化研究图书馆，收录、处理并索引来自多种来源的内容：",
     "sources": {
-      "papers": "arXiv 研究论文",
+      "papers": "arXiv 研究论文（天文、火箭与机器人）",
       "videos": "YouTube 科普视频",
       "nasa": "NASA 影像与内容"
     },
@@ -67,12 +67,12 @@
   },
   "seo": {
     "siteName": "AstroGroot",
-    "homeTitle": "AstroGroot - 天文学研究图书馆",
-    "homeDescription": "使用 AI 搜索探索天文论文、视频与 NASA 内容",
+    "homeTitle": "AstroGroot - 天文与机器人研究图书馆",
+    "homeDescription": "使用 AI 搜索探索天文、机器人论文、视频与 NASA 内容",
     "searchTitle": "搜索 - AstroGroot",
-    "searchDescription": "搜索天文研究论文、视频与 NASA 内容",
-    "searchResultsTitle": "“{query}” - 搜索 - AstroGroot",
-    "searchResultsDescription": "“{query}” 的搜索结果，涵盖天文论文、视频与 NASA 内容",
+    "searchDescription": "搜索天文与机器人研究论文、视频与 NASA 内容",
+    "searchResultsTitle": ""{query}" - 搜索 - AstroGroot",
+    "searchResultsDescription": ""{query}" 的搜索结果，涵盖天文、机器人论文、视频与 NASA 内容",
     "notFoundTitle": "页面未找到 - AstroGroot",
     "notFoundDescription": "未找到您请求的页面。"
   },

@@ -197,6 +197,13 @@ const ASTRONOMY_CHANNELS = [
   { id: "UCHnyfMqiRRG1u-2MsSQLbXA", name: "Veritasium" },
   { id: "UCvBqzzvUBLCs8Y7Axb-jZew", name: "Sixty Symbols" },
   { id: "UC-3SbfTPJlsFZWxYGLHQnWA", name: "Space Engine" },
+  // Robotics channels
+  { id: "UC7vVhkEfw4nOGp8TyDk7RcQ", name: "Boston Dynamics" },
+  { id: "UCjdiY1pQw1EgYBv-3EFqTgw", name: "Figure" },
+  { id: "UCHuiy8bXnmK5nisYHUd1J5g", name: "NVIDIA" },
+  { id: "UC0ExJJXMwEh03AY-bUHkPCA", name: "IEEE Spectrum" },
+  { id: "UCjN7DjO9M-OjMIaUd0vVJjg", name: "Agility Robotics" },
+  { id: "UCsMbcFBJYIEMCfB3VWlkHMg", name: "Unitree Robotics" },
 ];
 
 // Check if error indicates YouTube API quota exhaustion
@@ -253,6 +260,17 @@ export async function collectAstronomyVideos(params: {
       "Saturn V rocket",
       "Space Shuttle history",
       "Voyager golden record",
+      // Robotics
+      "humanoid robot walking",
+      "robotic arm manipulation",
+      "space robot ISS",
+      "Mars rover autonomy",
+      "Boston Dynamics Atlas",
+      "robot learning to walk",
+      "industrial robot assembly",
+      "quadruped robot",
+      "dexterous robot hand",
+      "robot SLAM navigation",
     ],
     maxResultsPerQuery = 10,
   } = params;
