@@ -206,35 +206,51 @@ export async function searchLibrary(params: {
   const needsVideoFallback = videoIds.length === 0 || bestVideoScore < MIN_RELEVANCE_SCORE;
   const needsNasaFallback = nasaIds.length === 0 || bestNasaScore < MIN_RELEVANCE_SCORE;
 
-  const keywordPattern = `%${trimmed}%`;
-  const [keywordPapers, keywordVideos, keywordNasa] = await Promise.all([
+  // Build keyword patterns: for Chinese queries, generate patterns for each bigram
+  const hasChinese = /[\u4e00-\u9fff]/.test(trimmed);
+  const keywordPatterns: string[] = [`%${trimmed}%`];
+  if (hasChinese && trimmed.length >= 2) {
+    for (let i = 0; i < trimmed.length - 1; i++) {
+      const bigram = trimmed.slice(i, i + 2);
+      if (/[\u4e00-\u9fff]/.test(bigram)) {
+        keywordPatterns.push(`%${bigram}%`);
+      }
+    }
+  }
+  const uniquePatterns = [...new Set(keywordPatterns)];
+  const buildLikeOr = (...columns: Parameters<typeof like>[0][]) =>
+    or(...columns.flatMap((col) => uniquePatterns.map((p) => like(col, p))));
+
+  const needsTranslationFallback = locale !== "en" && (needsPaperFallback || needsVideoFallback || needsNasaFallback);
+
+  const [keywordPapers, keywordVideos, keywordNasa, keywordTranslations] = await Promise.all([
     searchPapers && needsPaperFallback
       ? db_.query.papers.findMany({
-          where: or(
-            like(papers.title, keywordPattern),
-            like(papers.summary, keywordPattern),
-            like(papers.abstract, keywordPattern),
-          ),
+          where: buildLikeOr(papers.title, papers.summary, papers.abstract),
           limit: n,
         })
       : [],
     searchVideos && needsVideoFallback
       ? db_.query.videos.findMany({
-          where: or(
-            like(videos.title, keywordPattern),
-            like(videos.summary, keywordPattern),
-          ),
+          where: buildLikeOr(videos.title, videos.summary),
           limit: n,
         })
       : [],
     searchNasa && needsNasaFallback
       ? db_.query.nasaContent.findMany({
-          where: or(
-            like(nasaContent.title, keywordPattern),
-            like(nasaContent.summary, keywordPattern),
-            like(nasaContent.explanation, keywordPattern),
-          ),
+          where: buildLikeOr(nasaContent.title, nasaContent.summary, nasaContent.explanation),
           limit: n,
+        })
+      : [],
+    // Search translations table for Chinese keyword matches
+    needsTranslationFallback
+      ? db_.query.translations.findMany({
+          where: and(
+            eq(translations.lang, locale),
+            buildLikeOr(translations.title, translations.summary),
+          ),
+          columns: { itemType: true, itemId: true },
+          limit: n * 3,
         })
       : [],
   ]);
@@ -251,6 +267,19 @@ export async function searchLibrary(params: {
     nasaIds.push(item.id);
     nasaScores[item.id] = 0.5;
   });
+  // Merge translation matches into the correct type lists
+  for (const t of keywordTranslations) {
+    if (t.itemType === "paper" && searchPapers) {
+      paperIds.push(t.itemId);
+      if (!paperScores[t.itemId]) paperScores[t.itemId] = 0.5;
+    } else if (t.itemType === "video" && searchVideos) {
+      videoIds.push(t.itemId);
+      if (!videoScores[t.itemId]) videoScores[t.itemId] = 0.5;
+    } else if (t.itemType === "nasa" && searchNasa) {
+      nasaIds.push(t.itemId);
+      if (!nasaScores[t.itemId]) nasaScores[t.itemId] = 0.5;
+    }
+  }
 
   const [paperRows, videoRows, nasaRows] = await Promise.all([
     paperIds.length
@@ -362,18 +391,278 @@ export async function searchLibrary(params: {
     };
   };
 
-  // Common Chinese-English keyword mappings for better cross-language search
+  // Chinese-English keyword mappings for cross-language search
+  // Covers Traditional (zh-TW) and Simplified (zh-CN) variants
   const keywordMappings: Record<string, string[]> = {
-    "火箭": ["rocket", "launch", "propulsion", "engine", "booster"],
-    "引擎": ["engine", "motor", "propulsion"],
-    "推進": ["propulsion", "thrust", "propellant"],
-    "燃料": ["fuel", "propellant", "combustion"],
-    "太空": ["space", "spacecraft", "satellite"],
-    "衛星": ["satellite", "orbital"],
-    "黑洞": ["black hole", "blackhole"],
+    // --- Rocket & Propulsion ---
+    "火箭": ["rocket", "launch vehicle", "booster"],
+    "引擎": ["engine", "motor"],
+    "發動機": ["engine", "motor"],
+    "发动机": ["engine", "motor"],
+    "推進": ["propulsion", "thrust"],
+    "推进": ["propulsion", "thrust"],
+    "推進器": ["thruster", "propulsion system"],
+    "推进器": ["thruster", "propulsion system"],
+    "推力": ["thrust", "propulsive force"],
+    "燃料": ["fuel", "propellant"],
+    "推進劑": ["propellant"],
+    "推进剂": ["propellant"],
+    "氧化劑": ["oxidizer"],
+    "氧化剂": ["oxidizer"],
+    "液態氧": ["liquid oxygen", "LOX"],
+    "液态氧": ["liquid oxygen", "LOX"],
+    "液態氫": ["liquid hydrogen", "LH2"],
+    "液态氢": ["liquid hydrogen", "LH2"],
+    "固態燃料": ["solid fuel", "solid propellant"],
+    "固态燃料": ["solid fuel", "solid propellant"],
+    "燃燒室": ["combustion chamber"],
+    "燃烧室": ["combustion chamber"],
+    "噴嘴": ["nozzle"],
+    "喷嘴": ["nozzle"],
+    "噴管": ["nozzle", "exhaust nozzle"],
+    "喷管": ["nozzle", "exhaust nozzle"],
+    "渦輪泵": ["turbopump"],
+    "涡轮泵": ["turbopump"],
+    "助推器": ["booster", "strap-on booster"],
+    "級": ["stage"],
+    "级": ["stage"],
+    "多級火箭": ["multistage rocket"],
+    "多级火箭": ["multistage rocket"],
+    "比衝": ["specific impulse", "Isp"],
+    "比冲": ["specific impulse", "Isp"],
+    "降落傘": ["parachute", "recovery"],
+    "降落伞": ["parachute", "recovery"],
+    "回收": ["recovery", "reusable"],
+    "再入": ["reentry", "re-entry"],
+    "隔熱罩": ["heat shield", "thermal protection"],
+    "隔热罩": ["heat shield", "thermal protection"],
+    "整流罩": ["fairing", "payload fairing"],
+    "點火": ["ignition"],
+    "点火": ["ignition"],
+    "發射": ["launch", "liftoff"],
+    "发射": ["launch", "liftoff"],
+    "發射台": ["launch pad", "launch site"],
+    "发射台": ["launch pad", "launch site"],
+    "酬載": ["payload"],
+    "载荷": ["payload"],
+    "有效載荷": ["payload"],
+    "有效载荷": ["payload"],
+
+    // --- Space & Orbital Mechanics ---
+    "太空": ["space", "outer space"],
+    "航太": ["aerospace", "space"],
+    "航天": ["aerospace", "space"],
+    "軌道": ["orbit", "orbital"],
+    "轨道": ["orbit", "orbital"],
+    "入軌": ["orbit insertion", "orbital insertion"],
+    "入轨": ["orbit insertion", "orbital insertion"],
+    "近地軌道": ["low earth orbit", "LEO"],
+    "近地轨道": ["low earth orbit", "LEO"],
+    "地球同步": ["geosynchronous", "GEO", "geostationary"],
+    "轉移軌道": ["transfer orbit", "Hohmann"],
+    "转移轨道": ["transfer orbit", "Hohmann"],
+    "脫軌": ["deorbit", "de-orbit"],
+    "脱轨": ["deorbit", "de-orbit"],
+    "衛星": ["satellite"],
+    "卫星": ["satellite"],
+    "太空站": ["space station", "ISS"],
+    "空间站": ["space station", "ISS"],
+    "太空梭": ["space shuttle"],
+    "航天飞机": ["space shuttle"],
+    "太空船": ["spacecraft", "spaceship"],
+    "飞船": ["spacecraft", "spaceship"],
+    "太空艙": ["capsule", "space capsule"],
+    "太空舱": ["capsule", "space capsule"],
+    "對接": ["docking", "rendezvous"],
+    "对接": ["docking", "rendezvous"],
+    "太空漫步": ["spacewalk", "EVA", "extravehicular activity"],
+    "太空人": ["astronaut", "cosmonaut"],
+    "宇航员": ["astronaut", "cosmonaut"],
+    "太空衣": ["spacesuit", "EVA suit"],
+    "航天服": ["spacesuit", "EVA suit"],
+    "失重": ["weightlessness", "microgravity", "zero gravity"],
+    "微重力": ["microgravity"],
+
+    // --- Astronomy & Astrophysics ---
+    "天文": ["astronomy", "astronomical"],
+    "天文學": ["astronomy"],
+    "天文学": ["astronomy"],
+    "天體物理": ["astrophysics"],
+    "天体物理": ["astrophysics"],
+    "宇宙": ["universe", "cosmos", "cosmology"],
+    "宇宙學": ["cosmology"],
+    "宇宙学": ["cosmology"],
+    "黑洞": ["black hole"],
     "恆星": ["star", "stellar"],
+    "恒星": ["star", "stellar"],
     "行星": ["planet", "planetary"],
+    "系外行星": ["exoplanet", "extrasolar planet"],
     "星系": ["galaxy", "galactic"],
+    "星雲": ["nebula"],
+    "星云": ["nebula"],
+    "超新星": ["supernova"],
+    "脈衝星": ["pulsar"],
+    "脉冲星": ["pulsar"],
+    "中子星": ["neutron star"],
+    "白矮星": ["white dwarf"],
+    "紅巨星": ["red giant"],
+    "红巨星": ["red giant"],
+    "暗物質": ["dark matter"],
+    "暗物质": ["dark matter"],
+    "暗能量": ["dark energy"],
+    "大爆炸": ["big bang"],
+    "紅移": ["redshift"],
+    "红移": ["redshift"],
+    "藍移": ["blueshift"],
+    "蓝移": ["blueshift"],
+    "重力波": ["gravitational wave"],
+    "引力波": ["gravitational wave"],
+    "重力透鏡": ["gravitational lensing"],
+    "引力透镜": ["gravitational lensing"],
+    "類星體": ["quasar"],
+    "类星体": ["quasar"],
+    "磁星": ["magnetar"],
+    "星團": ["star cluster"],
+    "星团": ["star cluster"],
+    "球狀星團": ["globular cluster"],
+    "球状星团": ["globular cluster"],
+    "星際": ["interstellar"],
+    "星际": ["interstellar"],
+    "星際介質": ["interstellar medium", "ISM"],
+    "星际介质": ["interstellar medium", "ISM"],
+    "吸積盤": ["accretion disk"],
+    "吸积盘": ["accretion disk"],
+    "事件視界": ["event horizon"],
+    "事件视界": ["event horizon"],
+    "奇點": ["singularity"],
+    "奇点": ["singularity"],
+
+    // --- Solar System ---
+    "太陽": ["sun", "solar"],
+    "太阳": ["sun", "solar"],
+    "太陽系": ["solar system"],
+    "太阳系": ["solar system"],
+    "太陽風": ["solar wind"],
+    "太阳风": ["solar wind"],
+    "太陽閃焰": ["solar flare"],
+    "太阳耀斑": ["solar flare"],
+    "日冕": ["corona", "coronal"],
+    "太陽能": ["solar energy", "solar power"],
+    "太阳能": ["solar energy", "solar power"],
+    "太陽能板": ["solar panel", "solar array"],
+    "太阳能板": ["solar panel", "solar array"],
+    "月球": ["moon", "lunar"],
+    "火星": ["Mars", "Martian"],
+    "木星": ["Jupiter", "Jovian"],
+    "土星": ["Saturn"],
+    "水星": ["Mercury"],
+    "金星": ["Venus"],
+    "天王星": ["Uranus"],
+    "海王星": ["Neptune"],
+    "冥王星": ["Pluto"],
+    "小行星": ["asteroid"],
+    "彗星": ["comet"],
+    "隕石": ["meteorite", "meteor"],
+    "陨石": ["meteorite", "meteor"],
+    "流星": ["meteor", "shooting star"],
+    "月食": ["lunar eclipse"],
+    "日食": ["solar eclipse"],
+    "潮汐": ["tidal", "tide"],
+
+    // --- Instruments & Technology ---
+    "望遠鏡": ["telescope"],
+    "望远镜": ["telescope"],
+    "光譜": ["spectrum", "spectroscopy", "spectral"],
+    "光谱": ["spectrum", "spectroscopy", "spectral"],
+    "紅外線": ["infrared", "IR"],
+    "红外线": ["infrared", "IR"],
+    "紫外線": ["ultraviolet", "UV"],
+    "紫外线": ["ultraviolet", "UV"],
+    "X射線": ["X-ray"],
+    "X射线": ["X-ray"],
+    "伽瑪射線": ["gamma ray"],
+    "伽马射线": ["gamma ray"],
+    "雷達": ["radar"],
+    "雷达": ["radar"],
+    "感測器": ["sensor", "detector"],
+    "传感器": ["sensor", "detector"],
+    "探測器": ["probe", "detector"],
+    "探测器": ["probe", "detector"],
+    "天線": ["antenna"],
+    "天线": ["antenna"],
+    "陀螺儀": ["gyroscope"],
+    "陀螺仪": ["gyroscope"],
+    "加速度計": ["accelerometer"],
+    "加速度计": ["accelerometer"],
+    "導航": ["navigation", "guidance"],
+    "导航": ["navigation", "guidance"],
+    "姿態控制": ["attitude control"],
+    "姿态控制": ["attitude control"],
+    "遙測": ["telemetry"],
+    "遥测": ["telemetry"],
+
+    // --- Missions & Programs ---
+    "阿波羅": ["Apollo"],
+    "阿波罗": ["Apollo"],
+    "阿提米絲": ["Artemis"],
+    "阿尔忒弥斯": ["Artemis"],
+    "國際太空站": ["International Space Station", "ISS"],
+    "国际空间站": ["International Space Station", "ISS"],
+    "韋伯": ["Webb", "JWST", "James Webb"],
+    "韦伯": ["Webb", "JWST", "James Webb"],
+    "哈伯": ["Hubble", "HST"],
+    "哈勃": ["Hubble", "HST"],
+    "旅行者": ["Voyager"],
+    "好奇號": ["Curiosity"],
+    "好奇号": ["Curiosity"],
+    "毅力號": ["Perseverance"],
+    "毅力号": ["Perseverance"],
+    "嫦娥": ["Chang'e"],
+    "天問": ["Tianwen"],
+    "天问": ["Tianwen"],
+
+    // --- Physics & General Science ---
+    "重力": ["gravity", "gravitational"],
+    "引力": ["gravity", "gravitational"],
+    "質量": ["mass"],
+    "质量": ["mass"],
+    "密度": ["density"],
+    "溫度": ["temperature"],
+    "温度": ["temperature"],
+    "壓力": ["pressure"],
+    "压力": ["pressure"],
+    "輻射": ["radiation"],
+    "辐射": ["radiation"],
+    "磁場": ["magnetic field"],
+    "磁场": ["magnetic field"],
+    "電漿": ["plasma"],
+    "等离子体": ["plasma"],
+    "光年": ["light year", "light-year"],
+    "天文單位": ["astronomical unit", "AU"],
+    "天文单位": ["astronomical unit", "AU"],
+    "紅外": ["infrared"],
+    "红外": ["infrared"],
+
+    // --- Aerodynamics & Engineering ---
+    "空氣動力學": ["aerodynamics"],
+    "空气动力学": ["aerodynamics"],
+    "馬赫數": ["Mach number"],
+    "马赫数": ["Mach number"],
+    "超音速": ["supersonic"],
+    "極超音速": ["hypersonic"],
+    "高超音速": ["hypersonic"],
+    "阻力": ["drag"],
+    "升力": ["lift"],
+    "熱傳導": ["heat transfer", "thermal conductivity"],
+    "热传导": ["heat transfer", "thermal conductivity"],
+    "冷卻": ["cooling", "regenerative cooling"],
+    "冷却": ["cooling", "regenerative cooling"],
+    "複合材料": ["composite material"],
+    "复合材料": ["composite material"],
+    "碳纖維": ["carbon fiber"],
+    "碳纤维": ["carbon fiber"],
+    "鈦合金": ["titanium alloy"],
+    "钛合金": ["titanium alloy"],
   };
 
   const tokenizeQuery = (query: string): string[] => {
@@ -387,14 +676,27 @@ export async function searchLibrary(params: {
       }
     }
 
-    // Also include original terms
     if (/[\u4e00-\u9fff]/.test(lower)) {
+      // Split Chinese text into individual characters and overlapping bigrams
+      const chars: string[] = [];
+      for (const ch of lower) {
+        if (/[\u4e00-\u9fff]/.test(ch)) {
+          chars.push(ch);
+        }
+      }
+      // Add individual characters
+      terms.push(...chars);
+      // Add overlapping bigrams (most Chinese words are 2 chars)
+      for (let i = 0; i < chars.length - 1; i++) {
+        terms.push(chars[i] + chars[i + 1]);
+      }
+      // Keep the full query for exact matching
       terms.push(lower);
     } else {
       terms.push(...lower.split(/[^a-z0-9]+/i).filter((term) => term.length >= 2));
     }
 
-    return [...new Set(terms)]; // Remove duplicates
+    return [...new Set(terms)];
   };
 
   const computeKeywordScore = (text: string, terms: string[]): number => {
