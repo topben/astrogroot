@@ -89,9 +89,12 @@ function parseAcceptLanguage(header: string | undefined): Locale | null {
   for (const part of parts) {
     const lang = part.slice(0, 2);
     if (lang === "zh") {
+      // Taiwan / Hant → Traditional Chinese
       if (part.includes("tw") || part.includes("hant")) return "zh-TW";
-      if (part.includes("cn") || part.includes("hans")) return "zh-CN";
-      return "zh-TW";
+      // Hong Kong, China, Hans → Simplified Chinese
+      if (part.includes("hk") || part.includes("cn") || part.includes("hans")) return "zh-CN";
+      // Plain "zh" without region → Simplified Chinese (mainland default)
+      return "zh-CN";
     }
     if (lang === "en") return "en";
   }
