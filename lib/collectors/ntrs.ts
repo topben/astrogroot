@@ -282,6 +282,126 @@ export async function collectRoboticsReports(params: {
   return allEntries;
 }
 
+// Satellite-related search queries for NASA NTRS
+export const SATELLITE_QUERIES = [
+  "satellite mission",
+  "satellite systems",
+  "satellite communications",
+  "spacecraft bus",
+  "attitude determination and control",
+  "reaction wheel",
+  "orbital debris",
+  "on-orbit servicing",
+  "GNSS satellite",
+  "remote sensing satellite",
+];
+
+// Collect satellite technical reports from NASA NTRS
+export async function collectSatelliteReports(params: {
+  queries?: string[];
+  maxResultsPerQuery?: number;
+}): Promise<NtrsEntry[]> {
+  const {
+    queries = SATELLITE_QUERIES,
+    maxResultsPerQuery = 10,
+  } = params;
+
+  const allEntries: NtrsEntry[] = [];
+  const seenIds = new Set<number>();
+
+  const maxQueries = 10;
+  let queryCount = 0;
+
+  for (const query of queries) {
+    if (queryCount >= maxQueries) {
+      console.log(`  ⚠️ Reached query limit (${maxQueries}), stopping NTRS satellite searches`);
+      break;
+    }
+
+    try {
+      const { entries } = await searchNtrs({
+        query,
+        pageSize: maxResultsPerQuery,
+      });
+
+      for (const entry of entries) {
+        if (!seenIds.has(entry.id)) {
+          seenIds.add(entry.id);
+          allEntries.push(entry);
+        }
+      }
+
+      queryCount++;
+      await new Promise((r) => setTimeout(r, 200));
+    } catch (error) {
+      console.error(`Failed to search NTRS for "${query}":`, error);
+    }
+  }
+
+  console.log(`  📊 Found ${allEntries.length} unique NTRS satellite reports from ${queryCount} queries`);
+  return allEntries;
+}
+
+// Space travel / mission-related search queries for NASA NTRS
+export const SPACE_TRAVEL_QUERIES = [
+  "human spaceflight",
+  "crew vehicle",
+  "mission architecture",
+  "interplanetary mission",
+  "deep space mission",
+  "Mars mission",
+  "lunar mission",
+  "space habitat",
+  "life support system",
+  "entry descent landing",
+];
+
+// Collect space travel / mission technical reports from NASA NTRS
+export async function collectSpaceTravelReports(params: {
+  queries?: string[];
+  maxResultsPerQuery?: number;
+}): Promise<NtrsEntry[]> {
+  const {
+    queries = SPACE_TRAVEL_QUERIES,
+    maxResultsPerQuery = 10,
+  } = params;
+
+  const allEntries: NtrsEntry[] = [];
+  const seenIds = new Set<number>();
+
+  const maxQueries = 10;
+  let queryCount = 0;
+
+  for (const query of queries) {
+    if (queryCount >= maxQueries) {
+      console.log(`  ⚠️ Reached query limit (${maxQueries}), stopping NTRS space travel searches`);
+      break;
+    }
+
+    try {
+      const { entries } = await searchNtrs({
+        query,
+        pageSize: maxResultsPerQuery,
+      });
+
+      for (const entry of entries) {
+        if (!seenIds.has(entry.id)) {
+          seenIds.add(entry.id);
+          allEntries.push(entry);
+        }
+      }
+
+      queryCount++;
+      await new Promise((r) => setTimeout(r, 200));
+    } catch (error) {
+      console.error(`Failed to search NTRS for "${query}":`, error);
+    }
+  }
+
+  console.log(`  📊 Found ${allEntries.length} unique NTRS space travel reports from ${queryCount} queries`);
+  return allEntries;
+}
+
 // Fetch full text content for a document
 export async function fetchNtrsFullText(entry: NtrsEntry): Promise<string | null> {
   if (!entry.fulltextUrl) {

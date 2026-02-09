@@ -38,6 +38,7 @@
     "found": "共 {count} 筆結果",
     "noResults": "沒有結果，請嘗試其他關鍵字或篩選條件。",
     "error": "搜尋失敗",
+    "invalidLanguage": "此語言只接受繁體中文關鍵字。",
     "relatedNotice": "找不到精確匹配，顯示相關內容：",
     "relatedLabel": "相關",
     "page": "頁",

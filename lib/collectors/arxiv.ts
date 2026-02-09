@@ -334,6 +334,22 @@ export const ROCKET_CATEGORIES = [
   "eess.SY", // Systems and Control
 ];
 
+// Satellite-focused arXiv categories
+export const SATELLITE_CATEGORIES = [
+  "physics.space-ph", // Space Physics
+  "astro-ph.IM", // Instrumentation and Methods for Astrophysics
+  "astro-ph.EP", // Earth and Planetary Astrophysics
+  "physics.app-ph", // Applied Physics
+];
+
+// Space travel / mission-oriented arXiv categories
+export const SPACE_TRAVEL_CATEGORIES = [
+  "physics.space-ph", // Space Physics
+  "astro-ph.EP", // Earth and Planetary Astrophysics
+  "astro-ph.IM", // Instrumentation and Methods for Astrophysics
+  "physics.ao-ph", // Atmospheric and Oceanic Physics
+];
+
 export const ROCKET_KEYWORDS = [
   "rocket propulsion",
   "liquid rocket engine",
@@ -424,6 +440,32 @@ export function collectRoboticsPapers(params: {
   const { maxResults = 20, daysBack = 14 } = params;
   return getRecentArxivPapers({
     categories: ROBOTICS_CATEGORIES,
+    maxResults,
+    daysBack,
+  });
+}
+
+// Collect recent satellite-related papers
+export function collectSatellitePapers(params: {
+  maxResults?: number;
+  daysBack?: number;
+}): Promise<ArxivEntry[]> {
+  const { maxResults = 20, daysBack = 14 } = params;
+  return getRecentArxivPapers({
+    categories: SATELLITE_CATEGORIES,
+    maxResults,
+    daysBack,
+  });
+}
+
+// Collect recent space travel / mission papers
+export function collectSpaceTravelPapers(params: {
+  maxResults?: number;
+  daysBack?: number;
+}): Promise<ArxivEntry[]> {
+  const { maxResults = 20, daysBack = 14 } = params;
+  return getRecentArxivPapers({
+    categories: SPACE_TRAVEL_CATEGORIES,
     maxResults,
     daysBack,
   });

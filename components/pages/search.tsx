@@ -33,6 +33,7 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
   const foundTpl = d?.search.found ?? "Found {count} result(s)";
   const noResultsText = d?.search.noResults ?? "No results. Try different keywords or filters.";
   const errorTpl = d?.search.error ?? "Search failed";
+  const invalidLanguage = d?.search.invalidLanguage ?? "Please enter English keywords only.";
   const relatedNotice = d?.search.relatedNotice ?? "No exact matches found. Showing related content:";
   const relatedLabel = d?.search.relatedLabel ?? "Related";
   const pageLabel = d?.search.page ?? "Page";
@@ -85,6 +86,7 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
             data-label-nasa={labelNasa}
             data-label-more={labelMore}
             data-error-tpl={errorTpl}
+            data-invalid-msg={invalidLanguage}
             data-related-notice={relatedNotice}
             data-related-label={relatedLabel}
             data-page-label={pageLabel}
@@ -105,8 +107,12 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
         </div>
       </main>
       <script
+        type="module"
         dangerouslySetInnerHTML={{
           __html: `
+import { Converter } from "https://esm.sh/opencc-js";
+var s2t = Converter({ from: 'cn', to: 'tw' });
+var t2s = Converter({ from: 'tw', to: 'cn' });
 (function() {
   var el = document.getElementById('search-results');
   if (!el) return;
@@ -122,13 +128,33 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
   var labelNasa = el.getAttribute('data-label-nasa') || 'NASA';
   var labelMore = el.getAttribute('data-label-more') || 'More';
   var errorTpl = el.getAttribute('data-error-tpl') || 'Search failed';
+  var invalidMsg = el.getAttribute('data-invalid-msg') || 'Please enter English keywords only.';
   var relatedNotice = el.getAttribute('data-related-notice') || 'No exact matches found. Showing related content:';
   var relatedLabel = el.getAttribute('data-related-label') || 'Related';
   var pageLabel = el.getAttribute('data-page-label') || 'Page';
   var ofLabel = el.getAttribute('data-of-label') || 'of';
   var prevLabel = el.getAttribute('data-prev-label') || 'Previous';
   var nextLabel = el.getAttribute('data-next-label') || 'Next';
+  function hasLatin(value) { return /[A-Za-z]/.test(value); }
+  function hasCjk(value) { return /[\\u3400-\\u9FFF]/.test(value); }
+  function isTraditional(value) { return s2t(value) === value; }
+  function isSimplified(value) { return t2s(value) === value; }
+  function isInvalidForLocale(value, locale) {
+    var text = value.trim();
+    if (!text) return false;
+    var latin = hasLatin(text);
+    var cjk = hasCjk(text);
+    if (locale === 'en') return !latin || cjk;
+    if (locale === 'zh-TW') return latin || !cjk || !isTraditional(text);
+    if (locale === 'zh-CN') return latin || !cjk || !isSimplified(text);
+    return false;
+  }
   if (!q) return;
+  if (isInvalidForLocale(q, locale)) {
+    el.innerHTML = '';
+    el.insertAdjacentHTML('beforeend', '<p class="search-results-error">' + invalidMsg + '</p>');
+    return;
+  }
   var urlParams = new URLSearchParams(window.location.search || '');
   var initialPage = parseInt(urlParams.get('page') || '1', 10) || 1;
   var currentPage = initialPage;

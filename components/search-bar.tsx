@@ -53,6 +53,7 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
   const dateToLabel = d?.search.dateTo ?? "Date To:";
   const pickDateLabel = d?.calendar.pickDate ?? "Pick date";
   const tryLabel = d?.search.try ?? "Try:";
+  const invalidLanguage = d?.search.invalidLanguage ?? "Please enter English keywords only.";
   const formAction = "/search";
 
   // Get localized quick searches
@@ -61,7 +62,14 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
   if (compact) {
     return (
       <div class="search-bar-compact">
-        <form class="search-form-compact" method="get" action={formAction}>
+        <form
+          class="search-form-compact"
+          method="get"
+          action={formAction}
+          data-search-form="true"
+          data-locale={locale}
+          data-invalid-msg={invalidLanguage}
+        >
           <input type="hidden" name="lang" value={locale} />
           <input
             type="text"
@@ -74,6 +82,7 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
             🔍
           </button>
         </form>
+        <p class="search-input-error search-input-error-compact" hidden></p>
         {showSuggestions && (
           <div class="quick-searches-compact">
             <span class="quick-label">{tryLabel}</span>
@@ -92,18 +101,91 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
 .search-input-compact::placeholder { color: #64748b; }
 .search-button-compact { padding: 0.75rem 1.25rem; font-size: 1.125rem; background: linear-gradient(135deg, #22d3ee 0%, #a855f7 100%); border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; }
 .search-button-compact:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4); }
+.search-input-error { margin: 0.5rem 0 0; font-size: 0.875rem; color: #f87171; }
+.search-input-error-compact { text-align: center; }
 .quick-searches-compact { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.75rem; justify-content: center; }
 .quick-label { font-size: 0.875rem; color: #64748b; }
 .quick-link { font-size: 0.875rem; color: #22d3ee; text-decoration: none; padding: 0.25rem 0.75rem; background: rgba(34, 211, 238, 0.1); border-radius: 20px; transition: all 0.2s ease; }
 .quick-link:hover { background: rgba(34, 211, 238, 0.2); color: #a855f7; }
 ` }} />
+        <script
+          type="module"
+          dangerouslySetInnerHTML={{
+            __html: `
+import { Converter } from "https://esm.sh/opencc-js";
+var s2t = Converter({ from: 'cn', to: 'tw' });
+var t2s = Converter({ from: 'tw', to: 'cn' });
+(function() {
+  function hasLatin(value) { return /[A-Za-z]/.test(value); }
+  function hasCjk(value) { return /[\\u3400-\\u9FFF]/.test(value); }
+  function isTraditional(value) { return s2t(value) === value; }
+  function isSimplified(value) { return t2s(value) === value; }
+  function isInvalidForLocale(value, locale) {
+    var text = value.trim();
+    if (!text) return false;
+    var latin = hasLatin(text);
+    var cjk = hasCjk(text);
+    if (locale === 'en') return !latin || cjk;
+    if (locale === 'zh-TW') return latin || !cjk || !isTraditional(text);
+    if (locale === 'zh-CN') return latin || !cjk || !isSimplified(text);
+    return false;
+  }
+  function showError(form, message) {
+    var error = form.parentElement ? form.parentElement.querySelector('.search-input-error') : null;
+    if (error) {
+      error.textContent = message;
+      error.hidden = false;
+    }
+    var input = form.querySelector('input[name="q"]');
+    if (input) input.setAttribute('aria-invalid', 'true');
+  }
+  function clearError(form) {
+    var error = form.parentElement ? form.parentElement.querySelector('.search-input-error') : null;
+    if (error) {
+      error.textContent = '';
+      error.hidden = true;
+    }
+    var input = form.querySelector('input[name="q"]');
+    if (input) input.removeAttribute('aria-invalid');
+  }
+  function validateForm(form) {
+    var input = form.querySelector('input[name="q"]');
+    if (!input) return true;
+    var locale = form.getAttribute('data-locale') || 'en';
+    var msg = form.getAttribute('data-invalid-msg') || 'Please enter English keywords only.';
+    var value = input.value || '';
+    if (!value.trim()) { clearError(form); return true; }
+    if (isInvalidForLocale(value, locale)) { showError(form, msg); return false; }
+    clearError(form);
+    return true;
+  }
+  var forms = Array.prototype.slice.call(document.querySelectorAll('form[data-search-form="true"]'));
+  forms.forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+      if (!validateForm(form)) e.preventDefault();
+    });
+    var input = form.querySelector('input[name="q"]');
+    if (input) input.addEventListener('input', function() { validateForm(form); });
+  });
+})();
+`,
+          }}
+        />
       </div>
     );
   }
 
   return (
   <div class="search-bar-container">
-    <form id="search-form" class="search-form" method="get" action={formAction}>
+    <form
+      id="search-form"
+      class="search-form"
+      method="get"
+      action={formAction}
+      data-search-form="true"
+      data-locale={locale}
+      data-invalid-msg={invalidLanguage}
+    >
       <input type="hidden" name="lang" value={locale} />
       <div class="search-input-wrapper">
         <input
@@ -119,6 +201,7 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
           {buttonLabel}
         </button>
       </div>
+      <p class="search-input-error" hidden></p>
 
       {/* Content Type Tabs - Always visible */}
       <div class="content-type-tabs" role="tablist">
@@ -194,8 +277,12 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
       </div>
     </form>
     <script
+      type="module"
       dangerouslySetInnerHTML={{
         __html: `
+import { Converter } from "https://esm.sh/opencc-js";
+var s2t = Converter({ from: 'cn', to: 'tw' });
+var t2s = Converter({ from: 'tw', to: 'cn' });
 (function() {
   function initFilters() {
     var toggle = document.getElementById('filter-toggle');
@@ -211,11 +298,58 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
       });
     }
     var form = document.getElementById('search-form');
+    function hasLatin(value) { return /[A-Za-z]/.test(value); }
+    function hasCjk(value) { return /[\\u3400-\\u9FFF]/.test(value); }
+    function isTraditional(value) { return s2t(value) === value; }
+    function isSimplified(value) { return t2s(value) === value; }
+    function isInvalidForLocale(value, locale) {
+      var text = value.trim();
+      if (!text) return false;
+      var latin = hasLatin(text);
+      var cjk = hasCjk(text);
+      if (locale === 'en') return !latin || cjk;
+      if (locale === 'zh-TW') return latin || !cjk || !isTraditional(text);
+      if (locale === 'zh-CN') return latin || !cjk || !isSimplified(text);
+      return false;
+    }
+    function showError(message) {
+      if (!form) return;
+      var error = form.querySelector('.search-input-error');
+      if (error) {
+        error.textContent = message;
+        error.hidden = false;
+      }
+      var q = document.getElementById('search-input');
+      if (q) q.setAttribute('aria-invalid', 'true');
+    }
+    function clearError() {
+      if (!form) return;
+      var error = form.querySelector('.search-input-error');
+      if (error) {
+        error.textContent = '';
+        error.hidden = true;
+      }
+      var q = document.getElementById('search-input');
+      if (q) q.removeAttribute('aria-invalid');
+    }
+    function validateForm() {
+      if (!form) return true;
+      var q = document.getElementById('search-input');
+      if (!q) return true;
+      var value = q.value || '';
+      var locale = form.getAttribute('data-locale') || 'en';
+      var msg = form.getAttribute('data-invalid-msg') || 'Please enter English keywords only.';
+      if (!value.trim()) { clearError(); return true; }
+      if (isInvalidForLocale(value, locale)) { showError(msg); return false; }
+      clearError();
+      return true;
+    }
     if (form) {
       form.addEventListener('submit', function(e) {
-        var q = document.getElementById('search-input');
-        if (q && !q.value.trim()) e.preventDefault();
+        if (!validateForm()) e.preventDefault();
       });
+      var input = document.getElementById('search-input');
+      if (input) input.addEventListener('input', validateForm);
     }
     var filterType = document.getElementById('filter-type');
     var tabs = Array.prototype.slice.call(document.querySelectorAll('.content-type-tabs input[name="type"]'));
@@ -229,7 +363,7 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
     function maybeSubmit() {
       var q = document.getElementById('search-input');
       if (form && q && q.value.trim()) {
-        form.submit();
+        if (validateForm()) form.submit();
       }
     }
     if (filterType && filterType instanceof HTMLSelectElement) {
@@ -378,6 +512,7 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
 .search-input:focus { border-color: rgba(168, 85, 247, 0.6); box-shadow: 0 0 25px rgba(168, 85, 247, 0.4), 0 0 40px rgba(34, 211, 238, 0.15); background: rgba(5, 8, 22, 0.95); }
 .search-button { padding: 1rem 2.5rem; font-size: 1.0625rem; font-weight: 600; color: #e0e7ff; background: linear-gradient(135deg, #22d3ee 0%, #a855f7 100%); border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 20px rgba(168, 85, 247, 0.35), 0 0 30px rgba(34, 211, 238, 0.2); }
 .search-button:hover { transform: translateY(-2px); box-shadow: 0 6px 30px rgba(168, 85, 247, 0.5), 0 0 45px rgba(34, 211, 238, 0.3); filter: brightness(1.1); }
+.search-input-error { margin: -0.25rem 0 0; font-size: 0.9375rem; color: #f87171; }
 .filter-toggle { align-self: flex-start; padding: 0.625rem 1.25rem; font-size: 0.9375rem; color: #a855f7; background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 10px; cursor: pointer; transition: all 0.3s ease; font-weight: 500; }
 .filter-toggle:hover { background: rgba(168, 85, 247, 0.2); border-color: rgba(168, 85, 247, 0.6); box-shadow: 0 0 15px rgba(168, 85, 247, 0.3); transform: translateY(-1px); }
 .filters-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; padding: 2rem; background: rgba(5, 8, 22, 0.8); border-radius: 16px; margin-top: 1rem; border: 1px solid rgba(34, 211, 238, 0.2); backdrop-filter: blur(10px); box-shadow: 0 0 30px rgba(0,0,0,0.2); }

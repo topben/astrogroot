@@ -834,6 +834,10 @@
       "integrity": "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="
     }
   },
+  "redirects": {
+    "https://esm.sh/@types/opencc-js@~1.0.3/index.d.ts": "https://esm.sh/@types/opencc-js@1.0.3/index.d.ts",
+    "https://esm.sh/opencc-js": "https://esm.sh/opencc-js@1.0.5"
+  },
   "remote": {
     "https://deno.land/std@0.224.0/assert/_constants.ts": "a271e8ef5a573f1df8e822a6eb9d09df064ad66a4390f21b3e31f820a38e0975",
     "https://deno.land/std@0.224.0/assert/assert.ts": "09d30564c09de846855b7b071e62b5974b001bb72a4b797958fe0660e7849834",
@@ -870,6 +874,8 @@
     "https://deno.land/std@0.224.0/internal/mod.ts": "534125398c8e7426183e12dc255bb635d94e06d0f93c60a297723abe69d3b22e",
     "https://esm.sh/*@preact/signals-core@1.5.1": "382e1e909d94792c655d35c72854d3a06167442bd2e81190e3a682194163d8c8",
     "https://esm.sh/*@preact/signals@1.2.2": "8b174b406f1c00fdf3930fbb4ddc556162e6fd0dfe84a5ec300e9ac1776cbf42",
+    "https://esm.sh/opencc-js@1.0.5": "7dc1b14ff344e5a999e2a79ffbaf83058a5c8ded7eefafcb0f61ce0c537015c7",
+    "https://esm.sh/opencc-js@1.0.5/denonext/opencc-js.mjs": "e7c7438389c5cfe0e4a8909bb9c61cde8477c7ced2ff0edc070f738cc1e2e205",
     "https://esm.sh/preact@10.19.6": "b414713e8e5175b4d58848b921c742a6adef005e9718a25b04337c10fbc04ae7",
     "https://esm.sh/preact@10.19.6/denonext/hooks.mjs": "3586360ccdf368c70cbcdb3c52821244a644c71f638dd8b77edc64650728d4d0",
     "https://esm.sh/preact@10.19.6/denonext/jsx-runtime.mjs": "4b9fa5f6c7dc849db73f0432a8d11f241327f3f7c3f2afd1b74c7df2e30bf7ad",

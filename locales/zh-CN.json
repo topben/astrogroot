@@ -38,6 +38,7 @@
     "found": "共 {count} 条结果",
     "noResults": "没有结果，请尝试其他关键词或筛选条件。",
     "error": "搜索失败",
+    "invalidLanguage": "此语言只接受简体中文关键词。",
     "relatedNotice": "找不到精确匹配，显示相关内容：",
     "relatedLabel": "相关",
     "page": "页",
@@ -71,8 +72,8 @@
     "homeDescription": "使用 AI 搜索探索天文、机器人论文、视频与 NASA 内容",
     "searchTitle": "搜索 - AstroGroot",
     "searchDescription": "搜索天文与机器人研究论文、视频与 NASA 内容",
-    "searchResultsTitle": ""{query}" - 搜索 - AstroGroot",
-    "searchResultsDescription": ""{query}" 的搜索结果，涵盖天文、机器人论文、视频与 NASA 内容",
+    "searchResultsTitle": "\"{query}\" - 搜索 - AstroGroot",
+    "searchResultsDescription": "\"{query}\" 的搜索结果，涵盖天文、机器人论文、视频与 NASA 内容",
     "notFoundTitle": "页面未找到 - AstroGroot",
     "notFoundDescription": "未找到您请求的页面。"
   },

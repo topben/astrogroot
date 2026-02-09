@@ -38,6 +38,7 @@
     "found": "Found {count} result(s)",
     "noResults": "No results. Try different keywords or filters.",
     "error": "Search failed",
+    "invalidLanguage": "Please enter English keywords only.",
     "relatedNotice": "No exact matches found. Showing related content:",
     "relatedLabel": "Related",
     "page": "Page",
