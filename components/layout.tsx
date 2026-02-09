@@ -378,7 +378,6 @@ export const Layout: FC<LayoutProps> = (props) => {
             ) : null}
           </div>
           <script
-            type="module"
             dangerouslySetInnerHTML={{
               __html: SEARCH_VALIDATION_SCRIPT,
             }}
