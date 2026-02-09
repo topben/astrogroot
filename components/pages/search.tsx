@@ -107,12 +107,8 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
         </div>
       </main>
       <script
-        type="module"
         dangerouslySetInnerHTML={{
           __html: `
-import { Converter } from "https://esm.sh/opencc-js";
-var s2t = Converter({ from: 'cn', to: 'tw' });
-var t2s = Converter({ from: 'tw', to: 'cn' });
 (function() {
   var el = document.getElementById('search-results');
   if (!el) return;
@@ -135,24 +131,18 @@ var t2s = Converter({ from: 'tw', to: 'cn' });
   var ofLabel = el.getAttribute('data-of-label') || 'of';
   var prevLabel = el.getAttribute('data-prev-label') || 'Previous';
   var nextLabel = el.getAttribute('data-next-label') || 'Next';
-  function hasLatin(value) { return /[A-Za-z]/.test(value); }
-  function hasCjk(value) { return /[\\u3400-\\u9FFF]/.test(value); }
-  function isTraditional(value) { return s2t(value) === value; }
-  function isSimplified(value) { return t2s(value) === value; }
   function isInvalidForLocale(value, locale) {
-    var text = value.trim();
-    if (!text) return false;
-    var latin = hasLatin(text);
-    var cjk = hasCjk(text);
-    if (locale === 'en') return !latin || cjk;
-    if (locale === 'zh-TW') return latin || !cjk || !isTraditional(text);
-    if (locale === 'zh-CN') return latin || !cjk || !isSimplified(text);
-    return false;
+    var validator = window.__astroSearchValidation;
+    if (!validator || typeof validator.isInvalidForLocale !== 'function') return false;
+    return validator.isInvalidForLocale(value, locale);
   }
   if (!q) return;
   if (isInvalidForLocale(q, locale)) {
     el.innerHTML = '';
-    el.insertAdjacentHTML('beforeend', '<p class="search-results-error">' + invalidMsg + '</p>');
+    var msg = document.createElement('p');
+    msg.className = 'search-results-error';
+    msg.textContent = invalidMsg;
+    el.appendChild(msg);
     return;
   }
   var urlParams = new URLSearchParams(window.location.search || '');

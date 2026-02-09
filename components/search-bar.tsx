@@ -109,26 +109,13 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
 .quick-link:hover { background: rgba(34, 211, 238, 0.2); color: #a855f7; }
 ` }} />
         <script
-          type="module"
           dangerouslySetInnerHTML={{
             __html: `
-import { Converter } from "https://esm.sh/opencc-js";
-var s2t = Converter({ from: 'cn', to: 'tw' });
-var t2s = Converter({ from: 'tw', to: 'cn' });
 (function() {
-  function hasLatin(value) { return /[A-Za-z]/.test(value); }
-  function hasCjk(value) { return /[\\u3400-\\u9FFF]/.test(value); }
-  function isTraditional(value) { return s2t(value) === value; }
-  function isSimplified(value) { return t2s(value) === value; }
   function isInvalidForLocale(value, locale) {
-    var text = value.trim();
-    if (!text) return false;
-    var latin = hasLatin(text);
-    var cjk = hasCjk(text);
-    if (locale === 'en') return !latin || cjk;
-    if (locale === 'zh-TW') return latin || !cjk || !isTraditional(text);
-    if (locale === 'zh-CN') return latin || !cjk || !isSimplified(text);
-    return false;
+    var validator = window.__astroSearchValidation;
+    if (!validator || typeof validator.isInvalidForLocale !== 'function') return false;
+    return validator.isInvalidForLocale(value, locale);
   }
   function showError(form, message) {
     var error = form.parentElement ? form.parentElement.querySelector('.search-input-error') : null;
@@ -155,13 +142,15 @@ var t2s = Converter({ from: 'tw', to: 'cn' });
     var msg = form.getAttribute('data-invalid-msg') || 'Please enter English keywords only.';
     var value = input.value || '';
     if (!value.trim()) { clearError(form); return true; }
-    if (isInvalidForLocale(value, locale)) { showError(form, msg); return false; }
-    clearError(form);
-    return true;
-  }
+      if (isInvalidForLocale(value, locale)) { showError(form, msg); return false; }
+      clearError(form);
+      return true;
+    }
   var forms = Array.prototype.slice.call(document.querySelectorAll('form[data-search-form="true"]'));
   forms.forEach(function(form) {
     form.addEventListener('submit', function(e) {
+      var input = form.querySelector('input[name="q"]');
+      if (input && !input.value.trim()) { clearError(form); e.preventDefault(); return; }
       if (!validateForm(form)) e.preventDefault();
     });
     var input = form.querySelector('input[name="q"]');
@@ -277,12 +266,8 @@ var t2s = Converter({ from: 'tw', to: 'cn' });
       </div>
     </form>
     <script
-      type="module"
       dangerouslySetInnerHTML={{
         __html: `
-import { Converter } from "https://esm.sh/opencc-js";
-var s2t = Converter({ from: 'cn', to: 'tw' });
-var t2s = Converter({ from: 'tw', to: 'cn' });
 (function() {
   function initFilters() {
     var toggle = document.getElementById('filter-toggle');
@@ -298,19 +283,10 @@ var t2s = Converter({ from: 'tw', to: 'cn' });
       });
     }
     var form = document.getElementById('search-form');
-    function hasLatin(value) { return /[A-Za-z]/.test(value); }
-    function hasCjk(value) { return /[\\u3400-\\u9FFF]/.test(value); }
-    function isTraditional(value) { return s2t(value) === value; }
-    function isSimplified(value) { return t2s(value) === value; }
     function isInvalidForLocale(value, locale) {
-      var text = value.trim();
-      if (!text) return false;
-      var latin = hasLatin(text);
-      var cjk = hasCjk(text);
-      if (locale === 'en') return !latin || cjk;
-      if (locale === 'zh-TW') return latin || !cjk || !isTraditional(text);
-      if (locale === 'zh-CN') return latin || !cjk || !isSimplified(text);
-      return false;
+      var validator = window.__astroSearchValidation;
+      if (!validator || typeof validator.isInvalidForLocale !== 'function') return false;
+      return validator.isInvalidForLocale(value, locale);
     }
     function showError(message) {
       if (!form) return;
@@ -346,6 +322,8 @@ var t2s = Converter({ from: 'tw', to: 'cn' });
     }
     if (form) {
       form.addEventListener('submit', function(e) {
+        var q = document.getElementById('search-input');
+        if (q && !q.value.trim()) { clearError(); e.preventDefault(); return; }
         if (!validateForm()) e.preventDefault();
       });
       var input = document.getElementById('search-input');

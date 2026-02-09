@@ -2,6 +2,7 @@ import type { FC, PropsWithChildren } from "hono/jsx";
 import { raw } from "hono/html";
 import type { Locale, LocaleDict } from "../lib/i18n.ts";
 import { SUPPORTED_LOCALES } from "../lib/i18n.ts";
+import { SEARCH_VALIDATION_SCRIPT } from "../lib/search-validation-script.ts";
 
 const SHARED_STYLES = `
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -376,6 +377,12 @@ export const Layout: FC<LayoutProps> = (props) => {
               </div>
             ) : null}
           </div>
+          <script
+            type="module"
+            dangerouslySetInnerHTML={{
+              __html: SEARCH_VALIDATION_SCRIPT,
+            }}
+          />
           <script
             dangerouslySetInnerHTML={{
               __html: `
