@@ -1,19 +1,20 @@
 #!/usr/bin/env -S deno run --allow-all
 
-import { db } from "../db/client.ts";
+import { db, client } from "../db/client.ts";
 import { papers, videos, nasaContent, translations } from "../db/schema.ts";
 import { eq } from "drizzle-orm";
+import { ensureFtsTables, ftsInsertPaper, ftsInsertVideo, ftsInsertNasa, ftsInsertTranslation } from "../lib/fts.ts";
 import { initializeCollections } from "../lib/vector.ts";
 import { processMultilingualContent } from "../lib/ai/processor.ts";
 import type { Locale } from "../lib/i18n.ts";
 import { SUPPORTED_LOCALES } from "../lib/i18n.ts";
-import { collectAstronomyPapers, collectRocketPapers, collectRoboticsPapers } from "../lib/collectors/arxiv.ts";
+import { collectAstronomyPapers, collectRocketPapers, collectRoboticsPapers, collectSatellitePapers, collectSpaceTravelPapers } from "../lib/collectors/arxiv.ts";
 import { collectNasaContent } from "../lib/collectors/nasa.ts";
 import {
   collectAstronomyVideos,
   fetchCompleteVideoData,
 } from "../lib/collectors/youtube.ts";
-import { collectRocketReports, collectRoboticsReports, type NtrsEntry } from "../lib/collectors/ntrs.ts";
+import { collectRocketReports, collectRoboticsReports, collectSatelliteReports, collectSpaceTravelReports, type NtrsEntry } from "../lib/collectors/ntrs.ts";
 
 const CRAWLER_INTERVAL_HOURS = Number(Deno.env.get("CRAWLER_INTERVAL_HOURS")) || 24;
 const MAX_ITEMS_PER_SOURCE = Number(Deno.env.get("MAX_ITEMS_PER_SOURCE")) || 50;
@@ -173,6 +174,10 @@ export interface CrawlerDeps {
   collectRocketReports: typeof collectRocketReports;
   collectRoboticsPapers: typeof collectRoboticsPapers;
   collectRoboticsReports: typeof collectRoboticsReports;
+  collectSatellitePapers: typeof collectSatellitePapers;
+  collectSatelliteReports: typeof collectSatelliteReports;
+  collectSpaceTravelPapers: typeof collectSpaceTravelPapers;
+  collectSpaceTravelReports: typeof collectSpaceTravelReports;
   collectAstronomyVideos: typeof collectAstronomyVideos;
   fetchCompleteVideoData: typeof fetchCompleteVideoData;
   collectNasaContent: typeof collectNasaContent;
@@ -188,6 +193,10 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
   const collectRocketReports_ = deps?.collectRocketReports ?? collectRocketReports;
   const collectRoboticsPapers_ = deps?.collectRoboticsPapers ?? collectRoboticsPapers;
   const collectRoboticsReports_ = deps?.collectRoboticsReports ?? collectRoboticsReports;
+  const collectSatellitePapers_ = deps?.collectSatellitePapers ?? collectSatellitePapers;
+  const collectSatelliteReports_ = deps?.collectSatelliteReports ?? collectSatelliteReports;
+  const collectSpaceTravelPapers_ = deps?.collectSpaceTravelPapers ?? collectSpaceTravelPapers;
+  const collectSpaceTravelReports_ = deps?.collectSpaceTravelReports ?? collectSpaceTravelReports;
   const collectAstronomyVideos_ = deps?.collectAstronomyVideos ?? collectAstronomyVideos;
   const fetchCompleteVideoData_ = deps?.fetchCompleteVideoData ?? fetchCompleteVideoData;
   const collectNasaContent_ = deps?.collectNasaContent ?? collectNasaContent;
@@ -205,6 +214,13 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
 
   // Initialize vector store collections
   const collections = await initCollections_();
+
+  // Initialize FTS5 full-text search tables (non-fatal)
+  try {
+    await ensureFtsTables(client);
+  } catch (error) {
+    console.warn("⚠️  FTS table init failed (non-fatal):", error);
+  }
 
   // Collect arXiv papers
   try {
@@ -274,6 +290,12 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
               categories: paper.categories.join(", "),
             },
           });
+        }
+
+        // Insert into FTS index
+        try { await ftsInsertPaper(client, { id: paper.id, title: paper.title, abstract: paper.summary, summary: baseSummary }); } catch { /* non-fatal */ }
+        for (const t of trans) {
+          try { await ftsInsertTranslation(client, { itemType: "paper", itemId: paper.id, lang: t.lang, title: t.title, summary: t.summary }); } catch { /* non-fatal */ }
         }
 
         stats.papersCollected++;
@@ -355,6 +377,12 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
           });
         }
 
+        // Insert into FTS index
+        try { await ftsInsertPaper(client, { id: paper.id, title: paper.title, abstract: paper.summary, summary: baseSummary }); } catch { /* non-fatal */ }
+        for (const t of trans) {
+          try { await ftsInsertTranslation(client, { itemType: "paper", itemId: paper.id, lang: t.lang, title: t.title, summary: t.summary }); } catch { /* non-fatal */ }
+        }
+
         stats.papersCollected++;
         console.log(`  ✅ Saved paper: ${paper.id}`);
       } catch (error) {
@@ -432,6 +460,12 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
           });
         }
 
+        // Insert into FTS index
+        try { await ftsInsertPaper(client, { id: paper.id, title: paper.title, abstract: paper.summary, summary: baseSummary }); } catch { /* non-fatal */ }
+        for (const t of trans) {
+          try { await ftsInsertTranslation(client, { itemType: "paper", itemId: paper.id, lang: t.lang, title: t.title, summary: t.summary }); } catch { /* non-fatal */ }
+        }
+
         stats.papersCollected++;
         console.log(`  ✅ Saved paper: ${paper.id}`);
       } catch (error) {
@@ -442,6 +476,172 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
   } catch (error) {
     console.error("❌ Error collecting robotics papers:", error);
     stats.errors.push(`Robotics arXiv collection: ${error}`);
+  }
+
+  // Collect satellite papers
+  try {
+    console.log("\n📡 Collecting satellite papers...");
+    const satellitePapers = await collectSatellitePapers_({
+      maxResults: MAX_ITEMS_PER_SOURCE,
+      daysBack: 1095, // 3 years
+    });
+
+    for (const paper of satellitePapers) {
+      try {
+        const existing = await db_.query.papers.findFirst({
+          where: eq(papers.id, paper.id),
+        });
+
+        if (existing) {
+          console.log(`  ⏭️  Paper ${paper.id} already exists, skipping`);
+          continue;
+        }
+
+        console.log(`  🤖 Processing paper: ${paper.title.substring(0, 50)}...`);
+        const { baseSummary, translations: trans } = await processMultilingual_({
+          text: paper.summary,
+          title: paper.title,
+          sourceType: "paper",
+        });
+
+        await db_.insert(papers).values({
+          id: paper.id,
+          title: paper.title,
+          authors: JSON.stringify(paper.authors),
+          abstract: paper.summary,
+          summary: baseSummary,
+          publishedDate: new Date(paper.published),
+          updatedDate: paper.updated ? new Date(paper.updated) : null,
+          categories: JSON.stringify(paper.categories),
+          pdfUrl: paper.pdfUrl,
+          arxivUrl: paper.arxivUrl,
+          processed: true,
+          vectorId: paper.id,
+        });
+
+        for (const t of trans) {
+          await db_.insert(translations).values({
+            itemType: "paper",
+            itemId: paper.id,
+            lang: t.lang,
+            title: t.title,
+            summary: t.summary,
+          });
+        }
+
+        for (const t of trans) {
+          const locale = t.lang as Locale;
+          if (!SUPPORTED_LOCALES.includes(locale)) continue;
+          await collections.papers[locale].add({
+            id: paper.id,
+            text: `${t.title}\n\n${t.summary}\n\n${paper.summary}`,
+            metadata: {
+              title: t.title,
+              published: paper.published,
+              categories: paper.categories.join(", "),
+            },
+          });
+        }
+
+        // Insert into FTS index
+        try { await ftsInsertPaper(client, { id: paper.id, title: paper.title, abstract: paper.summary, summary: baseSummary }); } catch { /* non-fatal */ }
+        for (const t of trans) {
+          try { await ftsInsertTranslation(client, { itemType: "paper", itemId: paper.id, lang: t.lang, title: t.title, summary: t.summary }); } catch { /* non-fatal */ }
+        }
+
+        stats.papersCollected++;
+        console.log(`  ✅ Saved paper: ${paper.id}`);
+      } catch (error) {
+        console.error(`  ❌ Error processing paper ${paper.id}:`, error);
+        stats.errors.push(`Satellite paper ${paper.id}: ${error}`);
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error collecting satellite papers:", error);
+    stats.errors.push(`Satellite arXiv collection: ${error}`);
+  }
+
+  // Collect space travel/settlement papers
+  try {
+    console.log("\n🏠 Collecting space travel/settlement papers...");
+    const spaceTravelPapers = await collectSpaceTravelPapers_({
+      maxResults: MAX_ITEMS_PER_SOURCE,
+      daysBack: 1095, // 3 years
+    });
+
+    for (const paper of spaceTravelPapers) {
+      try {
+        const existing = await db_.query.papers.findFirst({
+          where: eq(papers.id, paper.id),
+        });
+
+        if (existing) {
+          console.log(`  ⏭️  Paper ${paper.id} already exists, skipping`);
+          continue;
+        }
+
+        console.log(`  🤖 Processing paper: ${paper.title.substring(0, 50)}...`);
+        const { baseSummary, translations: trans } = await processMultilingual_({
+          text: paper.summary,
+          title: paper.title,
+          sourceType: "paper",
+        });
+
+        await db_.insert(papers).values({
+          id: paper.id,
+          title: paper.title,
+          authors: JSON.stringify(paper.authors),
+          abstract: paper.summary,
+          summary: baseSummary,
+          publishedDate: new Date(paper.published),
+          updatedDate: paper.updated ? new Date(paper.updated) : null,
+          categories: JSON.stringify(paper.categories),
+          pdfUrl: paper.pdfUrl,
+          arxivUrl: paper.arxivUrl,
+          processed: true,
+          vectorId: paper.id,
+        });
+
+        for (const t of trans) {
+          await db_.insert(translations).values({
+            itemType: "paper",
+            itemId: paper.id,
+            lang: t.lang,
+            title: t.title,
+            summary: t.summary,
+          });
+        }
+
+        for (const t of trans) {
+          const locale = t.lang as Locale;
+          if (!SUPPORTED_LOCALES.includes(locale)) continue;
+          await collections.papers[locale].add({
+            id: paper.id,
+            text: `${t.title}\n\n${t.summary}\n\n${paper.summary}`,
+            metadata: {
+              title: t.title,
+              published: paper.published,
+              categories: paper.categories.join(", "),
+            },
+          });
+        }
+
+        // Insert into FTS index
+        try { await ftsInsertPaper(client, { id: paper.id, title: paper.title, abstract: paper.summary, summary: baseSummary }); } catch { /* non-fatal */ }
+        for (const t of trans) {
+          try { await ftsInsertTranslation(client, { itemType: "paper", itemId: paper.id, lang: t.lang, title: t.title, summary: t.summary }); } catch { /* non-fatal */ }
+        }
+
+        stats.papersCollected++;
+        console.log(`  ✅ Saved paper: ${paper.id}`);
+      } catch (error) {
+        console.error(`  ❌ Error processing paper ${paper.id}:`, error);
+        stats.errors.push(`Space travel paper ${paper.id}: ${error}`);
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error collecting space travel papers:", error);
+    stats.errors.push(`Space travel arXiv collection: ${error}`);
   }
 
   // Collect NASA NTRS technical reports (rocket/propulsion focused)
@@ -513,6 +713,12 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
               source: "NASA NTRS",
             },
           });
+        }
+
+        // Insert into FTS index
+        try { await ftsInsertPaper(client, { id: reportId, title: report.title, abstract: report.abstract || "", summary: baseSummary }); } catch { /* non-fatal */ }
+        for (const t of trans) {
+          try { await ftsInsertTranslation(client, { itemType: "paper", itemId: reportId, lang: t.lang, title: t.title, summary: t.summary }); } catch { /* non-fatal */ }
         }
 
         stats.ntrsReportsCollected++;
@@ -595,6 +801,12 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
           });
         }
 
+        // Insert into FTS index
+        try { await ftsInsertPaper(client, { id: reportId, title: report.title, abstract: report.abstract || "", summary: baseSummary }); } catch { /* non-fatal */ }
+        for (const t of trans) {
+          try { await ftsInsertTranslation(client, { itemType: "paper", itemId: reportId, lang: t.lang, title: t.title, summary: t.summary }); } catch { /* non-fatal */ }
+        }
+
         stats.ntrsReportsCollected++;
         console.log(`  ✅ Saved NTRS robotics report: ${reportId}`);
       } catch (error) {
@@ -607,6 +819,178 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
   } catch (error) {
     console.error("❌ Error collecting robotics NTRS reports:", error);
     stats.errors.push(`NTRS robotics collection: ${error}`);
+  }
+
+  // Collect NASA NTRS satellite reports
+  try {
+    console.log("\n📡 Collecting NASA NTRS satellite reports...");
+    const satelliteReports = await collectSatelliteReports_({
+      maxResultsPerQuery: Math.floor(MAX_ITEMS_PER_SOURCE / 10),
+    });
+
+    for (const report of satelliteReports.slice(0, MAX_ITEMS_PER_SOURCE)) {
+      try {
+        const reportId = `ntrs-${report.id}`;
+
+        const existing = await db_.query.papers.findFirst({
+          where: eq(papers.id, reportId),
+        });
+
+        if (existing) {
+          console.log(`  ⏭️  NTRS ${report.id} already exists, skipping`);
+          continue;
+        }
+
+        console.log(`  🤖 Processing NTRS: ${report.title.substring(0, 50)}...`);
+        const { baseSummary, translations: trans } = await processMultilingual_({
+          text: report.abstract || report.title,
+          title: report.title,
+          sourceType: "paper",
+        });
+
+        await db_.insert(papers).values({
+          id: reportId,
+          title: report.title,
+          authors: JSON.stringify(report.authors),
+          abstract: report.abstract || "",
+          summary: baseSummary,
+          publishedDate: report.publishedDate ? new Date(report.publishedDate) : new Date(),
+          categories: JSON.stringify(report.subjectCategories),
+          pdfUrl: report.pdfUrl,
+          arxivUrl: report.ntrsUrl,
+          processed: true,
+          vectorId: reportId,
+        });
+
+        for (const t of trans) {
+          await db_.insert(translations).values({
+            itemType: "paper",
+            itemId: reportId,
+            lang: t.lang,
+            title: t.title,
+            summary: t.summary,
+          });
+        }
+
+        for (const t of trans) {
+          const locale = t.lang as Locale;
+          if (!SUPPORTED_LOCALES.includes(locale)) continue;
+          await collections.papers[locale].add({
+            id: reportId,
+            text: `${t.title}\n\n${t.summary}\n\n${report.abstract || ""}`,
+            metadata: {
+              title: t.title,
+              published: report.publishedDate || "",
+              categories: report.subjectCategories.join(", "),
+              source: "NASA NTRS",
+            },
+          });
+        }
+
+        // Insert into FTS index
+        try { await ftsInsertPaper(client, { id: reportId, title: report.title, abstract: report.abstract || "", summary: baseSummary }); } catch { /* non-fatal */ }
+        for (const t of trans) {
+          try { await ftsInsertTranslation(client, { itemType: "paper", itemId: reportId, lang: t.lang, title: t.title, summary: t.summary }); } catch { /* non-fatal */ }
+        }
+
+        stats.ntrsReportsCollected++;
+        console.log(`  ✅ Saved NTRS satellite report: ${reportId}`);
+      } catch (error) {
+        console.error(`  ❌ Error processing NTRS ${report.id}:`, error);
+        stats.errors.push(`NTRS satellite ${report.id}: ${error}`);
+      }
+    }
+
+    console.log(`\n✅ Collected satellite NTRS reports`);
+  } catch (error) {
+    console.error("❌ Error collecting satellite NTRS reports:", error);
+    stats.errors.push(`NTRS satellite collection: ${error}`);
+  }
+
+  // Collect NASA NTRS space travel reports
+  try {
+    console.log("\n🏠 Collecting NASA NTRS space travel reports...");
+    const spaceTravelReports = await collectSpaceTravelReports_({
+      maxResultsPerQuery: Math.floor(MAX_ITEMS_PER_SOURCE / 10),
+    });
+
+    for (const report of spaceTravelReports.slice(0, MAX_ITEMS_PER_SOURCE)) {
+      try {
+        const reportId = `ntrs-${report.id}`;
+
+        const existing = await db_.query.papers.findFirst({
+          where: eq(papers.id, reportId),
+        });
+
+        if (existing) {
+          console.log(`  ⏭️  NTRS ${report.id} already exists, skipping`);
+          continue;
+        }
+
+        console.log(`  🤖 Processing NTRS: ${report.title.substring(0, 50)}...`);
+        const { baseSummary, translations: trans } = await processMultilingual_({
+          text: report.abstract || report.title,
+          title: report.title,
+          sourceType: "paper",
+        });
+
+        await db_.insert(papers).values({
+          id: reportId,
+          title: report.title,
+          authors: JSON.stringify(report.authors),
+          abstract: report.abstract || "",
+          summary: baseSummary,
+          publishedDate: report.publishedDate ? new Date(report.publishedDate) : new Date(),
+          categories: JSON.stringify(report.subjectCategories),
+          pdfUrl: report.pdfUrl,
+          arxivUrl: report.ntrsUrl,
+          processed: true,
+          vectorId: reportId,
+        });
+
+        for (const t of trans) {
+          await db_.insert(translations).values({
+            itemType: "paper",
+            itemId: reportId,
+            lang: t.lang,
+            title: t.title,
+            summary: t.summary,
+          });
+        }
+
+        for (const t of trans) {
+          const locale = t.lang as Locale;
+          if (!SUPPORTED_LOCALES.includes(locale)) continue;
+          await collections.papers[locale].add({
+            id: reportId,
+            text: `${t.title}\n\n${t.summary}\n\n${report.abstract || ""}`,
+            metadata: {
+              title: t.title,
+              published: report.publishedDate || "",
+              categories: report.subjectCategories.join(", "),
+              source: "NASA NTRS",
+            },
+          });
+        }
+
+        // Insert into FTS index
+        try { await ftsInsertPaper(client, { id: reportId, title: report.title, abstract: report.abstract || "", summary: baseSummary }); } catch { /* non-fatal */ }
+        for (const t of trans) {
+          try { await ftsInsertTranslation(client, { itemType: "paper", itemId: reportId, lang: t.lang, title: t.title, summary: t.summary }); } catch { /* non-fatal */ }
+        }
+
+        stats.ntrsReportsCollected++;
+        console.log(`  ✅ Saved NTRS space travel report: ${reportId}`);
+      } catch (error) {
+        console.error(`  ❌ Error processing NTRS ${report.id}:`, error);
+        stats.errors.push(`NTRS space travel ${report.id}: ${error}`);
+      }
+    }
+
+    console.log(`\n✅ Collected space travel NTRS reports`);
+  } catch (error) {
+    console.error("❌ Error collecting space travel NTRS reports:", error);
+    stats.errors.push(`NTRS space travel collection: ${error}`);
   }
 
   // Collect YouTube videos
@@ -684,6 +1068,12 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
               published: videoData.metadata.publishedAt,
             },
           });
+        }
+
+        // Insert into FTS index
+        try { await ftsInsertVideo(client, { id: videoData.metadata.id, title: videoData.metadata.title, summary: baseSummary, description: videoData.metadata.description || "" }); } catch { /* non-fatal */ }
+        for (const t of trans) {
+          try { await ftsInsertTranslation(client, { itemType: "video", itemId: videoData.metadata.id, lang: t.lang, title: t.title, summary: t.summary }); } catch { /* non-fatal */ }
         }
 
         stats.videosCollected++;
@@ -767,6 +1157,12 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
             });
           }
 
+          // Insert into FTS index
+          try { await ftsInsertNasa(client, { id: apodId, title: nasaData.apod.title, summary: baseSummary, explanation: nasaData.apod.explanation, description: "" }); } catch { /* non-fatal */ }
+          for (const t of trans) {
+            try { await ftsInsertTranslation(client, { itemType: "nasa", itemId: apodId, lang: t.lang, title: t.title, summary: t.summary }); } catch { /* non-fatal */ }
+          }
+
           stats.nasaItemsCollected++;
           console.log(`  ✅ Saved APOD: ${apodId}`);
         }
@@ -839,6 +1235,12 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
               type: "library",
             },
           });
+        }
+
+        // Insert into FTS index
+        try { await ftsInsertNasa(client, { id: itemId, title: item.title, summary: baseSummary, explanation: "", description }); } catch { /* non-fatal */ }
+        for (const t of trans) {
+          try { await ftsInsertTranslation(client, { itemType: "nasa", itemId: itemId, lang: t.lang, title: t.title, summary: t.summary }); } catch { /* non-fatal */ }
         }
 
         stats.nasaItemsCollected++;
