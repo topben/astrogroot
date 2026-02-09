@@ -142,10 +142,10 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
     var msg = form.getAttribute('data-invalid-msg') || 'Please enter English keywords only.';
     var value = input.value || '';
     if (!value.trim()) { clearError(form); return true; }
-      if (isInvalidForLocale(value, locale)) { showError(form, msg); return false; }
-      clearError(form);
-      return true;
-    }
+    if (isInvalidForLocale(value, locale)) { showError(form, msg); return false; }
+    clearError(form);
+    return true;
+  }
   var forms = Array.prototype.slice.call(document.querySelectorAll('form[data-search-form="true"]'));
   forms.forEach(function(form) {
     form.addEventListener('submit', function(e) {
