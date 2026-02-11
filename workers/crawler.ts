@@ -227,7 +227,7 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
     console.log("\n📄 Collecting arXiv papers...");
     const arxivPapers = await collectAstronomyPapers_({
       maxResults: MAX_ITEMS_PER_SOURCE,
-      daysBack: 1095, // 3 years
+      daysBack: 1825, // 5 years
     });
 
     for (const paper of arxivPapers) {
@@ -317,7 +317,7 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
     console.log("\n🛰️ Collecting rocket/launch system papers...");
     const rocketPapers = await collectRocketPapers_({
       maxResults: MAX_ITEMS_PER_SOURCE,
-      daysBack: 1095, // 3 years
+      daysBack: 1825, // 5 years
     });
 
     for (const paper of rocketPapers) {
@@ -400,7 +400,7 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
     console.log("\n🤖 Collecting robotics papers...");
     const roboticsPapers = await collectRoboticsPapers_({
       maxResults: MAX_ITEMS_PER_SOURCE,
-      daysBack: 1095, // 3 years
+      daysBack: 1825, // 5 years
     });
 
     for (const paper of roboticsPapers) {
@@ -483,7 +483,7 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
     console.log("\n📡 Collecting satellite papers...");
     const satellitePapers = await collectSatellitePapers_({
       maxResults: MAX_ITEMS_PER_SOURCE,
-      daysBack: 1095, // 3 years
+      daysBack: 1825, // 5 years
     });
 
     for (const paper of satellitePapers) {
@@ -566,7 +566,7 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
     console.log("\n🏠 Collecting space travel/settlement papers...");
     const spaceTravelPapers = await collectSpaceTravelPapers_({
       maxResults: MAX_ITEMS_PER_SOURCE,
-      daysBack: 1095, // 3 years
+      daysBack: 1825, // 5 years
     });
 
     for (const paper of spaceTravelPapers) {
