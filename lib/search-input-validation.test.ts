@@ -16,7 +16,7 @@ Deno.test("search input validation: Traditional Chinese locale", () => {
   assertEquals(isInvalidForLocale("黑洞", "zh-TW"), false);
   assertEquals(isInvalidForLocale("简体中文", "zh-TW"), true);
   assertEquals(isInvalidForLocale("NASA 衛星", "zh-TW"), false);
-  assertEquals(isInvalidForLocale("robot", "zh-TW"), true);
+  assertEquals(isInvalidForLocale("robot", "zh-TW"), false);
   assertEquals(isInvalidForLocale("中文", "zh-TW"), false);
 });
 
@@ -25,6 +25,6 @@ Deno.test("search input validation: Simplified Chinese locale", () => {
   assertEquals(isInvalidForLocale("黑洞", "zh-CN"), false);
   assertEquals(isInvalidForLocale("繁體中文", "zh-CN"), true);
   assertEquals(isInvalidForLocale("SpaceX 火箭", "zh-CN"), false);
-  assertEquals(isInvalidForLocale("robot", "zh-CN"), true);
+  assertEquals(isInvalidForLocale("robot", "zh-CN"), false);
   assertEquals(isInvalidForLocale("中文", "zh-CN"), false);
 });

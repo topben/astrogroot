@@ -30,7 +30,7 @@ export function isInvalidForLocale(
     return false;
   }
 
-  if (!hasHan) return true;
+  if (!hasHan) return false;
   if (locale === "zh-TW") return s2t(han) !== han;
   if (locale === "zh-CN") return t2s(han) !== han;
   return false;

@@ -13,7 +13,7 @@ export const SEARCH_VALIDATION_SCRIPT = `
       if (hasLetter(text) && !hasLatinLetter(text)) return true;
       return false;
     }
-    if (!hasHan) return true;
+    if (!hasHan) return false;
     if (locale === "zh-TW") return window.__astroS2T ? window.__astroS2T(han) !== han : false;
     if (locale === "zh-CN") return window.__astroT2S ? window.__astroT2S(han) !== han : false;
     return false;
