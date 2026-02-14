@@ -508,9 +508,10 @@ export async function searchLibrary(params: {
     });
   }
 
-  // Fallback 1: when using zh-TW/zh-CN and locale-specific collection has no docs, query English collection
+  // Cross-language: when using zh-TW/zh-CN and query contains Latin text, also query English collection
+  const hasLatin = /[a-zA-Z]{2,}/.test(trimmed);
   let hasNoResults = paperIds.length === 0 && videoIds.length === 0 && nasaIds.length === 0;
-  if (locale !== "en" && hasNoResults) {
+  if (locale !== "en" && (hasNoResults || hasLatin)) {
     const [enPaperRes, enVideoRes, enNasaRes] = await Promise.all([
       searchPapers ? collections.papers["en"].query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
       searchVideos ? collections.videos["en"].query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
@@ -518,23 +519,32 @@ export async function searchLibrary(params: {
     ]);
     if (searchPapers && enPaperRes.ids[0]?.length) {
       enPaperRes.ids[0].forEach((id, i) => {
-        paperIds.push(id);
+        if (!paperScores[id]) paperIds.push(id);
         const dist = enPaperRes.distances?.[0]?.[i];
-        if (dist != null) paperScores[id] = 1 - dist / 2;
+        if (dist != null) {
+          const score = 1 - dist / 2;
+          paperScores[id] = Math.max(paperScores[id] ?? 0, score);
+        }
       });
     }
     if (searchVideos && enVideoRes.ids[0]?.length) {
       enVideoRes.ids[0].forEach((id, i) => {
-        videoIds.push(id);
+        if (!videoScores[id]) videoIds.push(id);
         const dist = enVideoRes.distances?.[0]?.[i];
-        if (dist != null) videoScores[id] = 1 - dist / 2;
+        if (dist != null) {
+          const score = 1 - dist / 2;
+          videoScores[id] = Math.max(videoScores[id] ?? 0, score);
+        }
       });
     }
     if (searchNasa && enNasaRes.ids[0]?.length) {
       enNasaRes.ids[0].forEach((id, i) => {
-        nasaIds.push(id);
+        if (!nasaScores[id]) nasaIds.push(id);
         const dist = enNasaRes.distances?.[0]?.[i];
-        if (dist != null) nasaScores[id] = 1 - dist / 2;
+        if (dist != null) {
+          const score = 1 - dist / 2;
+          nasaScores[id] = Math.max(nasaScores[id] ?? 0, score);
+        }
       });
     }
   }
@@ -582,13 +592,22 @@ export async function searchLibrary(params: {
   const needsNasaFallback = nasaIds.length === 0 || bestNasaScore < MIN_RELEVANCE_SCORE;
   const needsTranslationFallback = locale !== "en" && (needsPaperFallback || needsVideoFallback || needsNasaFallback);
 
-  // Build FTS query: original terms + Chinese→English expanded keywords
+  // Build FTS query: original terms + bidirectional keyword expansion
   const ftsTerms: string[] = [trimmed];
   const hasChinese = /[\u4e00-\u9fff]/.test(trimmed);
   if (hasChinese) {
     for (const [chinese, english] of Object.entries(keywordMappings)) {
       if (trimmed.includes(chinese)) {
         ftsTerms.push(...english);
+      }
+    }
+  }
+  // English→Chinese expansion: when query has Latin text, add matching Chinese keywords
+  if (hasLatin && locale !== "en") {
+    const lowerTrimmed = trimmed.toLowerCase();
+    for (const [chinese, englishTerms] of Object.entries(keywordMappings)) {
+      if (englishTerms.some((en) => lowerTrimmed.includes(en.toLowerCase()))) {
+        ftsTerms.push(chinese);
       }
     }
   }
@@ -836,6 +855,15 @@ export async function searchLibrary(params: {
     for (const [chinese, english] of Object.entries(keywordMappings)) {
       if (lower.includes(chinese.toLowerCase()) || lower.includes(chinese)) {
         terms.push(...english);
+      }
+    }
+
+    // English→Chinese expansion for cross-language reranking
+    if (hasLatin && locale !== "en") {
+      for (const [chinese, englishTerms] of Object.entries(keywordMappings)) {
+        if (englishTerms.some((en) => lower.includes(en.toLowerCase()))) {
+          terms.push(chinese);
+        }
       }
     }
 
