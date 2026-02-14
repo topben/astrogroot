@@ -176,6 +176,14 @@ app.get("/static/favicon.png", async (c) => {
   return c.body(file, 200);
 });
 
+app.get("/favicon.ico", async (c) => {
+  const path = new URL("./static/favicon.png", import.meta.url);
+  const file = await Deno.readFile(path);
+  c.header("Content-Type", "image/png");
+  c.header("Cache-Control", STATIC_CACHE_CONTROL);
+  return c.body(file, 200);
+});
+
 app.get("/robots.txt", (c) => {
   const origin = new URL(c.req.url).origin;
   const body = `User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: ${origin}/sitemap.xml\n`;
