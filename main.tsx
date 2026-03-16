@@ -41,6 +41,11 @@ const STATIC_CACHE_CONTROL = "public, max-age=604800";
 app.use("*", secureHeaders());
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Global Rate Limit (covers all paths including unmatched 404s)
+// ─────────────────────────────────────────────────────────────────────────────
+app.use("*", rateLimit(RATE_LIMITS.global));
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Rate Limiting per Route Group
 // ─────────────────────────────────────────────────────────────────────────────
 app.use("/", rateLimit(RATE_LIMITS.html));
@@ -659,6 +664,13 @@ app.post("/api/mcp", async (c) => {
 
 // 404
 app.notFound(async (c) => {
+  // For clearly non-browser requests (no Accept header with text/html), skip
+  // the full page render to avoid wasting resources on scanners/bots.
+  const accept = c.req.header("Accept") ?? "";
+  if (!accept.includes("text/html")) {
+    return c.text("Not Found", 404);
+  }
+
   const locale = getLocaleFromRequest(
     c.req.query("lang"),
     c.req.header("Accept-Language"),

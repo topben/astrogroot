@@ -79,38 +79,46 @@ export function rateLimit(config: RateLimitConfig): MiddlewareHandler {
 
     const windowKey = getWindowKey(windowSec);
     const key = ["ratelimit", tier, ip, windowKey];
-    const kv = await getKv();
 
-    // Atomic check-and-set with one retry on contention
     let count = 0;
-    let success = false;
+    try {
+      const kv = await getKv();
 
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const entry = await kv.get<number>(key);
-      const currentCount = entry.value ?? 0;
+      // Atomic check-and-set with one retry on contention
+      let success = false;
 
-      // Calculate TTL - expire at end of current window plus buffer
-      const windowEndSec = (windowKey + 1) * windowSec;
-      const nowSec = Math.floor(Date.now() / 1000);
-      const ttlMs = Math.max((windowEndSec - nowSec + 1) * 1000, 1000);
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const entry = await kv.get<number>(key);
+        const currentCount = entry.value ?? 0;
 
-      const result = await kv.atomic()
-        .check(entry)
-        .set(key, currentCount + 1, { expireIn: ttlMs })
-        .commit();
+        // Calculate TTL - expire at end of current window plus buffer
+        const windowEndSec = (windowKey + 1) * windowSec;
+        const nowSec = Math.floor(Date.now() / 1000);
+        const ttlMs = Math.max((windowEndSec - nowSec + 1) * 1000, 1000);
 
-      if (result.ok) {
-        count = currentCount + 1;
-        success = true;
-        break;
+        const result = await kv.atomic()
+          .check(entry)
+          .set(key, currentCount + 1, { expireIn: ttlMs })
+          .commit();
+
+        if (result.ok) {
+          count = currentCount + 1;
+          success = true;
+          break;
+        }
+        // Contention - retry
       }
-      // Contention - retry
-    }
 
-    // If atomic failed twice, read current value
-    if (!success) {
-      const entry = await kv.get<number>(key);
-      count = (entry.value ?? 0) + 1;
+      // If atomic failed twice, read current value
+      if (!success) {
+        const entry = await kv.get<number>(key);
+        count = (entry.value ?? 0) + 1;
+      }
+    } catch (err) {
+      // KV unavailable - fail open to avoid 500s on legitimate traffic
+      console.error(`[rate-limit] KV error on tier=${tier}:`, err);
+      await next();
+      return;
     }
 
     // Calculate reset time (end of current window)

@@ -24,6 +24,8 @@ export const REQUEST_TIMEOUT_MS = 30000;
 
 // Rate limit configurations per tier
 export const RATE_LIMITS: Record<string, RateLimitConfig> = {
+  // Global baseline - applies to all requests before route-specific limits
+  global: { tier: "global", limit: 120, windowSec: 60 },
   // HTML pages - normal browsing
   html: { tier: "html", limit: 60, windowSec: 60 },
   // API endpoints - search, stats
