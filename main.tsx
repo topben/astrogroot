@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --allow-all --unstable-kv
+#!/usr/bin/env -S deno run --allow-all
 
 import { Hono } from "hono";
 import { secureHeaders } from "hono/secure-headers";

@@ -24,4 +24,4 @@ RUN deno cache workers/crawler.ts
 EXPOSE 8080
 
 # Default command: run crawler in scheduled mode
-CMD ["run", "--allow-all", "--unstable-kv", "workers/crawler.ts", "scheduled"]
+CMD ["run", "--allow-all", "workers/crawler.ts", "scheduled"]
