@@ -36,6 +36,7 @@
     "lib": ["deno.window", "dom", "dom.iterable"],
     "strict": true
   },
+  "exclude": ["scripts/"],
   "fmt": {
     "useTabs": false,
     "lineWidth": 100,
