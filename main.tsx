@@ -420,6 +420,10 @@ app.get("/detail", async (c) => {
   const dict = await loadDictionary(locale);
   const canonicalUrl = buildCanonicalUrl(c.req.url);
   const alternateUrls = buildAlternateUrls(c.req.url);
+  // Sanitize returnUrl: only allow relative URLs back to /search
+  const rawReturnUrl = c.req.query("returnUrl") ?? "";
+  const returnUrl = rawReturnUrl.startsWith("/search") ? rawReturnUrl : undefined;
+
   if (!id || !type) {
     setHtmlHeaders(c, locale);
     return c.html(
@@ -480,6 +484,7 @@ app.get("/detail", async (c) => {
         publishedDate={row.publishedDate ? new Date(row.publishedDate).toISOString().slice(0, 10) : undefined}
         summaryHtml={renderMarkdown(summary)}
         sourceUrl={row.arxivUrl ?? row.pdfUrl ?? undefined}
+        returnUrl={returnUrl}
         locale={locale}
         dict={dict}
         pageTitle={pageTitle}
@@ -533,6 +538,7 @@ app.get("/detail", async (c) => {
         publishedDate={row.publishedDate ? new Date(row.publishedDate).toISOString().slice(0, 10) : undefined}
         summaryHtml={renderMarkdown(summary)}
         sourceUrl={row.videoUrl}
+        returnUrl={returnUrl}
         locale={locale}
         dict={dict}
         pageTitle={pageTitle}
@@ -599,6 +605,7 @@ app.get("/detail", async (c) => {
         publishedDate={row.date ? new Date(row.date).toISOString().slice(0, 10) : undefined}
         summaryHtml={renderMarkdown(summary)}
         sourceUrl={row.url}
+        returnUrl={returnUrl}
         locale={locale}
         dict={dict}
         pageTitle={pageTitle}

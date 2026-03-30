@@ -11,6 +11,7 @@ interface SearchBarProps {
   dict?: LocaleDict;
   compact?: boolean; // For dashboard mini search bar
   showSuggestions?: boolean; // Show quick search examples
+  hideFilters?: boolean; // Hide the Show Filters button and panel (e.g. when sidebar has filters)
 }
 
 // Quick search examples
@@ -35,6 +36,7 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
   const locale = props.locale ?? "en";
   const compact = props.compact ?? false;
   const showSuggestions = props.showSuggestions ?? false;
+  const hideFilters = props.hideFilters ?? false;
   const d = props.dict;
   const placeholder = d?.search.placeholder ?? "Search astronomy papers, videos, and NASA content...";
   const buttonLabel = d?.search.button ?? "Search";
@@ -53,6 +55,8 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
   const dateToLabel = d?.search.dateTo ?? "Date To:";
   const pickDateLabel = d?.calendar.pickDate ?? "Pick date";
   const tryLabel = d?.search.try ?? "Try:";
+  const recentLabel = d?.search.recentSearches ?? "Recent:";
+  const clearRecentLabel = d?.search.clearRecent ?? "Clear";
   const invalidLanguage = d?.search.invalidLanguage ?? "Please enter English keywords only.";
   const formAction = "/search";
 
@@ -77,16 +81,25 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
             placeholder={placeholder}
             class="search-input-compact"
             autocomplete="off"
+            autofocus
           />
           <button type="submit" class="search-button-compact">
-            🔍
+            {buttonLabel}
           </button>
         </form>
         <p class="search-input-error search-input-error-compact" hidden></p>
+        <div
+          id="recent-searches-compact"
+          class="recent-searches-compact"
+          hidden
+          data-recent-label={recentLabel}
+          data-clear-label={clearRecentLabel}
+          data-locale={locale}
+        ></div>
         {showSuggestions && (
           <div class="quick-searches-compact">
             <span class="quick-label">{tryLabel}</span>
-            {quickSearches.slice(0, 3).map((term) => (
+            {quickSearches.map((term) => (
               <a href={`/search?q=${encodeURIComponent(term)}&lang=${locale}`} class="quick-link">
                 {term}
               </a>
@@ -94,15 +107,20 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
           </div>
         )}
         <style dangerouslySetInnerHTML={{ __html: `
-.search-bar-compact { max-width: 500px; margin: 0 auto; }
+.search-bar-compact { max-width: 650px; margin: 0 auto; }
 .search-form-compact { display: flex; gap: 0.5rem; }
-.search-input-compact { flex: 1; padding: 0.75rem 1rem; font-size: 1rem; background: rgba(5, 8, 22, 0.8); border: 2px solid rgba(34, 211, 238, 0.3); border-radius: 10px; outline: none; color: #e0e7ff; transition: all 0.3s ease; }
+.search-input-compact { flex: 1; padding: 0.75rem 1rem; font-size: 1rem; background: rgba(5, 8, 22, 0.8); border: 2px solid rgba(34, 211, 238, 0.3); border-radius: 10px; outline: none; color: #e0e7ff; transition: all 0.3s ease; backdrop-filter: blur(10px); }
 .search-input-compact:focus { border-color: rgba(168, 85, 247, 0.6); box-shadow: 0 0 20px rgba(168, 85, 247, 0.3); }
 .search-input-compact::placeholder { color: #64748b; }
-.search-button-compact { padding: 0.75rem 1.25rem; font-size: 1.125rem; background: linear-gradient(135deg, #22d3ee 0%, #a855f7 100%); border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; }
+.search-button-compact { padding: 0.75rem 1.5rem; font-size: 0.9375rem; font-weight: 600; color: #e0e7ff; background: linear-gradient(135deg, #22d3ee 0%, #a855f7 100%); border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; white-space: nowrap; }
 .search-button-compact:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4); }
 .search-input-error { margin: 0.5rem 0 0; font-size: 0.875rem; color: #f87171; }
 .search-input-error-compact { text-align: center; }
+.recent-searches-compact { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.75rem; justify-content: center; }
+.recent-link { font-size: 0.875rem; color: #a855f7; text-decoration: none; padding: 0.25rem 0.75rem; background: rgba(168, 85, 247, 0.1); border-radius: 20px; border: 1px solid rgba(168, 85, 247, 0.25); transition: all 0.2s ease; }
+.recent-link:hover { background: rgba(168, 85, 247, 0.2); color: #c4b5fd; }
+.recent-clear-btn { font-size: 0.8rem; color: #475569; background: none; border: none; cursor: pointer; padding: 0.25rem 0.5rem; text-decoration: underline; transition: color 0.2s ease; }
+.recent-clear-btn:hover { color: #94a3b8; }
 .quick-searches-compact { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.75rem; justify-content: center; }
 .quick-label { font-size: 0.875rem; color: #64748b; }
 .quick-link { font-size: 0.875rem; color: #22d3ee; text-decoration: none; padding: 0.25rem 0.75rem; background: rgba(34, 211, 238, 0.1); border-radius: 20px; transition: all 0.2s ease; }
@@ -112,6 +130,39 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
           dangerouslySetInnerHTML={{
             __html: `
 (function() {
+  var RECENT_KEY = 'astro-recent-v1';
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function saveRecent(query) {
+    try {
+      var items = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+      items = [query].concat(items.filter(function(s) { return s !== query; })).slice(0, 5);
+      localStorage.setItem(RECENT_KEY, JSON.stringify(items));
+    } catch(e) {}
+  }
+  function renderRecent() {
+    var container = document.getElementById('recent-searches-compact');
+    if (!container) return;
+    var items;
+    try { items = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); } catch(e) { items = []; }
+    if (!items.length) { container.hidden = true; return; }
+    var locale = container.getAttribute('data-locale') || 'en';
+    var recentLabel = container.getAttribute('data-recent-label') || 'Recent:';
+    var clearLabel = container.getAttribute('data-clear-label') || 'Clear';
+    var html = '<span class="quick-label">' + esc(recentLabel) + '</span>';
+    items.forEach(function(term) {
+      html += '<a href="/search?q=' + encodeURIComponent(term) + '&lang=' + encodeURIComponent(locale) + '" class="recent-link">' + esc(term) + '</a>';
+    });
+    html += '<button type="button" class="recent-clear-btn">' + esc(clearLabel) + '</button>';
+    container.innerHTML = html;
+    container.hidden = false;
+    container.querySelector('.recent-clear-btn').addEventListener('click', function() {
+      try { localStorage.removeItem(RECENT_KEY); } catch(e) {}
+      container.hidden = true;
+      container.innerHTML = '';
+    });
+  }
   function isInvalidForLocale(value, locale) {
     var validator = window.__astroSearchValidation;
     if (!validator || typeof validator.isInvalidForLocale !== 'function') return false;
@@ -119,19 +170,13 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
   }
   function showError(form, message) {
     var error = form.parentElement ? form.parentElement.querySelector('.search-input-error') : null;
-    if (error) {
-      error.textContent = message;
-      error.hidden = false;
-    }
+    if (error) { error.textContent = message; error.hidden = false; }
     var input = form.querySelector('input[name="q"]');
     if (input) input.setAttribute('aria-invalid', 'true');
   }
   function clearError(form) {
     var error = form.parentElement ? form.parentElement.querySelector('.search-input-error') : null;
-    if (error) {
-      error.textContent = '';
-      error.hidden = true;
-    }
+    if (error) { error.textContent = ''; error.hidden = true; }
     var input = form.querySelector('input[name="q"]');
     if (input) input.removeAttribute('aria-invalid');
   }
@@ -146,16 +191,25 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
     clearError(form);
     return true;
   }
-  var forms = Array.prototype.slice.call(document.querySelectorAll('form[data-search-form="true"]'));
-  forms.forEach(function(form) {
-    form.addEventListener('submit', function(e) {
+  function init() {
+    renderRecent();
+    var forms = Array.prototype.slice.call(document.querySelectorAll('form[data-search-form="true"]'));
+    forms.forEach(function(form) {
+      form.addEventListener('submit', function(e) {
+        var input = form.querySelector('input[name="q"]');
+        if (input && !input.value.trim()) { clearError(form); e.preventDefault(); return; }
+        if (!validateForm(form)) { e.preventDefault(); return; }
+        if (input && input.value.trim()) saveRecent(input.value.trim());
+      });
       var input = form.querySelector('input[name="q"]');
-      if (input && !input.value.trim()) { clearError(form); e.preventDefault(); return; }
-      if (!validateForm(form)) e.preventDefault();
+      if (input) input.addEventListener('input', function() { validateForm(form); });
     });
-    var input = form.querySelector('input[name="q"]');
-    if (input) input.addEventListener('input', function() { validateForm(form); });
-  });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
 `,
           }}
@@ -224,46 +278,50 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
         </div>
       )}
 
-      <button type="button" class="filter-toggle" id="filter-toggle" aria-expanded="false" data-show={showFilters} data-hide={hideFilters}>
-        {showFilters}
-      </button>
-      <div class="filters-panel" id="filters-panel" hidden>
-        <div class="filter-group">
-          <label for="filter-type">{contentType}</label>
-          <select name="typeFilter" id="filter-type" defaultValue={type}>
-            <option value="all">{allContent}</option>
-            <option value="papers">{papersLabel}</option>
-            <option value="videos">{videosLabel}</option>
-            <option value="nasa">{nasaLabel}</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="filter-sort">{sortByLabel}</label>
-          <select name="sortBy" id="filter-sort" defaultValue={sortBy}>
-            <option value="relevance">{relevanceLabel}</option>
-            <option value="date">{dateLabel}</option>
-            <option value="title">{titleLabel}</option>
-          </select>
-        </div>
-        <div class="filter-group date-picker-group">
-          <label for="filter-dateFrom">{dateFromLabel}</label>
-          <div class="date-picker-wrap">
-            <input type="date" name="dateFrom" id="filter-dateFrom" class="date-input" defaultValue={dateFrom} />
-            <button type="button" class="calendar-btn" data-target="filter-dateFrom" title={pickDateLabel} aria-label={pickDateLabel}>
-              <span class="calendar-btn-icon" aria-hidden="true">📅</span>
-            </button>
+      {!hideFilters && (
+        <>
+          <button type="button" class="filter-toggle" id="filter-toggle" aria-expanded="false" data-show={showFilters} data-hide={hideFilters}>
+            {showFilters}
+          </button>
+          <div class="filters-panel" id="filters-panel" hidden>
+            <div class="filter-group">
+              <label for="filter-type">{contentType}</label>
+              <select name="typeFilter" id="filter-type" defaultValue={type}>
+                <option value="all">{allContent}</option>
+                <option value="papers">{papersLabel}</option>
+                <option value="videos">{videosLabel}</option>
+                <option value="nasa">{nasaLabel}</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filter-sort">{sortByLabel}</label>
+              <select name="sortBy" id="filter-sort" defaultValue={sortBy}>
+                <option value="relevance">{relevanceLabel}</option>
+                <option value="date">{dateLabel}</option>
+                <option value="title">{titleLabel}</option>
+              </select>
+            </div>
+            <div class="filter-group date-picker-group">
+              <label for="filter-dateFrom">{dateFromLabel}</label>
+              <div class="date-picker-wrap">
+                <input type="date" name="dateFrom" id="filter-dateFrom" class="date-input" defaultValue={dateFrom} />
+                <button type="button" class="calendar-btn" data-target="filter-dateFrom" title={pickDateLabel} aria-label={pickDateLabel}>
+                  <span class="calendar-btn-icon" aria-hidden="true">📅</span>
+                </button>
+              </div>
+            </div>
+            <div class="filter-group date-picker-group">
+              <label for="filter-dateTo">{dateToLabel}</label>
+              <div class="date-picker-wrap">
+                <input type="date" name="dateTo" id="filter-dateTo" class="date-input" defaultValue={dateTo} />
+                <button type="button" class="calendar-btn" data-target="filter-dateTo" title={pickDateLabel} aria-label={pickDateLabel}>
+                  <span class="calendar-btn-icon" aria-hidden="true">📅</span>
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="filter-group date-picker-group">
-          <label for="filter-dateTo">{dateToLabel}</label>
-          <div class="date-picker-wrap">
-            <input type="date" name="dateTo" id="filter-dateTo" class="date-input" defaultValue={dateTo} />
-            <button type="button" class="calendar-btn" data-target="filter-dateTo" title={pickDateLabel} aria-label={pickDateLabel}>
-              <span class="calendar-btn-icon" aria-hidden="true">📅</span>
-            </button>
-          </div>
-        </div>
-      </div>
+        </>
+      )}
     </form>
     <script
       dangerouslySetInnerHTML={{

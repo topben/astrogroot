@@ -39,6 +39,9 @@ export interface LocaleDict {
     invalidLanguage: string;
     relatedNotice: string;
     relatedLabel: string;
+    recentSearches: string;
+    clearRecent: string;
+    dateRange: string;
     page: string;
     of: string;
     prev: string;

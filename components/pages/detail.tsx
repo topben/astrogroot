@@ -8,6 +8,7 @@ export interface DetailPageProps {
   publishedDate?: string;
   summaryHtml: string;
   sourceUrl?: string;
+  returnUrl?: string; // Search URL to return to (preserves query + filters)
   locale?: Locale;
   dict?: LocaleDict;
   pageTitle: string;
@@ -24,7 +25,8 @@ export const DetailPage: FC<DetailPageProps> = (props) => {
   const backLabel = d?.common.back ?? "Back";
   const summaryLabel = d?.common.fullSummary ?? "Full Summary";
   const sourceLabel = d?.common.source ?? "Source";
-  const searchHref = locale !== "en" ? `/search?lang=${encodeURIComponent(locale)}` : "/search";
+  const defaultSearchHref = locale !== "en" ? `/search?lang=${encodeURIComponent(locale)}` : "/search";
+  const searchHref = props.returnUrl ?? defaultSearchHref;
   return (
     <Layout
       pageClass="detail-page"
