@@ -36,7 +36,7 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
   const locale = props.locale ?? "en";
   const compact = props.compact ?? false;
   const showSuggestions = props.showSuggestions ?? false;
-  const hideFilters = props.hideFilters ?? false;
+  const noFiltersPanel = props.hideFilters ?? false;
   const d = props.dict;
   const placeholder = d?.search.placeholder ?? "Search astronomy papers, videos, and NASA content...";
   const buttonLabel = d?.search.button ?? "Search";
@@ -278,7 +278,7 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
         </div>
       )}
 
-      {!hideFilters && (
+      {!noFiltersPanel && (
         <>
           <button type="button" class="filter-toggle" id="filter-toggle" aria-expanded="false" data-show={showFilters} data-hide={hideFilters}>
             {showFilters}
