@@ -80,6 +80,11 @@
     "notFoundTitle": "找不到頁面 - AstroGroot",
     "notFoundDescription": "找不到您要的頁面。"
   },
+  "tools": {
+    "title": "實用工具",
+    "rocketExamTitle": "初級火箭發射執照 — 模擬考",
+    "rocketExamDesc": "2026 台灣盃火箭競賽初級發射執照模擬考 — 40 題、30 分鐘,附教學指南與完整題庫。"
+  },
   "error404": {
     "title": "迷失太空",
     "message": "找不到您要的頁面。",

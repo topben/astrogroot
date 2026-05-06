@@ -55,6 +55,26 @@ export const DashboardPage: FC<DashboardPageProps> = (props) => {
           <SearchBar compact={true} showSuggestions={true} locale={locale} dict={d} />
         </section>
 
+        <section class="info-section">
+          <h2 class="section-title">{d?.tools?.title ?? "Tools"}</h2>
+          <a
+            href="/rocket-exam"
+            class="stat-card"
+            style="display:flex;align-items:center;gap:1.25rem;text-decoration:none;text-align:left;padding:1.5rem 2rem;"
+          >
+            <div class="stat-icon" style="font-size:2.5rem;margin:0;">🚀</div>
+            <div style="flex:1;">
+              <div style="font-size:1.25rem;font-weight:600;color:#e0e7ff;margin-bottom:0.35rem;">
+                {d?.tools?.rocketExamTitle ?? "Rocket Launch License — Mock Exam"}
+              </div>
+              <div style="font-size:0.95rem;color:#a5b4fc;line-height:1.55;">
+                {d?.tools?.rocketExamDesc ?? "2026 Taiwan Cup Level-1 launch license practice — 40 questions, 30 minutes, with a study guide and the full question bank."}
+              </div>
+            </div>
+            <div style="font-size:1.5rem;color:#22d3ee;">→</div>
+          </a>
+        </section>
+
         <section class="stats-section">
           <h2 class="section-title">{d?.stats.title ?? "Library Statistics"}</h2>
           <div class="stats-grid">

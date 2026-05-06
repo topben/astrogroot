@@ -74,6 +74,11 @@ export interface LocaleDict {
     notFoundTitle: string;
     notFoundDescription: string;
   };
+  tools?: {
+    title: string;
+    rocketExamTitle: string;
+    rocketExamDesc: string;
+  };
   error404: { title: string; message: string; returnButton: string };
   calendar: {
     weekdays: [string, string, string, string, string, string, string];
