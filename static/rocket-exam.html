@@ -1,0 +1,1630 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>2026 Taiwan Cup Rocket Competition · Level-1 Launch License Mock Exam</title>
+<link rel="icon" href="/static/favicon.png" type="image/png" />
+<style>
+  :root {
+    --bg: #0b1020;
+    --bg-elev: #131a32;
+    --bg-card: #182142;
+    --border: #283156;
+    --text: #e6ecff;
+    --muted: #9aa6cf;
+    --accent: #5b8cff;
+    --accent-2: #7b5bff;
+    --good: #43d39e;
+    --bad: #ff6b6b;
+    --warn: #ffc857;
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", "Inter", sans-serif;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(91,140,255,.15), transparent 60%),
+      radial-gradient(900px 600px at -10% 110%, rgba(123,91,255,.12), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 20px 80px; }
+  header.app {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px; gap: 16px; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid; place-items: center; color: white; font-weight: 800; font-size: 22px;
+    box-shadow: var(--shadow);
+  }
+  .brand h1 { margin: 0; font-size: 18px; letter-spacing: .5px; }
+  .brand p { margin: 0; color: var(--muted); font-size: 13px; }
+  .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .back-link {
+    color: var(--muted); text-decoration: none; font-size: 13px;
+    padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-elev);
+  }
+  .back-link:hover { color: var(--text); border-color: var(--accent); }
+
+  .lang-toggle { display: flex; gap: 4px; background: var(--bg-elev); padding: 4px; border-radius: 10px; border: 1px solid var(--border); }
+  .lang-toggle button {
+    border: 0; background: transparent; color: var(--muted);
+    padding: 6px 12px; font-size: 13px; border-radius: 7px; cursor: pointer; font-weight: 600;
+  }
+  .lang-toggle button.active { background: var(--bg-card); color: var(--text); box-shadow: var(--shadow); }
+
+  nav.tabs { display: flex; gap: 4px; background: var(--bg-elev); padding: 4px; border-radius: 12px; border: 1px solid var(--border); }
+  nav.tabs button {
+    border: 0; background: transparent; color: var(--muted);
+    padding: 8px 16px; font-size: 14px; border-radius: 8px; cursor: pointer; font-weight: 600;
+  }
+  nav.tabs button.active { background: var(--bg-card); color: var(--text); box-shadow: var(--shadow); }
+  nav.tabs button:hover:not(.active) { color: var(--text); }
+
+  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow); }
+  .grid { display: grid; gap: 16px; }
+  .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (max-width: 800px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  }
+
+  .stat { display: flex; flex-direction: column; gap: 4px; padding: 18px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; }
+  .stat .label { color: var(--muted); font-size: 13px; }
+  .stat .value { font-size: 24px; font-weight: 700; }
+  .stat .hint { color: var(--muted); font-size: 12px; }
+
+  h2 { margin: 28px 0 12px; font-size: 22px; }
+  h3 { margin: 20px 0 10px; font-size: 17px; }
+  p.lead { color: var(--muted); margin-top: 0; font-size: 15px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 0; cursor: pointer; font-weight: 600; font-size: 15px;
+    padding: 12px 20px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: white; box-shadow: 0 4px 14px rgba(91,140,255,.3);
+    transition: transform .08s ease, box-shadow .2s ease;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(91,140,255,.4); }
+  .btn:active { transform: translateY(0); }
+  .btn.secondary { background: var(--bg-elev); color: var(--text); border: 1px solid var(--border); box-shadow: none; }
+  .btn.secondary:hover { background: var(--bg-card); }
+  .btn.ghost { background: transparent; color: var(--muted); box-shadow: none; }
+  .btn.ghost:hover { color: var(--text); background: var(--bg-elev); }
+  .btn.danger { background: var(--bad); }
+  .btn.success { background: var(--good); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--bg-elev); color: var(--muted); border: 1px solid var(--border); }
+  .pill.good { color: var(--good); border-color: rgba(67,211,158,.4); background: rgba(67,211,158,.08); }
+  .pill.bad { color: var(--bad); border-color: rgba(255,107,107,.4); background: rgba(255,107,107,.08); }
+  .pill.warn { color: var(--warn); border-color: rgba(255,200,87,.4); background: rgba(255,200,87,.08); }
+  .pill.accent { color: var(--accent); border-color: rgba(91,140,255,.4); background: rgba(91,140,255,.08); }
+
+  .hero { text-align: center; padding: 32px 20px 12px; }
+  .hero h2 {
+    font-size: 36px; line-height: 1.2; margin: 0 0 12px;
+    background: linear-gradient(135deg, var(--text), var(--accent));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p { color: var(--muted); max-width: 640px; margin: 0 auto; font-size: 16px; }
+  .home-cards { margin-top: 28px; }
+  .home-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 28px; cursor: pointer; transition: transform .1s ease, border-color .2s; box-shadow: var(--shadow); }
+  .home-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .home-card .icon { font-size: 32px; margin-bottom: 12px; }
+  .home-card h3 { margin: 0 0 8px; font-size: 20px; }
+  .home-card p { margin: 0; color: var(--muted); font-size: 14px; }
+  .badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 0; }
+
+  .exam-header {
+    display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 14px 20px; margin-bottom: 16px; position: sticky; top: 12px; z-index: 10;
+    backdrop-filter: blur(10px);
+  }
+  .timer { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 22px; letter-spacing: 1px; color: var(--accent); }
+  .timer.warn { color: var(--warn); }
+  .timer.danger { color: var(--bad); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.55} }
+  .progress-text { color: var(--muted); font-size: 13px; }
+  .progress-bar { height: 6px; background: var(--bg-elev); border-radius: 999px; overflow: hidden; flex: 1; min-width: 120px; }
+  .progress-bar > span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .3s; }
+
+  .question-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 28px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  .qmeta { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
+  .qtext { font-size: 17px; font-weight: 600; margin: 0 0 18px; line-height: 1.6; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option { display: flex; align-items: flex-start; gap: 14px; cursor: pointer; padding: 14px 16px; background: var(--bg-elev); border: 2px solid var(--border); border-radius: 10px; transition: all .15s; }
+  .option:hover { border-color: var(--accent); }
+  .option.selected { border-color: var(--accent); background: rgba(91,140,255,.08); }
+  .option .marker { flex: 0 0 32px; height: 32px; border-radius: 8px; background: var(--bg-card); display: grid; place-items: center; font-weight: 700; color: var(--muted); border: 1px solid var(--border); }
+  .option.selected .marker { background: var(--accent); color: white; border-color: var(--accent); }
+  .option .text { flex: 1; }
+
+  .nav-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; }
+  @media (max-width: 600px) { .nav-grid { grid-template-columns: repeat(8, 1fr); } }
+  .nav-grid button { aspect-ratio: 1; min-height: 36px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-elev); color: var(--muted); font-weight: 600; cursor: pointer; font-size: 13px; transition: all .1s; }
+  .nav-grid button.answered { background: rgba(91,140,255,.18); color: var(--text); border-color: var(--accent); }
+  .nav-grid button.flagged { box-shadow: inset 0 0 0 2px var(--warn); }
+  .nav-grid button.current { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  .footer-bar { display: flex; gap: 10px; justify-content: space-between; flex-wrap: wrap; }
+
+  .score-ring {
+    width: 220px; height: 220px; border-radius: 50%; display: grid; place-items: center; margin: 12px auto 24px;
+    background: conic-gradient(var(--ring-color, var(--accent)) calc(var(--p) * 1%), var(--bg-elev) 0);
+    position: relative;
+  }
+  .score-ring::before { content: ""; position: absolute; inset: 14px; border-radius: 50%; background: var(--bg-card); }
+  .score-ring .inner { position: relative; text-align: center; }
+  .score-ring .num { font-size: 56px; font-weight: 800; line-height: 1; }
+  .score-ring .lbl { color: var(--muted); font-size: 13px; margin-top: 6px; }
+
+  .review-item { padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-elev); margin-bottom: 10px; }
+  .review-item .qhead { font-weight: 600; margin-bottom: 6px; }
+  .review-item .opt { padding: 6px 10px; border-radius: 6px; margin: 4px 0; font-size: 14px; }
+  .review-item .opt.correct { background: rgba(67,211,158,.12); color: var(--good); }
+  .review-item .opt.user { background: rgba(255,107,107,.12); color: var(--bad); }
+
+  .study-toc { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .study-toc button { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg-elev); color: var(--muted); cursor: pointer; font-weight: 600; font-size: 13px; }
+  .study-toc button.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  details { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; margin-bottom: 8px; }
+  details summary { cursor: pointer; font-weight: 600; outline: none; list-style: none; display: flex; gap: 12px; align-items: flex-start; }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::before { content: "▶"; color: var(--muted); font-size: 11px; transition: transform .2s; margin-top: 6px; }
+  details[open] summary::before { transform: rotate(90deg); }
+  details .ans-block { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); }
+  details .opt { padding: 6px 12px; border-radius: 6px; margin: 4px 0; font-size: 14px; }
+  details .opt.correct { background: rgba(67,211,158,.12); color: var(--good); font-weight: 600; }
+  details .opt.normal { color: var(--muted); }
+
+  .keypoints { display: grid; gap: 10px; }
+  .keypoint { padding: 14px 16px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; border-left: 4px solid var(--accent); }
+  .keypoint b { color: var(--accent); }
+
+  .search-input { width: 100%; padding: 12px 16px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; margin-bottom: 16px; }
+  .search-input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+  .hide { display: none !important; }
+
+  table.summary { width: 100%; border-collapse: collapse; margin: 8px 0; }
+  table.summary th, table.summary td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; font-size: 14px; }
+  table.summary th { color: var(--muted); font-weight: 600; }
+
+  .modal-bg { position: fixed; inset: 0; background: rgba(10,15,35,.6); display: grid; place-items: center; z-index: 100; backdrop-filter: blur(4px); }
+  .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 28px; max-width: 460px; width: 92%; box-shadow: var(--shadow); }
+  .modal h3 { margin-top: 0; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
+
+  .guide-toc { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-bottom: 24px; position: sticky; top: 12px; z-index: 5; backdrop-filter: blur(10px); }
+  .guide-toc-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .guide-toc h3 { margin: 0; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; }
+  .guide-toc ol { margin: 0; padding-left: 20px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 16px; }
+  @media (max-width: 700px) { .guide-toc ol { grid-template-columns: 1fr; } }
+  .guide-toc li { padding: 4px 0; }
+  .guide-toc a { color: var(--text); text-decoration: none; font-size: 14px; font-weight: 500; }
+  .guide-toc a:hover { color: var(--accent); }
+  .guide-toc a small { color: var(--muted); margin-left: 4px; font-weight: 400; }
+
+  .chapter { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; margin-bottom: 24px; box-shadow: var(--shadow); scroll-margin-top: 100px; }
+  .chapter > h2 { font-size: 26px; margin: 0 0 8px; padding-bottom: 14px; border-bottom: 2px solid var(--border); display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .chapter > h2 .chapter-num { color: white; font-size: 13px; font-weight: 700; letter-spacing: 1px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); padding: 4px 12px; border-radius: 999px; }
+  .chapter .lead { font-size: 15px; color: var(--muted); margin: 16px 0 8px; line-height: 1.85; }
+  .chapter h3 { font-size: 18px; margin: 32px 0 10px; color: var(--text); display: flex; align-items: center; gap: 10px; }
+  .chapter h3::before { content: ""; width: 4px; height: 18px; background: linear-gradient(180deg, var(--accent), var(--accent-2)); border-radius: 2px; display: inline-block; }
+  .chapter h4 { font-size: 14px; margin: 20px 0 6px; color: var(--accent); font-weight: 700; letter-spacing: .5px; }
+  .chapter p { font-size: 15px; line-height: 1.85; margin: 10px 0; color: var(--text); }
+  .chapter ul, .chapter ol { line-height: 1.85; padding-left: 22px; }
+  .chapter li { margin-bottom: 4px; }
+  .chapter b, .chapter strong { color: var(--accent); }
+  .chapter code { background: var(--bg-elev); padding: 2px 8px; border-radius: 5px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 13px; color: var(--accent-2); border: 1px solid var(--border); }
+
+  .flow-diagram { text-align: center; padding: 18px; background: var(--bg-elev); border-radius: 12px; border: 1px dashed var(--border); margin: 14px 0; font-weight: 600; font-size: 15px; color: var(--text); letter-spacing: 1px; }
+  .flow-diagram .arrow { color: var(--accent); margin: 0 6px; }
+
+  .callout { padding: 14px 18px; margin: 14px 0; border-radius: 10px; background: rgba(91,140,255,.06); border-left: 4px solid var(--accent); font-size: 14px; line-height: 1.8; }
+  .callout.warn { background: rgba(255,200,87,.07); border-left-color: var(--warn); }
+  .callout.danger { background: rgba(255,107,107,.07); border-left-color: var(--bad); }
+  .callout.tip { background: rgba(67,211,158,.07); border-left-color: var(--good); }
+  .callout strong { display: inline-block; margin-right: 6px; color: var(--accent); }
+  .callout.warn strong { color: var(--warn); }
+  .callout.danger strong { color: var(--bad); }
+  .callout.tip strong { color: var(--good); }
+
+  .fact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 16px 0; }
+  .fact { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 13px; }
+  .fact .key { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+  .fact .val { font-size: 18px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+  .chapter-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .chapter-nav a { color: var(--muted); text-decoration: none; font-size: 14px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-elev); }
+  .chapter-nav a:hover { color: var(--accent); border-color: var(--accent); }
+  .chapter-nav a.disabled { opacity: .35; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header class="app">
+    <div class="brand">
+      <div class="logo">🚀</div>
+      <div>
+        <h1 id="brand-title"></h1>
+        <p id="brand-sub"></p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="/" class="back-link" id="back-link">← AstroGroot</a>
+      <div class="lang-toggle" id="lang-toggle">
+        <button data-lang="zh-TW">繁中</button>
+        <button data-lang="en">EN</button>
+      </div>
+      <nav class="tabs" id="tabs">
+        <button data-view="home" class="active"></button>
+        <button data-view="exam"></button>
+        <button data-view="guide"></button>
+        <button data-view="study"></button>
+      </nav>
+    </div>
+  </header>
+
+  <section id="view-home"></section>
+  <section id="view-exam" class="hide"></section>
+  <section id="view-guide" class="hide"></section>
+  <section id="view-study" class="hide"></section>
+</div>
+
+<script>
+/* =========================================================================
+   i18n strings
+   ========================================================================= */
+const I18N = {
+  "zh-TW": {
+    brandTitle: "初級火箭發射執照 — 模擬考",
+    brandSub: "2026 台灣盃火箭競賽 · 國家太空中心 / 屏東縣政府",
+    docTitle: "2026 台灣盃火箭競賽 — 初級火箭發射執照模擬考",
+    tabs: { home: "首頁", exam: "開始考試", guide: "教學指南", study: "題庫速覽" },
+    home: {
+      heroTitle: "準備好取得發射執照了嗎?",
+      heroDesc: '本系統依官方題庫共 <b>55 題</b> 隨機抽出 <b>40 題</b> 模擬考,通過標準為 <b>35 / 40</b>,測驗時間 <b>30 分鐘</b>。先看學習資料熟悉重點,再進入考試挑戰自己!',
+      cardExamTitle: "開始模擬考試",
+      cardExamDesc: "40 題 · 30 分鐘 · 即時計分 · 錯題回顧。完整重現正式考試環境。",
+      cardExamBadges: ["隨機抽題", "30 分鐘倒數", "通過 35/40"],
+      cardGuideTitle: "教學指南",
+      cardGuideDesc: "四章節串接的完整學習資料,從原理到規範,告訴你「為什麼這樣設計」,而不只是死背數字。",
+      cardGuideBadges: ["流程解說", "設計原理", "安全觀念"],
+      cardStudyTitle: "題庫速覽 / 重點",
+      cardStudyDesc: "考試規則、題目分布、關鍵重點條列、全部 55 題附答案,可依類別篩選與關鍵字搜尋。",
+      cardStudyBadges: ["考試規則", "重點速覽", "完整題庫"],
+      overviewTitle: "考試一覽",
+      overviewStats: [
+        { label: "總題數", value: "40", hint: "從 55 題庫中隨機抽出" },
+        { label: "時間", value: "30 分", hint: "時間到自動交卷" },
+        { label: "通過分數", value: "35", hint: "即正確率 87.5%" },
+        { label: "題型", value: "單選", hint: "每題四個選項" }
+      ],
+      distTitle: "題型分布",
+      distHeads: ["類別", "抽題 / 題庫", "佔比", "備註"],
+      distRows: [
+        ["發射流程", "8 / 12", "20%", "—"],
+        ["火箭系統", "20 / 28", "50%", "含火箭設計規範內容"],
+        ["發射安全", "8 / 10", "20%", "—"],
+        ["風險管理", "4 / 5", "10%", "—"]
+      ],
+      lastTitle: "上次成績",
+      passed: "✓ 通過",
+      failed: "✗ 未通過",
+      lastTaken: "用時"
+    },
+    exam: {
+      introTitle: "考試說明",
+      introLead: "請仔細閱讀以下規則,點選「開始考試」即進入計時。",
+      introStats: [
+        { label: "題數", value: "40 題", hint: "隨機抽自 55 題庫" },
+        { label: "時間", value: "30 分鐘", hint: "時間到自動交卷" },
+        { label: "通過標準", value: "35 / 40", hint: "87.5% 正確率" },
+        { label: "題型", value: "單一選擇題", hint: "每題 4 個選項" }
+      ],
+      noticeTitle: "注意事項",
+      notices: [
+        "本系統為非官方模擬考,實體考試規則以官方公告為準。",
+        "考試期間請勿重整頁面,進度不會被保存。",
+        "可使用上下方導覽鈕跳題、標記疑問題目。",
+        "剩餘時間 ≤ 5 分鐘 提示為黃色,≤ 1 分鐘 為紅色閃爍。"
+      ],
+      back: "← 返回首頁",
+      start: "開始考試 →",
+      progress: "第 {i} / {n} 題",
+      answered: "已答 {n}",
+      flagOn: "⚑ 已標記",
+      flagOff: "⚐ 標記",
+      navTitle: "題目導覽",
+      navHint: "藍色 = 已答 · 黃框 = 標記",
+      prev: "← 上一題",
+      next: "下一題 →",
+      submit: "交卷",
+      finish: "完成 →",
+      confirmTitle: "確認交卷?",
+      confirmStats: "未作答:<b>{u}</b> 題 · 已標記:<b>{f}</b> 題",
+      confirmNote: "交卷後即顯示成績與詳解,無法回到考試。",
+      cancel: "取消",
+      confirmBtn: "確認交卷",
+      passTitle: "🎉 恭喜通過!",
+      failTitle: "再加油!",
+      passSummary: "通過標準 35 / 40 · 用時 {t}",
+      timedOut: " · 時間到自動交卷",
+      retry: "重新考一次",
+      goStudy: "查看學習資料",
+      goHome: "返回首頁",
+      catTitle: "分類成績",
+      detailTitle: "題目詳解",
+      filterAll: "全部",
+      filterWrong: "只看錯題",
+      filterFlag: "只看已標記",
+      correct: "✓ 正確",
+      wrong: "✗ 錯誤",
+      noAnswer: "○ 未答",
+      yourAnswer: "  ← 你的答案",
+      answerMark: "  ✓ 正解",
+      noMatch: "沒有符合的題目"
+    },
+    study: {
+      ruleTitle: "考試規則",
+      ruleLead: "為確保作業安全,台灣盃火箭競賽參賽人員須考取初級火箭執照,通過後方可進入科研火箭發射場執行發射任務。",
+      stat1Label: "主辦單位", stat1Val: "國家太空中心 · 屏東縣政府",
+      stat2Label: "考試資格", stat2Val: "參賽組成員 (含指導員)",
+      stat3Label: "作弊處置", stat3Val: "取消資格並禁賽",
+      distTitle: "題型分布",
+      distHeads: ["類別", "抽題", "題庫", "備註"],
+      distRows: [
+        ["發射流程", "8", "12", "—"],
+        ["火箭系統", "20", "28", "含火箭設計規範內容"],
+        ["發射安全", "8", "10", "—"],
+        ["風險管理", "4", "5", "—"],
+        ["<b>合計</b>", "<b>40</b>", "<b>55</b>", "30 分鐘 · 通過 35 題"]
+      ],
+      keyTitle: "關鍵重點整理",
+      bankTitle: "完整題庫 (55 題)",
+      searchPh: "🔍 搜尋題目關鍵字 (例如:風速、終端速度、GNC)",
+      tocAll: "全部 (55)",
+      countLine: "共 {n} 題"
+    },
+    guide: {
+      tocHead: "📖 章節導覽",
+      tocHint: "點擊章節快速跳轉",
+      tocItems: [
+        ["發射流程", "從報到到回收的時間軸"],
+        ["火箭系統", "結構、航電、推進的核心觀念"],
+        ["發射場安全", "人員、環境與緊急應變"],
+        ["風險管理", "FMEA 思維與標準化"]
+      ],
+      chapterLabel: ["第一章", "第二章", "第三章", "第四章"],
+      prev: "← 上一章", next: "下一章"
+    }
+  },
+  "en": {
+    brandTitle: "Level-1 Rocket Launch License — Mock Exam",
+    brandSub: "2026 Taiwan Cup Rocket Competition · TASA / Pingtung County Gov.",
+    docTitle: "2026 Taiwan Cup Rocket — Level-1 Launch License Mock Exam",
+    tabs: { home: "Home", exam: "Start Exam", guide: "Study Guide", study: "Question Bank" },
+    home: {
+      heroTitle: "Ready to earn your launch license?",
+      heroDesc: 'This mock exam draws <b>40 questions</b> randomly from the official bank of <b>55</b>. Passing score: <b>35 / 40</b>, time limit: <b>30 minutes</b>. Review the study material first, then take the exam!',
+      cardExamTitle: "Start Mock Exam",
+      cardExamDesc: "40 questions · 30 minutes · instant scoring · review wrong answers. Mirrors the real test environment.",
+      cardExamBadges: ["Random pick", "30-min countdown", "Pass: 35/40"],
+      cardGuideTitle: "Study Guide",
+      cardGuideDesc: "Four connected chapters explain the rationale behind each rule — understand the engineering, don't just memorize numbers.",
+      cardGuideBadges: ["Process walkthrough", "Design principles", "Safety mindset"],
+      cardStudyTitle: "Bank Overview / Key Points",
+      cardStudyDesc: "Exam rules, distribution, key points, and all 55 questions with answers — filter by category or keyword.",
+      cardStudyBadges: ["Exam rules", "Key takeaways", "Full bank"],
+      overviewTitle: "Exam at a Glance",
+      overviewStats: [
+        { label: "Questions", value: "40", hint: "Drawn from 55-item bank" },
+        { label: "Time", value: "30 min", hint: "Auto-submit on timeout" },
+        { label: "Pass score", value: "35", hint: "= 87.5% accuracy" },
+        { label: "Type", value: "MCQ", hint: "4 options per item" }
+      ],
+      distTitle: "Question Distribution",
+      distHeads: ["Category", "Picked / Bank", "Share", "Notes"],
+      distRows: [
+        ["Launch Process", "8 / 12", "20%", "—"],
+        ["Rocket Systems", "20 / 28", "50%", "Includes design specs"],
+        ["Launch Safety", "8 / 10", "20%", "—"],
+        ["Risk Management", "4 / 5", "10%", "—"]
+      ],
+      lastTitle: "Last Score",
+      passed: "✓ Passed",
+      failed: "✗ Did not pass",
+      lastTaken: "took"
+    },
+    exam: {
+      introTitle: "Exam Instructions",
+      introLead: 'Please read the rules below carefully. Click "Start Exam" to begin the timer.',
+      introStats: [
+        { label: "Questions", value: "40", hint: "Drawn from 55-item bank" },
+        { label: "Time", value: "30 min", hint: "Auto-submit on timeout" },
+        { label: "Pass score", value: "35 / 40", hint: "87.5% accuracy" },
+        { label: "Type", value: "Single MCQ", hint: "4 options per item" }
+      ],
+      noticeTitle: "Notes",
+      notices: [
+        "This is an unofficial mock exam — the real test follows the official rulebook.",
+        "Do not refresh the page during the exam; progress will not be saved.",
+        "Use the navigator to jump and flag uncertain questions.",
+        "Timer turns yellow ≤ 5 min, red and pulsing ≤ 1 min."
+      ],
+      back: "← Back Home",
+      start: "Start Exam →",
+      progress: "Q {i} / {n}",
+      answered: "Answered: {n}",
+      flagOn: "⚑ Flagged",
+      flagOff: "⚐ Flag",
+      navTitle: "Question Navigator",
+      navHint: "Blue = answered · Yellow border = flagged",
+      prev: "← Previous",
+      next: "Next →",
+      submit: "Submit",
+      finish: "Finish →",
+      confirmTitle: "Submit exam?",
+      confirmStats: "Unanswered: <b>{u}</b> · Flagged: <b>{f}</b>",
+      confirmNote: "After submission you will see your score and the explanations; you cannot return to the exam.",
+      cancel: "Cancel",
+      confirmBtn: "Confirm submit",
+      passTitle: "🎉 Congratulations — you passed!",
+      failTitle: "Keep going!",
+      passSummary: "Pass score 35 / 40 · took {t}",
+      timedOut: " · auto-submitted on timeout",
+      retry: "Retake",
+      goStudy: "Open study material",
+      goHome: "Back to home",
+      catTitle: "Score by Category",
+      detailTitle: "Question Review",
+      filterAll: "All",
+      filterWrong: "Wrong only",
+      filterFlag: "Flagged only",
+      correct: "✓ Correct",
+      wrong: "✗ Wrong",
+      noAnswer: "○ Unanswered",
+      yourAnswer: "  ← your answer",
+      answerMark: "  ✓ correct",
+      noMatch: "No matching questions."
+    },
+    study: {
+      ruleTitle: "Exam Rules",
+      ruleLead: "For operational safety, all Taiwan Cup competitors must pass the Level-1 license exam before they may enter the research rocket launch site to perform a launch.",
+      stat1Label: "Hosts", stat1Val: "TASA · Pingtung County Gov.",
+      stat2Label: "Eligibility", stat2Val: "Team members (incl. mentors)",
+      stat3Label: "Cheating", stat3Val: "Disqualification & ban",
+      distTitle: "Question Distribution",
+      distHeads: ["Category", "Picked", "Bank", "Notes"],
+      distRows: [
+        ["Launch Process", "8", "12", "—"],
+        ["Rocket Systems", "20", "28", "Includes design specs"],
+        ["Launch Safety", "8", "10", "—"],
+        ["Risk Management", "4", "5", "—"],
+        ["<b>Total</b>", "<b>40</b>", "<b>55</b>", "30 min · pass at 35"]
+      ],
+      keyTitle: "Key Takeaways",
+      bankTitle: "Full Question Bank (55)",
+      searchPh: "🔍 Search keywords (e.g. wind speed, terminal velocity, GNC)",
+      tocAll: "All (55)",
+      countLine: "{n} question(s)"
+    },
+    guide: {
+      tocHead: "📖 Chapter Navigation",
+      tocHint: "Click to jump",
+      tocItems: [
+        ["Launch Process", "from check-in to recovery"],
+        ["Rocket Systems", "structure, avionics, propulsion"],
+        ["Launch Site Safety", "people, environment, emergencies"],
+        ["Risk Management", "FMEA mindset & standardization"]
+      ],
+      chapterLabel: ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4"],
+      prev: "← Previous", next: "Next chapter"
+    }
+  }
+};
+
+/* =========================================================================
+   Question bank — 55 questions, bilingual
+   ========================================================================= */
+const BANK = {
+  launch: {
+    title: { "zh-TW": "發射流程", "en": "Launch Process" },
+    take: 8,
+    questions: [
+      { q: { "zh-TW": "以下敘述之火箭正式上架前的程序哪項正確?", "en": "Which procedure is correct before the rocket is officially mounted on the rail?" },
+        o: [{ "zh-TW": "不須額外的程序", "en": "No additional procedure is required" },
+            { "zh-TW": "可試上發射架", "en": "A trial mounting on the launch rail is allowed" },
+            { "zh-TW": "需審查委員確認", "en": "Review committee must confirm" },
+            { "zh-TW": "b、c 都正確", "en": "Both b and c are correct" }], a: 3 },
+      { q: { "zh-TW": "火箭上架準備超過多久時間便會要求重新排隊進行發射準備?", "en": "If launch preparation on the rail exceeds how long, the team must re-queue?" },
+        o: [{ "zh-TW": "30 分鐘", "en": "30 minutes" }, { "zh-TW": "60 分鐘", "en": "60 minutes" }, { "zh-TW": "50 分鐘", "en": "50 minutes" }, { "zh-TW": "75 分鐘", "en": "75 minutes" }], a: 2 },
+      { q: { "zh-TW": "火箭於發射架上電後能否再下電?", "en": "After the rocket is powered up on the rail, can it be powered off again?" },
+        o: [{ "zh-TW": "任何時候都可以", "en": "Yes, at any time" },
+            { "zh-TW": "不可以,經審查委員確認完即不可下電", "en": "No — once confirmed by the review committee, power-off is not allowed" },
+            { "zh-TW": "不可以,經隊內航電人員確認完即不可下電", "en": "No — once confirmed by the team's avionics member" },
+            { "zh-TW": "可以,但須審查員的許可", "en": "Yes, but only with the reviewer's permission" }], a: 1 },
+      { q: { "zh-TW": "審查人員發射許可檢查項目包含哪些?", "en": "Which items are included in the launch-permission review?" },
+        o: [{ "zh-TW": "Rail button 位於質心兩側", "en": "Rail buttons placed on either side of the CG" },
+            { "zh-TW": "火箭外型無異狀突起物", "en": "No abnormal protrusions on the airframe" },
+            { "zh-TW": "所有零件已鎖緊固定", "en": "All parts are tightened and secured" },
+            { "zh-TW": "以上皆是", "en": "All of the above" }], a: 3 },
+      { q: { "zh-TW": "火箭發射後,回收的時間區間為多久?", "en": "After launch, what is the recovery time window?" },
+        o: [{ "zh-TW": "1 小時", "en": "1 hour" }, { "zh-TW": "2 小時", "en": "2 hours" }, { "zh-TW": "30 分鐘", "en": "30 minutes" }, { "zh-TW": "1.5 小時", "en": "1.5 hours" }], a: 0 },
+      { q: { "zh-TW": "以下關於發射流程的敘述何者正確?", "en": "Which statement about the launch procedure is correct?" },
+        o: [{ "zh-TW": "火箭上架準備完成後需全員撤離", "en": "All personnel must evacuate after rail prep is complete" },
+            { "zh-TW": "在任何情況下皆可發射", "en": "Launch is permitted under any condition" },
+            { "zh-TW": "火箭需能在軌道上滑動無阻礙", "en": "The rocket must slide along the rail without obstruction" },
+            { "zh-TW": "a、c 正確", "en": "Both a and c are correct" }], a: 3 },
+      { q: { "zh-TW": "固態火箭發動機何時組裝完成?", "en": "When is the solid rocket motor finally assembled?" },
+        o: [{ "zh-TW": "發射許可審查時間", "en": "During the permission review" },
+            { "zh-TW": "火箭上架準備時間", "en": "During the rail-prep window" },
+            { "zh-TW": "火箭發射準備時間", "en": "During the launch-ready window" },
+            { "zh-TW": "團隊技術交流時間", "en": "During the technical exchange session" }], a: 1 },
+      { q: { "zh-TW": "固態火箭發動機點火線路由誰安裝?", "en": "Who installs the solid motor ignition wiring?" },
+        o: [{ "zh-TW": "審查委員", "en": "Review committee" }, { "zh-TW": "競賽現場工作人員", "en": "On-site staff" }, { "zh-TW": "參賽隊員", "en": "Team members" }, { "zh-TW": "團隊指導員", "en": "Team mentor" }], a: 1 },
+      { q: { "zh-TW": "若固態火箭發動機點火啟動失敗(未燃燒)該如何處理?", "en": "If the solid motor fails to ignite (no burn), what is the correct handling?" },
+        o: [{ "zh-TW": "由競賽現場工作人員確認安全", "en": "On-site staff confirm safety" },
+            { "zh-TW": "由競賽現場工作人員重新安裝點火線路並發射", "en": "On-site staff rewire and re-attempt the launch" },
+            { "zh-TW": "取消本次發射,重新排最後一輪進行火箭上架準備與發射程序", "en": "Cancel and re-queue at the end of the round for fresh prep" },
+            { "zh-TW": "a、c 正確", "en": "Both a and c are correct" }], a: 3 },
+      { q: { "zh-TW": "火箭落海後由誰打撈回收?", "en": "Who retrieves the rocket if it lands in the sea?" },
+        o: [{ "zh-TW": "審查委員", "en": "Review committee" }, { "zh-TW": "競賽現場工作人員", "en": "On-site staff" }, { "zh-TW": "參賽隊員", "en": "Team members" }, { "zh-TW": "團隊指導員", "en": "Team mentor" }], a: 1 },
+      { q: { "zh-TW": "火箭落海打撈回收後會於哪邊上岸?", "en": "After sea retrieval, where does the rocket come ashore?" },
+        o: [{ "zh-TW": "旭海漁港", "en": "Xuhai Fishing Port" },
+            { "zh-TW": "科研火箭發射場", "en": "Research rocket launch site" },
+            { "zh-TW": "火箭發射場旁邊的沙灘", "en": "Beach next to the launch site" },
+            { "zh-TW": "科研探空火箭發射觀看區", "en": "Public viewing area" }], a: 0 },
+      { q: { "zh-TW": "參賽隊員於發射場撤離後,下列敘述何者錯誤?", "en": "After teams have evacuated, which statement is INCORRECT?" },
+        o: [{ "zh-TW": "參賽隊員於規劃之安全區域觀看火箭發射", "en": "Members watch from the designated safe area" },
+            { "zh-TW": "參賽隊員隨時注意發射動態", "en": "Members keep watching the launch status" },
+            { "zh-TW": "參賽隊員進行發射程序", "en": "Members carry out the launch procedure themselves" },
+            { "zh-TW": "參賽隊員拿起手機拍攝", "en": "Members can hold up phones to film" }], a: 2 }
+    ]
+  },
+  system: {
+    title: { "zh-TW": "火箭系統", "en": "Rocket Systems" },
+    take: 20,
+    questions: [
+      { q: { "zh-TW": "為什麼製作火箭通常會建議開一個小洞在火箭分節段、鼻錐等位置?", "en": "Why is a small hole recommended at section joints and the nose cone?" },
+        o: [{ "zh-TW": "用於降落傘回收系統設計", "en": "For parachute recovery design" },
+            { "zh-TW": "為了讓壓力計紀錄氣壓", "en": "So a barometer can read pressure" },
+            { "zh-TW": "降低升空累積的內壓,避免過早脫節", "en": "To relieve internal pressure buildup during ascent and prevent premature separation" },
+            { "zh-TW": "做為降落傘已安裝的記號", "en": "A marker that the chute is installed" }], a: 2 },
+      { q: { "zh-TW": "使用壓力計為航電回收感測器時,為什麼需在航電段開一個小洞?", "en": "When using a barometer as the recovery sensor, why is a hole needed in the avionics bay?" },
+        o: [{ "zh-TW": "為減輕脫節瞬間對壓力計造成的影響", "en": "To reduce the shock from separation on the barometer" },
+            { "zh-TW": "為了讓壓力計紀錄氣壓", "en": "So the barometer can sense ambient pressure" },
+            { "zh-TW": "降低升空累積的內壓,避免過早脫節", "en": "To relieve internal pressure to avoid premature separation" },
+            { "zh-TW": "做為電池已安裝的記號", "en": "A marker that the battery is installed" }], a: 1 },
+      { q: { "zh-TW": "公版固態火箭發動機的最大推力為多少公斤重?", "en": "What is the max thrust of the standard solid motor (kgf)?" },
+        o: [{ "zh-TW": "200", "en": "200" }, { "zh-TW": "100", "en": "100" }, { "zh-TW": "1000", "en": "1000" }, { "zh-TW": "400", "en": "400" }], a: 0 },
+      { q: { "zh-TW": "火箭的動態穩定性 (stability) 需至少大於多少?", "en": "Dynamic stability must be at least greater than:" },
+        o: [{ "zh-TW": "2", "en": "2" }, { "zh-TW": "1", "en": "1" }, { "zh-TW": "1.5", "en": "1.5" }, { "zh-TW": "3", "en": "3" }], a: 2 },
+      { q: { "zh-TW": "進行無導控的火箭外型設計時,為使火箭穩定飛行,以下敘述哪個正確?", "en": "For an unguided rocket to fly stably, which is correct?" },
+        o: [{ "zh-TW": "氣壓中心需位於質心後方", "en": "Center of pressure must lie behind the center of gravity" },
+            { "zh-TW": "氣壓中心需位於質心前方", "en": "Center of pressure must lie ahead of the center of gravity" },
+            { "zh-TW": "火箭需有尾翼", "en": "The rocket must have fins" },
+            { "zh-TW": "箭長須至少為管徑長度的五倍", "en": "Length must be at least 5× the body diameter" }], a: 0 },
+      { q: { "zh-TW": "如何讓原本不穩定的火箭進入穩定狀態?", "en": "How can an unstable rocket be made stable?" },
+        o: [{ "zh-TW": "在鼻錐增重", "en": "Add nose weight" },
+            { "zh-TW": "在鼻錐減重", "en": "Remove nose weight" },
+            { "zh-TW": "將尾翼移近鼻錐", "en": "Move fins closer to the nose" },
+            { "zh-TW": "縮短火箭長度", "en": "Shorten the rocket" }], a: 0 },
+      { q: { "zh-TW": "在加速時,利用固態燃料做為推進劑的火箭會趨近:", "en": "While accelerating, a solid-propellant rocket tends to:" },
+        o: [{ "zh-TW": "逐漸穩定", "en": "Become more stable" },
+            { "zh-TW": "逐漸不穩", "en": "Become less stable" },
+            { "zh-TW": "不會影響穩定性", "en": "Have no change in stability" },
+            { "zh-TW": "變不穩定", "en": "Become unstable" }], a: 0 },
+      { q: { "zh-TW": "火箭尾翼通常建議用何種方式來固定?", "en": "What is the recommended way to fix the fins?" },
+        o: [{ "zh-TW": "黏貼於外殼表面", "en": "Glue them on the outer surface" },
+            { "zh-TW": "釘子釘於外殼上", "en": "Nail them onto the airframe" },
+            { "zh-TW": "穿過外殼於內部結構固定", "en": "Pass through the airframe and anchor to internal structure" },
+            { "zh-TW": "以上固定方式都可以", "en": "Any of the above is fine" }], a: 2 },
+      { q: { "zh-TW": "火箭的離架穩定性 (stability) 需小於多少?", "en": "Off-the-rail stability must be less than:" },
+        o: [{ "zh-TW": "6", "en": "6" }, { "zh-TW": "4", "en": "4" }, { "zh-TW": "2", "en": "2" }, { "zh-TW": "1.5", "en": "1.5" }], a: 1 },
+      { q: { "zh-TW": "下列關於發射架軌道滑塊的敘述何者正確?", "en": "Which statement about rail buttons is correct?" },
+        o: [{ "zh-TW": "火箭應至少使用兩個軌道滑塊,且位置需分別位於火箭質心前方與後方", "en": "At least two rail buttons, placed ahead of and behind the CG" },
+            { "zh-TW": "可使用塑膠 3D 列印的軌道滑塊", "en": "Plastic 3D-printed buttons are acceptable" },
+            { "zh-TW": "滑塊放置位置不須考慮航電系統的操作方式", "en": "Position need not consider avionics operation" },
+            { "zh-TW": "可用黏著劑固定軌道滑塊", "en": "Adhesive alone may secure the buttons" }], a: 0 },
+      { q: { "zh-TW": "以下關於火箭主結構的敘述何者正確?", "en": "Which statement about the primary structure is correct?" },
+        o: [{ "zh-TW": "箭身應完全密閉無開口", "en": "The body must be fully sealed without openings" },
+            { "zh-TW": "設計時不需考慮尾翼顫振速度", "en": "Fin flutter speed need not be considered" },
+            { "zh-TW": "搬運過程中不須保持結構完整性", "en": "Structural integrity is not needed during transport" },
+            { "zh-TW": "需承受飛行過程中的應力", "en": "Must withstand the stresses of flight" }], a: 3 },
+      { q: { "zh-TW": "火箭的氣壓中心可以用下列何種方法得出?", "en": "How can the center of pressure be obtained?" },
+        o: [{ "zh-TW": "理論計算 (Barrowman or cardboard cutout methods)", "en": "Theory (Barrowman, cardboard-cutout)" },
+            { "zh-TW": "使用 open rocket 等設計軟體", "en": "Design software such as OpenRocket" },
+            { "zh-TW": "秤台量測", "en": "Weighing on a balance" },
+            { "zh-TW": "a、b 都正確", "en": "Both a and b are correct" }], a: 3 },
+      { q: { "zh-TW": "火箭系統大部分可分為哪三大類?", "en": "The rocket system can be divided into which three subsystems?" },
+        o: [{ "zh-TW": "結構、航電、推進", "en": "Structure, avionics, propulsion" },
+            { "zh-TW": "航電、鼻錐、推進", "en": "Avionics, nose cone, propulsion" },
+            { "zh-TW": "結構、天線、噴嘴", "en": "Structure, antenna, nozzle" },
+            { "zh-TW": "結構、鼻錐、噴嘴", "en": "Structure, nose cone, nozzle" }], a: 0 },
+      { q: { "zh-TW": "火箭飛行模擬的目的為何?", "en": "What is the purpose of flight simulation?" },
+        o: [{ "zh-TW": "軌跡設計和最佳有效酬載估算", "en": "Trajectory design and optimal payload estimation" },
+            { "zh-TW": "確定各次系統的受力附載", "en": "Determine subsystem load" },
+            { "zh-TW": "飛行測試後分析之評估", "en": "Post-flight evaluation" },
+            { "zh-TW": "以上皆是", "en": "All of the above" }], a: 3 },
+      { q: { "zh-TW": "請選擇任務規劃圖中,從起飛到落地正確的事件順序。", "en": "Choose the correct event order from liftoff to landing." },
+        o: [{ "zh-TW": "發射→打開降落傘→慣性飛行", "en": "Launch → deploy chute → coast" },
+            { "zh-TW": "慣性飛行→推進結束→落地", "en": "Coast → burnout → landing" },
+            { "zh-TW": "慣性飛行→開傘→落地", "en": "Coast → deploy chute → landing" },
+            { "zh-TW": "發射→開傘→推進結束", "en": "Launch → deploy chute → burnout" }], a: 2 },
+      { q: { "zh-TW": "無導控的火箭外型設計,應確保尾翼顫振速度 (fin flutter) 至少比火箭的預期最大速度高出多少?", "en": "Fin flutter speed should exceed expected max speed by at least:" },
+        o: [{ "zh-TW": "10%", "en": "10%" }, { "zh-TW": "25%", "en": "25%" }, { "zh-TW": "50%", "en": "50%" }, { "zh-TW": "100%", "en": "100%" }], a: 2 },
+      { q: { "zh-TW": "針對台灣盃火箭競賽,下述哪一項火箭的航電系統環境測試是一定要做的?", "en": "Which avionics environmental test is REQUIRED?" },
+        o: [{ "zh-TW": "衝擊、振動測試", "en": "Shock & vibration" },
+            { "zh-TW": "溫度循環測試", "en": "Thermal cycling" },
+            { "zh-TW": "真空測試", "en": "Vacuum" },
+            { "zh-TW": "噪音測試", "en": "Acoustic noise" }], a: 0 },
+      { q: { "zh-TW": "針對降落於海面的降落傘回收系統,建議設計的終端速度為多少以下?", "en": "Sea-landing recovery: recommended terminal velocity is at most:" },
+        o: [{ "zh-TW": "10 m/s", "en": "10 m/s" }, { "zh-TW": "11 m/s", "en": "11 m/s" }, { "zh-TW": "12 m/s", "en": "12 m/s" }, { "zh-TW": "13 m/s", "en": "13 m/s" }], a: 2 },
+      { q: { "zh-TW": "針對台灣盃火箭競賽,火箭的航電系統電池電力應可供應系統正常功能運作多長時間以上?", "en": "Avionics battery should sustain normal operation for at least:" },
+        o: [{ "zh-TW": "0.5 小時", "en": "0.5 hour" }, { "zh-TW": "1 小時", "en": "1 hour" }, { "zh-TW": "1.5 小時", "en": "1.5 hours" }, { "zh-TW": "2 小時", "en": "2 hours" }], a: 2 },
+      { q: { "zh-TW": "下列選項何者非台灣盃火箭競賽規定之儲能裝置類型?", "en": "Which is NOT an allowed energy-storage type?" },
+        o: [{ "zh-TW": "高壓氣瓶", "en": "High-pressure gas cylinder" },
+            { "zh-TW": "黑色火藥", "en": "Black powder" },
+            { "zh-TW": "市售煙霧棒", "en": "Off-the-shelf smoke charge" },
+            { "zh-TW": "彈簧、彈力繩等機構", "en": "Springs / elastic mechanisms" }], a: 1 },
+      { q: { "zh-TW": "針對台灣盃火箭競賽,3K 組火箭的系統總重量應小於多少公斤?", "en": "For the 3K class, total system mass must be less than (kg):" },
+        o: [{ "zh-TW": "20", "en": "20" }, { "zh-TW": "25", "en": "25" }, { "zh-TW": "28.5", "en": "28.5" }, { "zh-TW": "30.5", "en": "30.5" }], a: 2 },
+      { q: { "zh-TW": "下列何者為火箭禁用材料?", "en": "Which material is FORBIDDEN?" },
+        o: [{ "zh-TW": "玻璃纖維", "en": "Fiberglass" }, { "zh-TW": "PVC", "en": "PVC" }, { "zh-TW": "鋁合金", "en": "Aluminum alloy" }, { "zh-TW": "鉛", "en": "Lead" }], a: 3 },
+      { q: { "zh-TW": "針對台灣盃火箭競賽,關於火箭識別標記何者正確?", "en": "Which statement on rocket identification marking is correct?" },
+        o: [{ "zh-TW": "火箭應標註隊伍名稱、編號,且所有可分離的部件上需有重複標記", "en": "Mark team name and ID, and replicate the mark on every separable part" },
+            { "zh-TW": "不須標註 ID 號碼", "en": "ID number is not needed" },
+            { "zh-TW": "隊伍身分和工作人員確認即可、不須在火箭上標註", "en": "Verbal confirmation is enough; no marking needed" },
+            { "zh-TW": "隊伍 ID 的數字應按順序橫向標記", "en": "Team ID digits must run horizontally in order" }], a: 0 },
+      { q: { "zh-TW": "關於降落傘回收系統的規範,何者正確?", "en": "Which rule on the parachute recovery system is correct?" },
+        o: [{ "zh-TW": "需有冗餘設計", "en": "Must have redundancy" },
+            { "zh-TW": "第一頂降落傘須於最高點開啟", "en": "First chute must deploy at apogee" },
+            { "zh-TW": "若回收系統運作時有高溫氣體產生,回收系統應設計充分的耐熱保護以防止高溫", "en": "If hot gases are produced, sufficient heat protection must be designed" },
+            { "zh-TW": "以上皆是", "en": "All of the above" }], a: 3 },
+      { q: { "zh-TW": "下列那個電池符合設計規範?", "en": "Which battery complies with the spec?" },
+        o: [{ "zh-TW": "18650 鋰離子電池", "en": "18650 Li-ion" },
+            { "zh-TW": "鋰聚合物電池", "en": "Li-polymer" },
+            { "zh-TW": "鉛酸電池", "en": "Lead-acid" },
+            { "zh-TW": "只要能完成任務任何電池皆可", "en": "Any battery that completes the mission" }], a: 0 },
+      { q: { "zh-TW": "GNC 分別代表航電中哪三個項目?", "en": "GNC stands for which three avionics functions?" },
+        o: [{ "zh-TW": "Guidance(導引)、Navigation(導航)、Communication(通訊)", "en": "Guidance, Navigation, Communication" },
+            { "zh-TW": "Guidance(導引)、Navigation(導航)、Control(控制)", "en": "Guidance, Navigation, Control" },
+            { "zh-TW": "Gyro(陀螺儀)、Navigation(導航)、Communication(通訊)", "en": "Gyro, Navigation, Communication" },
+            { "zh-TW": "Gyro(陀螺儀)、Navigation(導航)、Control(控制)", "en": "Gyro, Navigation, Control" }], a: 1 },
+      { q: { "zh-TW": "針對地面降落,通常建議終端速度在多少公尺/秒以下?", "en": "For land landing, terminal velocity should be at most (m/s):" },
+        o: [{ "zh-TW": "15 m/s", "en": "15 m/s" }, { "zh-TW": "14 m/s", "en": "14 m/s" }, { "zh-TW": "13 m/s", "en": "13 m/s" }, { "zh-TW": "11 m/s", "en": "11 m/s" }], a: 3 },
+      { q: { "zh-TW": "以下那些因素會影響火箭的終端速度?", "en": "Which factors influence terminal velocity?" },
+        o: [{ "zh-TW": "火箭重量", "en": "Rocket mass" },
+            { "zh-TW": "阻力係數", "en": "Drag coefficient" },
+            { "zh-TW": "降落傘面積", "en": "Parachute area" },
+            { "zh-TW": "以上皆是", "en": "All of the above" }], a: 3 }
+    ]
+  },
+  safety: {
+    title: { "zh-TW": "發射場安全", "en": "Launch Site Safety" },
+    take: 8,
+    questions: [
+      { q: { "zh-TW": "以下哪個行為是禁止發射人員和旁觀者從事的?", "en": "Which behavior is FORBIDDEN for launch personnel and spectators?" },
+        o: [{ "zh-TW": "飲酒", "en": "Drinking alcohol" },
+            { "zh-TW": "服用會影響判斷力、行動、和穩定性的藥物", "en": "Taking medication that impairs judgment, motion, or stability" },
+            { "zh-TW": "因擔心影響火箭上的電子控制而用手機通話", "en": "Using a phone to call (out of fear it disturbs avionics)" },
+            { "zh-TW": "a 和 b 皆對", "en": "Both a and b" }], a: 3 },
+      { q: { "zh-TW": "發射現場建議攜帶哪些裝備?", "en": "Which equipment should be on-site?" },
+        o: [{ "zh-TW": "滅火器", "en": "Fire extinguisher" },
+            { "zh-TW": "急救箱", "en": "First-aid kit" },
+            { "zh-TW": "滅火器和急救箱", "en": "Extinguisher and first-aid kit" },
+            { "zh-TW": "滅火器、急救箱和能跟發射現場人員直接聯絡的裝置", "en": "Extinguisher, first-aid kit, and a direct comms device" }], a: 3 },
+      { q: { "zh-TW": "以下哪個天候因素包含在射場環境的確認範圍內?", "en": "Which weather factor is part of site environment checks?" },
+        o: [{ "zh-TW": "地震", "en": "Earthquake" }, { "zh-TW": "風速", "en": "Wind speed" }, { "zh-TW": "濃霧", "en": "Heavy fog" }, { "zh-TW": "以上皆是", "en": "All of the above" }], a: 3 },
+      { q: { "zh-TW": "針對台灣盃火箭競賽,火箭準備發射時,相關人員於空曠區離火箭不可少於多少公尺?", "en": "Distance between personnel and rocket during launch prep must be at least (m):" },
+        o: [{ "zh-TW": "50 m", "en": "50 m" }, { "zh-TW": "80 m", "en": "80 m" }, { "zh-TW": "100 m", "en": "100 m" }, { "zh-TW": "150 m", "en": "150 m" }], a: 2 },
+      { q: { "zh-TW": "針對台灣盃火箭競賽,允許發射的風速最多不能超過多少 m/s?", "en": "Maximum allowed launch wind speed (m/s):" },
+        o: [{ "zh-TW": "6", "en": "6" }, { "zh-TW": "7", "en": "7" }, { "zh-TW": "8", "en": "8" }, { "zh-TW": "15", "en": "15" }], a: 0 },
+      { q: { "zh-TW": "以直立狀態為基準,火箭發射架仰角最多不能超過幾度?", "en": "Maximum launch rail elevation angle from vertical reference (°):" },
+        o: [{ "zh-TW": "88 度", "en": "88°" }, { "zh-TW": "86 度", "en": "86°" }, { "zh-TW": "85 度", "en": "85°" }, { "zh-TW": "83 度", "en": "83°" }], a: 2 },
+      { q: { "zh-TW": "當火箭已上架,並已預備發射,請問以下安全措施何者錯誤?", "en": "When the rocket is on the rail and ready, which safety measure is INCORRECT?" },
+        o: [{ "zh-TW": "只要火箭點火離架後,射場管制即可解除,所有人員可隨意移動。", "en": "Once the rocket lifts off, range control is lifted and people may move freely" },
+            { "zh-TW": "所有人員及相關設備皆須撤離發射台並退至警戒範圍之外。", "en": "All personnel and equipment must evacuate the pad and stay outside the warning zone" },
+            { "zh-TW": "需聽從現場指揮單位指令,並注意現場狀況。", "en": "Follow on-site command; remain alert" },
+            { "zh-TW": "車輛即使內部沒人,也必須停放在管制範圍外以策安全。", "en": "Vehicles, even unoccupied, must be parked outside the controlled zone" }], a: 0 },
+      { q: { "zh-TW": "當固體火箭發動機點火發射後但火箭還留在發射架上燃燒,請問應採下列何者緊急措施?", "en": "If a solid motor ignites but the rocket stays on the rail burning, what should be done?" },
+        o: [{ "zh-TW": "立即用滅火器或水澆熄。", "en": "Immediately spray with extinguisher or water" },
+            { "zh-TW": "什麼都不做,等固體推進劑燃燒殆盡。", "en": "Do nothing — let the solid propellant burn out" },
+            { "zh-TW": "維護安全人員立刻在發射台周圍拉出封鎖線,禁止所有人靠近。", "en": "Safety officers immediately rope off the pad and forbid approach" },
+            { "zh-TW": "以上皆非。", "en": "None of the above" }], a: 1 },
+      { q: { "zh-TW": "在火箭組裝整備期間,下列敘述何者錯誤?", "en": "During assembly, which statement is INCORRECT?" },
+        o: [{ "zh-TW": "火箭管路安裝及推進劑充填時,工作人員須配戴護目鏡。", "en": "Wear safety goggles when installing tubing and loading propellant" },
+            { "zh-TW": "使用電鑽、切割器等工具時,工作人員須配戴防割手套。", "en": "Wear cut-resistant gloves when using drills/cutters" },
+            { "zh-TW": "為避免被工具及其他器具誤傷,工作人員須配戴安全帽並著長袖長褲。", "en": "Wear helmet and long-sleeve attire to prevent injury" },
+            { "zh-TW": "因整備期間危險性較低,故可以隨意招待非相關人員參觀工作區。", "en": "Since assembly is low-risk, casually inviting non-personnel is fine" }], a: 3 },
+      { q: { "zh-TW": "在火箭組裝整備期間,如發現問題不確定如何處理時,下列處理方式何者有誤?", "en": "If unsure how to handle an issue during assembly, which response is WRONG?" },
+        o: [{ "zh-TW": "自行想辦法解決。", "en": "Solve it on your own" },
+            { "zh-TW": "詢問指導員。", "en": "Ask the mentor" },
+            { "zh-TW": "詢問現場工作人員。", "en": "Ask on-site staff" },
+            { "zh-TW": "詢問審查委員。", "en": "Ask the review committee" }], a: 0 }
+    ]
+  },
+  risk: {
+    title: { "zh-TW": "風險管理", "en": "Risk Management" },
+    take: 4,
+    questions: [
+      { q: { "zh-TW": "進行風險管理的目的是什麼?", "en": "What is the purpose of risk management?" },
+        o: [{ "zh-TW": "以下皆是", "en": "All of the below" },
+            { "zh-TW": "發現產品或製程中的潛在風險", "en": "Identify potential risks in product or process" },
+            { "zh-TW": "找到能減少或避免風險的措施", "en": "Find measures to reduce or avoid risk" },
+            { "zh-TW": "留存資料,形成經驗庫", "en": "Preserve records to build an experience base" }], a: 0 },
+      { q: { "zh-TW": "假設汽車中盤點出 4 項失效模式,經過失效分析如下,哪種情況應最優先採取措施?", "en": "Of four failure modes, which should be addressed FIRST?" },
+        o: [{ "zh-TW": "嚴重性=9, 發生率=3, 難檢度=3", "en": "S=9, O=3, D=3" },
+            { "zh-TW": "嚴重性=3, 發生率=9, 難檢度=9", "en": "S=3, O=9, D=9" },
+            { "zh-TW": "嚴重性=3, 發生率=9, 難檢度=3", "en": "S=3, O=9, D=3" },
+            { "zh-TW": "嚴重性=3, 發生率=3, 難檢度=9", "en": "S=3, O=3, D=9" }], a: 0 },
+      { q: { "zh-TW": "下列哪個不是一般 DFMEA 中失效分析時考慮的內容?", "en": "Which is NOT considered in a typical DFMEA failure analysis?" },
+        o: [{ "zh-TW": "改善所需的成本", "en": "Cost to improve" },
+            { "zh-TW": "是否容易偵測到失效或跡象", "en": "Detectability of the failure" },
+            { "zh-TW": "失效是否會造成人身危險", "en": "Whether failure causes personal harm" },
+            { "zh-TW": "發生失效的機率", "en": "Probability of failure" }], a: 0 },
+      { q: { "zh-TW": "引入標準化的做法可以用來處置一些失效模式,什麼是正確的標準化觀念?", "en": "Which is a CORRECT view of standardization?" },
+        o: [{ "zh-TW": "以下都不對", "en": "None of the below" },
+            { "zh-TW": "誤差無可避免,重要的規格參數應該訂定適當的容許誤差並進行檢驗,以確保成品符合需要", "en": "Tolerances are unavoidable — set appropriate allowances and inspect to ensure parts meet need" },
+            { "zh-TW": "量測設備的品質都做得很好,也經過充分的耐用測試,所以校驗並不重要", "en": "Measuring equipment is high quality, so calibration is unimportant" },
+            { "zh-TW": "作業過程中如果發現標準作業程序(SOP)有缺失或問題,可以直接修改,省去討論的過程以追求效率", "en": "If SOP issues are found, modify directly to save discussion time" }], a: 1 },
+      { q: { "zh-TW": "FMEA 的適用範圍為?", "en": "FMEA applies to:" },
+        o: [{ "zh-TW": "以下都適用", "en": "All of the below" },
+            { "zh-TW": "剛做過設計變更的產品或製程", "en": "Products/processes after a design change" },
+            { "zh-TW": "新的產品或製程", "en": "Brand-new products or processes" },
+            { "zh-TW": "原有產品或製程,修改使用情境後", "en": "Existing products/processes used in a new context" }], a: 0 }
+    ]
+  }
+};
+
+const KEYPOINTS = {
+  "zh-TW": [
+    { cat: "發射流程", items: [
+      "上架準備超過 <b>50 分鐘</b> 須重新排隊。",
+      "上電後 <b>不可下電</b>,須經審查委員確認。",
+      "回收時間區間 <b>1 小時</b>。",
+      "點火線路由 <b>競賽現場工作人員</b> 安裝。",
+      "落海打撈後於 <b>旭海漁港</b> 上岸。",
+      "點火失敗:工作人員確認安全 + 重排最後一輪。"
+    ]},
+    { cat: "火箭系統", items: [
+      "公版固態發動機最大推力 <b>200 kg</b>。",
+      "動態穩定性 (stability) > <b>1.5</b>;離架穩定性 < <b>4</b>。",
+      "氣壓中心 <b>位於質心後方</b> 才會穩定;不穩可在 <b>鼻錐增重</b>。",
+      "尾翼用 <b>穿殼內固定</b>;火箭三大系統:<b>結構、航電、推進</b>。",
+      "尾翼顫振速度需高於預期最大速度 <b>50%</b>。",
+      "必做環境測試:<b>衝擊與振動</b>。",
+      "電池可運作 <b>1.5 小時以上</b>;規範用 <b>18650 鋰離子</b>。",
+      "海面回收終端速度 ≤ <b>12 m/s</b>;地面 ≤ <b>11 m/s</b>。",
+      "3K 組總重量 < <b>28.5 kg</b>;禁用材料:<b>鉛</b>;禁用儲能:<b>黑色火藥</b>。",
+      "GNC = Guidance(導引) / Navigation(導航) / Control(控制)。",
+      "事件順序:慣性飛行 → 開傘 → 落地。"
+    ]},
+    { cat: "發射場安全", items: [
+      "禁止飲酒、服影響判斷力之藥物。",
+      "現場應備:滅火器 + 急救箱 + 直接通訊裝置。",
+      "天候確認:風速、濃霧 等。",
+      "人員與火箭距離不可少於 <b>100 公尺</b>。",
+      "風速上限 <b>6 m/s</b>;發射架仰角不超過 <b>85 度</b>。",
+      "火箭卡架燃燒:<b>等推進劑燒盡,不要靠近</b>。",
+      "點火離架後 <b>仍須遵守管制</b>,不可隨意移動。",
+      "整備期間遇問題:<b>不可自行解決</b>,須詢問指導員/工作人員/審查委員。"
+    ]},
+    { cat: "風險管理", items: [
+      "風險管理目的:發現風險、找對策、留經驗。",
+      "FMEA 風險優先採取依 RPN = 嚴重性 × 發生率 × 難檢度,但 <b>嚴重性極高</b> 應優先處理。",
+      "DFMEA 不考慮 <b>改善成本</b>。",
+      "SOP 發現問題須 <b>討論後修改</b>,不可直接改。",
+      "FMEA 適用所有新製程、變更後產品、新使用情境。"
+    ]}
+  ],
+  "en": [
+    { cat: "Launch Process", items: [
+      "Rail prep exceeding <b>50 min</b> → re-queue.",
+      "Once powered on, <b>no power-off</b> without committee approval.",
+      "Recovery window: <b>1 hour</b>.",
+      "Ignition wiring is installed by <b>on-site staff</b>.",
+      "Sea retrieval comes ashore at <b>Xuhai Fishing Port</b>.",
+      "Ignition fail: staff confirm safety + re-queue at end."
+    ]},
+    { cat: "Rocket Systems", items: [
+      "Std solid motor max thrust <b>200 kgf</b>.",
+      "Dynamic stability > <b>1.5</b>; off-rail stability < <b>4</b>.",
+      "CP <b>behind</b> CG = stable; for unstable, <b>add nose weight</b>.",
+      "Fins: <b>through-skin internal anchoring</b>; three subsystems: <b>structure, avionics, propulsion</b>.",
+      "Fin flutter speed > max speed by <b>50%</b>.",
+      "Mandatory env test: <b>shock & vibration</b>.",
+      "Battery endurance ≥ <b>1.5 h</b>; required type: <b>18650 Li-ion</b>.",
+      "Sea-landing terminal velocity ≤ <b>12 m/s</b>; land ≤ <b>11 m/s</b>.",
+      "3K class total mass < <b>28.5 kg</b>; banned material: <b>lead</b>; banned energy: <b>black powder</b>.",
+      "GNC = Guidance / Navigation / Control.",
+      "Order: coast → deploy → land."
+    ]},
+    { cat: "Launch Site Safety", items: [
+      "No alcohol, no impairing medication.",
+      "On-site: extinguisher + first-aid kit + direct comms device.",
+      "Weather check: wind speed, fog, etc.",
+      "Personnel-to-rocket distance ≥ <b>100 m</b>.",
+      "Max wind <b>6 m/s</b>; max rail elevation <b>85°</b>.",
+      "Rocket burning on rail: <b>let propellant burn out, do not approach</b>.",
+      "After lift-off, <b>controls remain in effect</b> — do not roam.",
+      "Issue during assembly: <b>do not self-solve</b>; ask mentor / staff / committee."
+    ]},
+    { cat: "Risk Management", items: [
+      "Goals: find risks, fix risks, preserve experience.",
+      "FMEA priority: RPN = S × O × D, but <b>extreme severity</b> takes precedence.",
+      "DFMEA does <b>not</b> consider improvement <b>cost</b>.",
+      "SOP issues require <b>discussion before change</b>, not direct edit.",
+      "FMEA applies to new processes, changed products, new contexts."
+    ]}
+  ]
+};
+
+const GUIDE = {
+  "zh-TW": [
+    { id: "ch1", title: "發射流程 — 從報到到回收",
+      lead: "台灣盃火箭競賽的發射日採嚴格的時段管理。每支隊伍依排程進入射場,流程是一條<b>不可逆的時間軸</b> — 任何環節出錯都會被退到下一輪重新來過。理解每一站的工作分工與關鍵時間點,是通過考試也是順利完賽的基本功。",
+      body: `
+        <h3>1.1 整體流程概觀</h3>
+        <p>從報到到上岸,大致經過六個階段:</p>
+        <div class="flow-diagram">整備 <span class="arrow">→</span> 審查 <span class="arrow">→</span> 上架 <span class="arrow">→</span> 發射 <span class="arrow">→</span> 回收 <span class="arrow">→</span> 上岸</div>
+        <p>每個階段都有明確的負責人 — 有些事情是隊員做、有些是工作人員做、有些是審查委員做。把分工搞錯就會被取消資格,所以分工是這一章最重要的觀念之一。</p>
+        <h3>1.2 整備期 — 發動機在這時候才組裝</h3>
+        <p>許多新手以為固態火箭發動機是事先組裝好帶來,其實 <b>發動機在「火箭上架準備時間」才組裝完成</b>。這是因為固態推進劑屬於高風險物件,事先組裝會增加運送與保管風險。</p>
+        <div class="callout"><strong>關鍵分工</strong>:發動機點火線路 <b>由競賽現場工作人員統一安裝</b>,不是由參賽隊員或指導員自行連接。這是為了確保線路品質一致、減少誤觸風險。</div>
+        <h3>1.3 審查 — 通過才有上架資格</h3>
+        <p>審查委員會逐項檢查火箭。考試會問「審查項目包含哪些」,答案是「以上皆是」 — 也就是下面這幾項全都是檢查重點:</p>
+        <ul>
+          <li><b>Rail button 位於質心兩側</b> — 確保發射過程中軌道滑塊兩端力臂平衡</li>
+          <li><b>火箭外型無異狀突起物</b> — 突起物會增加阻力、影響穩定性,也可能勾住軌道</li>
+          <li><b>所有零件已鎖緊固定</b> — 飛行過程加速度大,任何鬆動都可能導致解體</li>
+        </ul>
+        <h3>1.4 上架 — 兩條鐵則</h3>
+        <p>火箭上架後要試上發射軌道,確認能在軌道上自由滑動無阻礙。這個階段有兩條看起來不起眼但極為關鍵的限制:</p>
+        <div class="callout warn"><strong>50 分鐘上限</strong>:從上架開始計時,若超過 <b>50 分鐘</b> 仍未完成發射準備,就會被要求重新排隊到隊伍最後。這個時限是為了維持整場競賽的進度。</div>
+        <div class="callout warn"><strong>上電後不可下電</strong>:火箭一旦在發射架上完成上電,就不可再下電 — 除非經審查委員確認。為什麼?電子系統反覆啟停會造成感測器歸零、航電狀態漂移、回收觸發條件失效。</div>
+        <h3>1.5 發射 — 撤離與管制</h3>
+        <p>所有人員及相關設備必須撤離發射台、退至警戒範圍外。隊員只能在規劃的安全區內觀看,不可進行任何發射程序 — 點火由工作人員操作。</p>
+        <div class="callout danger"><strong>常見錯誤心態</strong>:「火箭點火離架後,管制就解除,可以隨意移動」 — 這是錯的。即使火箭已經發射,仍須聽從現場指揮單位指令,直到工作人員正式解除警戒。</div>
+        <h3>1.6 點火失敗的處理</h3>
+        <p>如果固態發動機點火後沒有燃燒(俗稱「未發火」),正確處理流程是:</p>
+        <ol><li>由競賽現場工作人員 <b>確認安全</b></li><li>取消本次發射</li><li>重新排到 <b>最後一輪</b>,進行火箭上架準備與發射程序</li></ol>
+        <div class="callout danger"><strong>絕對不可以</strong>:就地重新接點火線再射。點火失敗的火箭可能存在電氣短路、推進劑問題、結構鬆動等未明的故障原因,在現場重接線路風險極高。</div>
+        <h3>1.7 回收與上岸</h3>
+        <div class="fact-grid"><div class="fact"><div class="key">回收時間區間</div><div class="val">1 小時</div></div><div class="fact"><div class="key">海上打撈者</div><div class="val">工作人員</div></div><div class="fact"><div class="key">上岸地點</div><div class="val">旭海漁港</div></div></div>
+        <p>注意:火箭若落海,<b>是由競賽現場工作人員打撈,而不是由隊員自己去撿</b>。打撈後也不會直接送回發射場,而是於 <b>旭海漁港</b> 上岸 — 隊員需到漁港領取火箭。</p>
+      `
+    },
+    { id: "ch2", title: "火箭系統 — 結構、航電、推進",
+      lead: "這一章佔考試一半題數(20/40),是必須拿下的部分。重點不是死背數字,而是理解 <b>為什麼要有這些規範</b> — 一旦理解原理,所有題目就會迎刃而解。",
+      body: `
+        <h3>2.1 三大次系統</h3>
+        <ul>
+          <li><b>結構 (Structure)</b>:箭身、鼻錐、尾翼 — 撐起整體形狀,承受飛行應力</li>
+          <li><b>航電 (Avionics)</b>:導引、導航、控制、感測器、電池 — 火箭的「大腦與感官」</li>
+          <li><b>推進 (Propulsion)</b>:發動機、噴嘴 — 提供升空所需的推力</li>
+        </ul>
+        <p>注意鼻錐、天線、噴嘴 <b>不是</b> 三大次系統的分類,而是其中的零件。</p>
+        <h3>2.2 穩定性 — 整章最核心的觀念</h3>
+        <div class="callout tip"><strong>穩定性原理</strong>:當火箭受到側向擾動時,如果氣壓中心 <b>位於質心後方</b>,空氣作用力會產生「修正力矩」把火箭擺正;如果氣壓中心位於質心前方,反而會放大偏差。</div>
+        <h4>穩定度規範</h4>
+        <div class="fact-grid"><div class="fact"><div class="key">動態穩定性</div><div class="val">≥ 1.5</div></div><div class="fact"><div class="key">離架穩定性</div><div class="val">&lt; 4</div></div></div>
+        <p>為什麼上限只能 <code>&lt; 4</code>?因為穩定度太大會讓火箭對風 <b>過於敏感</b>(weather-cocking),反而向風偏轉。</p>
+        <h4>讓不穩定的火箭變穩定 — 兩個方法</h4>
+        <ul><li><b>在鼻錐增重</b>:質心往前移 → 與氣壓中心距離拉大 → 穩定度提升</li><li>把尾翼加大、後移:讓氣壓中心進一步往後</li></ul>
+        <h4>固態火箭會「越燒越穩」</h4>
+        <p>固態推進劑集中在後段,燃燒時尾段重量持續減少 → 質心前移 → 穩定度逐漸增加。</p>
+        <h3>2.3 結構設計重點</h3>
+        <div class="callout warn"><strong>分節段、鼻錐處的洞</strong>:目的是<b>降低升空時內部累積的氣壓,避免過早脫節</b>。</div>
+        <div class="callout warn"><strong>航電段的洞</strong>:目的是<b>讓壓力計記錄外部氣壓</b>。</div>
+        <h4>尾翼固定方式</h4>
+        <p>建議「<b>穿過外殼於內部結構固定</b>」 — 而不是黏貼於表面或釘在外殼上。</p>
+        <h4>尾翼顫振速度 (Fin Flutter)</h4>
+        <div class="callout">尾翼顫振速度應 <b>至少比火箭預期最大速度高出 50%</b>(也就是 1.5 倍以上)。</div>
+        <h4>軌道滑塊 (Rail Buttons)</h4>
+        <ul><li>至少使用 <b>兩個</b>,分別位於火箭 <b>質心前方與後方</b></li><li>不能只用塑膠 3D 列印件</li><li>必須機械固定,不能只用黏著劑</li></ul>
+        <h3>2.4 推進系統</h3>
+        <div class="fact-grid"><div class="fact"><div class="key">公版發動機最大推力</div><div class="val">200 kgf</div></div><div class="fact"><div class="key">發動機組裝時機</div><div class="val">上架準備</div></div><div class="fact"><div class="key">點火線路安裝者</div><div class="val">工作人員</div></div></div>
+        <h3>2.5 航電系統</h3>
+        <h4>GNC 三要素</h4>
+        <p><b>GNC = Guidance(導引) / Navigation(導航) / Control(控制)</b>。注意 C 是 Control 不是 Communication;G 是 Guidance 不是 Gyro。</p>
+        <h4>必做的環境測試</h4>
+        <p><b>衝擊與振動測試</b> 是必做的 — 因為發射瞬間的衝擊與飛行震動是最直接的環境干擾。</p>
+        <h4>電池規範</h4>
+        <ul><li>規定電池類型:<b>18650 鋰離子電池</b></li><li>電池續航 <b>≥ 1.5 小時</b></li></ul>
+        <h4>儲能裝置</h4>
+        <ul><li>✓ 高壓氣瓶 / 市售煙霧棒 / 彈簧、彈力繩</li><li>✗ <b>黑色火藥(禁用)</b></li></ul>
+        <h3>2.6 回收系統</h3>
+        <ul><li>需有 <b>冗餘設計</b></li><li>第一頂降落傘須於 <b>最高點</b> 開啟</li><li>若有高溫氣體,需 <b>耐熱保護</b></li></ul>
+        <div class="fact-grid"><div class="fact"><div class="key">海面終端速度</div><div class="val">≤ 12 m/s</div></div><div class="fact"><div class="key">地面終端速度</div><div class="val">≤ 11 m/s</div></div></div>
+        <h3>2.7 任務規劃 — 飛行階段順序</h3>
+        <div class="flow-diagram">發射 <span class="arrow">→</span> 推進結束 <span class="arrow">→</span> 慣性飛行 <span class="arrow">→</span> 開傘 <span class="arrow">→</span> 落地</div>
+        <h3>2.8 整體規範摘要</h3>
+        <div class="fact-grid"><div class="fact"><div class="key">3K 組總重</div><div class="val">&lt; 28.5 kg</div></div><div class="fact"><div class="key">禁用材料</div><div class="val">鉛</div></div><div class="fact"><div class="key">禁用儲能</div><div class="val">黑色火藥</div></div></div>
+      `
+    },
+    { id: "ch3", title: "發射場安全 — 人員、環境、應變",
+      lead: "火箭比賽不是普通的工程競賽,而是一場「處理危險物件」的活動。固態推進劑、高速飛行物、高壓氣體都是不可逆的傷害源。",
+      body: `
+        <h3>3.1 人員行為規範</h3>
+        <ul><li>禁止飲酒</li><li>禁止服用會影響判斷力、行動或穩定性的藥物</li></ul>
+        <p>注意:用手機通話 <b>不在禁止行列</b>。</p>
+        <h3>3.2 必備裝備 — 三項全都要</h3>
+        <p>發射現場應攜帶:<b>滅火器 + 急救箱 + 能跟發射現場人員直接聯絡的裝置</b>。</p>
+        <h3>3.3 三個關鍵安全數字</h3>
+        <div class="fact-grid"><div class="fact"><div class="key">人員距火箭</div><div class="val">≥ 100 m</div></div><div class="fact"><div class="key">允許風速</div><div class="val">≤ 6 m/s</div></div><div class="fact"><div class="key">發射架仰角</div><div class="val">≤ 85°</div></div></div>
+        <h3>3.4 緊急狀況應變</h3>
+        <div class="callout danger"><strong>固體發動機卡架燃燒</strong>:<b>什麼都不做,等推進劑燒盡。</b>用滅火器或水會造成蒸汽爆炸;固體推進劑燃燒不需外部氧氣,水滅不掉。</div>
+        <h3>3.5 個人防護裝備 (PPE)</h3>
+        <ul><li>充填推進劑 → 護目鏡</li><li>使用切割器 → 防割手套</li><li>整體 → 長袖長褲、安全帽</li></ul>
+        <h3>3.6 不確定怎麼辦?</h3>
+        <p>整備期間遇到問題, <b>不可自行解決</b>。正確順序:詢問指導員 → 工作人員 → 審查委員。</p>
+      `
+    },
+    { id: "ch4", title: "風險管理 — FMEA 思維",
+      lead: "風險管理只有 5 題、抽 4 題,看似簡單,但題型集中在 <b>FMEA(失效模式與效應分析)</b>的核心觀念。",
+      body: `
+        <h3>4.1 風險管理的目的(以上皆是)</h3>
+        <ol><li><b>發現</b> 潛在風險</li><li><b>找到</b> 對策</li><li><b>留存</b> 經驗</li></ol>
+        <h3>4.2 FMEA 三要素 (DFMEA)</h3>
+        <div class="fact-grid"><div class="fact"><div class="key">嚴重性 S</div><div class="val">後果有多嚴重</div></div><div class="fact"><div class="key">發生率 O</div><div class="val">發生機率高低</div></div><div class="fact"><div class="key">難檢度 D</div><div class="val">不易偵測程度</div></div></div>
+        <p>三者相乘 = <b>風險優先數 RPN = S × O × D</b>。</p>
+        <h3>4.3 但 RPN 最大不一定最優先</h3>
+        <div class="callout tip"><strong>實務原則</strong>:即使 RPN 不是最高,但 <b>嚴重性極高的項目應最優先處理</b>。火箭工程一貫以「人身安全」為最高優先。</div>
+        <h3>4.4 DFMEA 不考慮成本</h3>
+        <p>DFMEA 是 <b>純失效分析</b> 工具,改善成本是後續決策階段才考慮。</p>
+        <h3>4.5 標準化的正確觀念</h3>
+        <div class="callout tip">誤差無可避免,重要規格參數應該訂定 <b>適當的容許誤差</b> 並進行檢驗。</div>
+        <h3>4.6 FMEA 的適用範圍(以上都適用)</h3>
+        <ul><li>新的產品或製程</li><li>剛做過設計變更的產品或製程</li><li>原有產品,修改使用情境後</li></ul>
+      `
+    }
+  ],
+  "en": [
+    { id: "ch1", title: "Launch Process — From check-in to recovery",
+      lead: "Launch day at the Taiwan Cup follows strict time-windowed scheduling. The flow is an <b>irreversible timeline</b> — a misstep at any station sends you back to the next round. Knowing each station's role and the key timing is the foundation for both passing the exam and finishing the competition.",
+      body: `
+        <h3>1.1 Overall flow</h3>
+        <p>From check-in to coming ashore, six stages:</p>
+        <div class="flow-diagram">Prep <span class="arrow">→</span> Review <span class="arrow">→</span> Mount <span class="arrow">→</span> Launch <span class="arrow">→</span> Recovery <span class="arrow">→</span> Ashore</div>
+        <p>Each stage has clear ownership — some by the team, some by site staff, some by the review committee. Mixing up ownership leads to disqualification.</p>
+        <h3>1.2 Prep — the motor is assembled HERE</h3>
+        <p>Many newcomers think the solid motor arrives pre-assembled. In fact <b>the motor is finally assembled during the rail-prep window</b>. Solid propellant is high-risk; pre-assembly increases transport and storage risk.</p>
+        <div class="callout"><strong>Key ownership</strong>: ignition wiring is installed <b>by on-site staff</b>, never by team members or mentors. Uniform wiring quality and reduced mishandling risk.</div>
+        <h3>1.3 Review — pass or no rail</h3>
+        <p>The committee inspects every item. The "review checklist" question's answer is "all of the above":</p>
+        <ul>
+          <li><b>Rail buttons on either side of CG</b> — balanced moments along the rail</li>
+          <li><b>No abnormal protrusions</b> — protrusions add drag, hurt stability, and can snag the rail</li>
+          <li><b>All parts secured</b> — flight loads are large; any looseness can cause break-up</li>
+        </ul>
+        <h3>1.4 On the rail — two iron rules</h3>
+        <div class="callout warn"><strong>50-minute cap</strong>: timer starts at mounting; if launch prep isn't complete in <b>50 min</b>, the team is sent to the back of the queue.</div>
+        <div class="callout warn"><strong>No power-off after power-on</strong>: once powered up on the rail, you cannot power down without committee approval. Power cycling resets sensors, drifts avionics state, and can disable recovery triggers.</div>
+        <h3>1.5 Launch — evacuation & control</h3>
+        <p>All personnel and equipment must clear the pad and stay outside the warning zone. Members watch only from the designated safe area; the launch action is performed by staff.</p>
+        <div class="callout danger"><strong>Common bad mindset</strong>: "Once the rocket leaves the rail, controls are lifted." Wrong. Controls remain in effect until staff officially clear the warning. There may still be debris, exhaust, and air-burst risks.</div>
+        <h3>1.6 If ignition fails</h3>
+        <ol><li>On-site staff <b>confirm safety</b></li><li>Cancel this launch</li><li>Re-queue at the <b>end of the round</b> for fresh prep</li></ol>
+        <div class="callout danger"><strong>Never</strong>: rewire and try again on the spot. A fail can hide electrical shorts, propellant issues, or loose structure.</div>
+        <h3>1.7 Recovery & ashore</h3>
+        <div class="fact-grid"><div class="fact"><div class="key">Recovery window</div><div class="val">1 hour</div></div><div class="fact"><div class="key">Sea retrieval by</div><div class="val">On-site staff</div></div><div class="fact"><div class="key">Ashore at</div><div class="val">Xuhai Port</div></div></div>
+        <p>If the rocket lands at sea, <b>staff retrieve it — not the team</b>. The rocket is brought ashore at <b>Xuhai Fishing Port</b>, where the team picks it up.</p>
+      `
+    },
+    { id: "ch2", title: "Rocket Systems — Structure, avionics, propulsion",
+      lead: "This chapter is half of the exam (20/40). The trick is not memorizing numbers — it's understanding <b>why</b> each rule exists. Once the principles click, the questions become trivial.",
+      body: `
+        <h3>2.1 Three subsystems</h3>
+        <ul>
+          <li><b>Structure</b>: airframe, nose cone, fins — shape and load-carrying</li>
+          <li><b>Avionics</b>: guidance, navigation, control, sensors, battery — the brain</li>
+          <li><b>Propulsion</b>: motor, nozzle — thrust</li>
+        </ul>
+        <p>Note: nose cone, antenna, nozzle are <b>parts</b>, not subsystems.</p>
+        <h3>2.2 Stability — the central concept</h3>
+        <div class="callout tip"><strong>Principle</strong>: when the rocket is perturbed, if CP is <b>behind</b> CG, aerodynamic forces produce a restoring moment; if CP is in front of CG, the disturbance is amplified.</div>
+        <h4>Stability spec</h4>
+        <div class="fact-grid"><div class="fact"><div class="key">Dynamic stability</div><div class="val">≥ 1.5</div></div><div class="fact"><div class="key">Off-rail stability</div><div class="val">&lt; 4</div></div></div>
+        <p>Why cap at <code>&lt; 4</code>? Too much stability makes the rocket <b>over-sensitive to wind</b> (weather-cocking).</p>
+        <h4>Two ways to stabilize an unstable rocket</h4>
+        <ul><li><b>Add nose weight</b> → CG moves forward → distance from CP grows → stability up</li><li>Enlarge / aft-shift the fins → CP moves further aft</li></ul>
+        <h4>Solid rockets self-stabilize</h4>
+        <p>Solid propellant sits aft. As it burns, aft mass drops → CG moves forward → stability rises.</p>
+        <h3>2.3 Structural design</h3>
+        <div class="callout warn"><strong>Hole at joints / nose</strong>: relieve internal pressure during ascent to prevent premature separation.</div>
+        <div class="callout warn"><strong>Hole in avionics bay</strong>: let the barometer read ambient pressure — needed for recovery triggers.</div>
+        <h4>Fin attachment</h4>
+        <p>Fins must be <b>through-skin and anchored to internal structure</b> — not surface-glued or nailed.</p>
+        <h4>Fin flutter</h4>
+        <div class="callout">Fin flutter speed must exceed expected max speed by <b>at least 50%</b>.</div>
+        <h4>Rail buttons</h4>
+        <ul><li>At least <b>two</b>, placed <b>ahead of and behind CG</b></li><li>Plastic 3D-printed alone is too weak</li><li>Mechanical fastening required, adhesive alone is not enough</li></ul>
+        <h3>2.4 Propulsion</h3>
+        <div class="fact-grid"><div class="fact"><div class="key">Std motor max thrust</div><div class="val">200 kgf</div></div><div class="fact"><div class="key">Motor assembly</div><div class="val">During rail prep</div></div><div class="fact"><div class="key">Wiring installer</div><div class="val">On-site staff</div></div></div>
+        <h3>2.5 Avionics</h3>
+        <h4>GNC</h4>
+        <p><b>GNC = Guidance / Navigation / Control</b>. C is Control (not Communication); G is Guidance (not Gyro).</p>
+        <h4>Mandatory environmental test</h4>
+        <p><b>Shock & vibration</b> is required — the most direct, largest perturbation at liftoff and during flight.</p>
+        <h4>Battery spec</h4>
+        <ul><li>Required type: <b>18650 Li-ion</b></li><li>Endurance: <b>≥ 1.5 hours</b></li></ul>
+        <h4>Energy storage</h4>
+        <ul><li>✓ High-pressure cylinder / off-the-shelf smoke charge / springs / elastic</li><li>✗ <b>Black powder (banned)</b></li></ul>
+        <h3>2.6 Recovery</h3>
+        <ul><li>Must include <b>redundancy</b></li><li>First chute deploys at <b>apogee</b></li><li>Hot gas → heat protection</li></ul>
+        <div class="fact-grid"><div class="fact"><div class="key">Sea terminal velocity</div><div class="val">≤ 12 m/s</div></div><div class="fact"><div class="key">Land terminal velocity</div><div class="val">≤ 11 m/s</div></div></div>
+        <h3>2.7 Mission events</h3>
+        <div class="flow-diagram">Launch <span class="arrow">→</span> Burnout <span class="arrow">→</span> Coast <span class="arrow">→</span> Deploy <span class="arrow">→</span> Land</div>
+        <h3>2.8 Spec summary</h3>
+        <div class="fact-grid"><div class="fact"><div class="key">3K class total mass</div><div class="val">&lt; 28.5 kg</div></div><div class="fact"><div class="key">Banned material</div><div class="val">Lead</div></div><div class="fact"><div class="key">Banned energy</div><div class="val">Black powder</div></div></div>
+      `
+    },
+    { id: "ch3", title: "Launch Site Safety — People, environment, response",
+      lead: "Rocket competition is not a regular engineering contest — it is an exercise in handling dangerous goods. Solid propellant, high-velocity flying objects, and pressurized gas are irreversible hazards.",
+      body: `
+        <h3>3.1 Personnel rules</h3>
+        <ul><li>No alcohol</li><li>No medication that impairs judgment, motion, or stability</li></ul>
+        <p>Note: phone use is <b>not</b> on the forbidden list.</p>
+        <h3>3.2 Required equipment — all three</h3>
+        <p>On-site: <b>extinguisher + first-aid kit + a direct comms device</b>.</p>
+        <h3>3.3 Three key safety numbers</h3>
+        <div class="fact-grid"><div class="fact"><div class="key">Personnel distance</div><div class="val">≥ 100 m</div></div><div class="fact"><div class="key">Max wind</div><div class="val">≤ 6 m/s</div></div><div class="fact"><div class="key">Max rail elevation</div><div class="val">≤ 85°</div></div></div>
+        <h3>3.4 Emergency response</h3>
+        <div class="callout danger"><strong>Solid motor burning on rail</strong>: <b>do nothing — let propellant burn out.</b> Water or extinguisher will cause steam explosion or fragmentation; solid propellant burns without external oxygen.</div>
+        <h3>3.5 PPE during assembly</h3>
+        <ul><li>Propellant loading → goggles</li><li>Drills / cutters → cut-resistant gloves</li><li>Always → long sleeves, helmet</li></ul>
+        <h3>3.6 What to do when unsure?</h3>
+        <p>During assembly, <b>do not self-solve</b>. Ask: mentor → on-site staff → review committee.</p>
+      `
+    },
+    { id: "ch4", title: "Risk Management — FMEA mindset",
+      lead: "Only 4 of 5 questions are drawn from this category, but they cluster around the core ideas of FMEA — useful far beyond the exam.",
+      body: `
+        <h3>4.1 Goals (all of the above)</h3>
+        <ol><li><b>Identify</b> potential risk</li><li><b>Find</b> mitigations</li><li><b>Preserve</b> records</li></ol>
+        <h3>4.2 FMEA's three dimensions (DFMEA)</h3>
+        <div class="fact-grid"><div class="fact"><div class="key">Severity (S)</div><div class="val">how bad</div></div><div class="fact"><div class="key">Occurrence (O)</div><div class="val">how often</div></div><div class="fact"><div class="key">Detection (D)</div><div class="val">how hard to detect</div></div></div>
+        <p>Multiply: <b>RPN = S × O × D</b>.</p>
+        <h3>4.3 But highest RPN is not always top priority</h3>
+        <div class="callout tip"><strong>Practical rule</strong>: items with <b>extremely high severity</b> take priority even if their RPN is not the largest. Rocketry's golden rule: human safety first.</div>
+        <h3>4.4 DFMEA does NOT consider cost</h3>
+        <p>DFMEA is a <b>pure failure analysis</b> tool — improvement cost belongs to a later decision step.</p>
+        <h3>4.5 Correct view of standardization</h3>
+        <div class="callout tip">Tolerances are unavoidable; key spec parameters need <b>appropriate allowance</b> and inspection.</div>
+        <h3>4.6 FMEA scope (all of the below)</h3>
+        <ul><li>New products or processes</li><li>Products / processes after a design change</li><li>Existing products used in a new context</li></ul>
+      `
+    }
+  ]
+};
+
+/* =========================================================================
+   State & helpers
+   ========================================================================= */
+let LANG = (() => {
+  try {
+    const saved = localStorage.getItem("rocket-exam.lang");
+    if (saved === "en" || saved === "zh-TW") return saved;
+  } catch { /* ignore */ }
+  const nav = (navigator.language || "").toLowerCase();
+  return nav.startsWith("zh") ? "zh-TW" : "en";
+})();
+
+function t(path) {
+  const parts = path.split(".");
+  let v = I18N[LANG];
+  for (const p of parts) v = v && v[p];
+  return v;
+}
+function loc(obj) { return (obj && (obj[LANG] ?? obj["zh-TW"])) ?? ""; }
+function fmt(s, params) { return s.replace(/\{(\w+)\}/g, (_, k) => String(params[k] ?? "")); }
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function fmtTime(s) {
+  s = Math.max(0, s | 0);
+  const m = (s / 60) | 0, ss = s % 60;
+  return String(m).padStart(2, "0") + ":" + String(ss).padStart(2, "0");
+}
+function letter(i) { return ["A", "B", "C", "D"][i]; }
+
+/* =========================================================================
+   View routing
+   ========================================================================= */
+const VIEWS = ["home", "exam", "guide", "study"];
+let CURRENT_VIEW = "home";
+
+function showView(name) {
+  CURRENT_VIEW = name;
+  VIEWS.forEach(v => {
+    document.getElementById("view-" + v).classList.toggle("hide", v !== name);
+  });
+  document.querySelectorAll("#tabs button").forEach(b => {
+    b.classList.toggle("active", b.dataset.view === name);
+  });
+  if (name === "exam") renderExam();
+  if (name === "guide") renderGuide();
+  if (name === "study") renderStudy();
+  if (name === "home") renderHome();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function renderChrome() {
+  document.title = t("docTitle");
+  document.documentElement.lang = LANG;
+  document.getElementById("brand-title").textContent = t("brandTitle");
+  document.getElementById("brand-sub").textContent = t("brandSub");
+  document.querySelectorAll("#tabs button").forEach(b => {
+    b.textContent = t("tabs." + b.dataset.view);
+  });
+  document.querySelectorAll("#lang-toggle button").forEach(b => {
+    b.classList.toggle("active", b.dataset.lang === LANG);
+  });
+}
+
+document.getElementById("tabs").addEventListener("click", e => {
+  const b = e.target.closest("button[data-view]");
+  if (b) showView(b.dataset.view);
+});
+document.getElementById("lang-toggle").addEventListener("click", e => {
+  const b = e.target.closest("button[data-lang]");
+  if (!b) return;
+  LANG = b.dataset.lang;
+  try { localStorage.setItem("rocket-exam.lang", LANG); } catch { /* ignore */ }
+  renderChrome();
+  showView(CURRENT_VIEW);
+});
+
+/* =========================================================================
+   Home view
+   ========================================================================= */
+function renderHome() {
+  const root = document.getElementById("view-home");
+  const h = t("home");
+  const last = (() => { try { return JSON.parse(localStorage.getItem("rocket-exam.last") || "null"); } catch { return null; } })();
+  const lastBlock = last ? `
+    <h2>${h.lastTitle}</h2>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="font-size:32px;font-weight:800;">${last.score} <span style="font-size:18px;color:var(--muted);">/ 40</span></div>
+          <div style="color:var(--muted);font-size:13px;margin-top:4px;">${new Date(last.at).toLocaleString(LANG === "en" ? "en-US" : "zh-TW")} · ${h.lastTaken} ${fmtTime(last.used)}</div>
+        </div>
+        <span class="pill ${last.score >= 35 ? "good" : "bad"}">${last.score >= 35 ? h.passed : h.failed}</span>
+      </div>
+    </div>` : "";
+
+  root.innerHTML = `
+    <div class="hero">
+      <h2>${h.heroTitle}</h2>
+      <p>${h.heroDesc}</p>
+    </div>
+    <div class="grid grid-3 home-cards">
+      <div class="home-card" onclick="showView('exam')">
+        <div class="icon">📝</div>
+        <h3>${h.cardExamTitle}</h3>
+        <p>${h.cardExamDesc}</p>
+        <div class="badge-row">
+          <span class="pill accent">${h.cardExamBadges[0]}</span>
+          <span class="pill warn">${h.cardExamBadges[1]}</span>
+          <span class="pill good">${h.cardExamBadges[2]}</span>
+        </div>
+      </div>
+      <div class="home-card" onclick="showView('guide')">
+        <div class="icon">📖</div>
+        <h3>${h.cardGuideTitle}</h3>
+        <p>${h.cardGuideDesc}</p>
+        <div class="badge-row">
+          ${h.cardGuideBadges.map(b => `<span class="pill">${b}</span>`).join("")}
+        </div>
+      </div>
+      <div class="home-card" onclick="showView('study')">
+        <div class="icon">📚</div>
+        <h3>${h.cardStudyTitle}</h3>
+        <p>${h.cardStudyDesc}</p>
+        <div class="badge-row">
+          ${h.cardStudyBadges.map(b => `<span class="pill">${b}</span>`).join("")}
+        </div>
+      </div>
+    </div>
+    <h2>${h.overviewTitle}</h2>
+    <div class="grid grid-4">
+      ${h.overviewStats.map(s => `<div class="stat"><span class="label">${s.label}</span><span class="value">${s.value}</span><span class="hint">${s.hint}</span></div>`).join("")}
+    </div>
+    <h2>${h.distTitle}</h2>
+    <div class="card">
+      <table class="summary">
+        <thead><tr>${h.distHeads.map(x => `<th>${x}</th>`).join("")}</tr></thead>
+        <tbody>${h.distRows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody>
+      </table>
+    </div>
+    ${lastBlock}
+  `;
+}
+
+/* =========================================================================
+   Exam view
+   ========================================================================= */
+const EXAM = {
+  questions: [], answers: [], flags: [],
+  current: 0, startAt: 0, timer: null,
+  remaining: 30 * 60, state: "intro", submittedAt: 0,
+  options: { shuffleOptions: true }
+};
+
+function pickQuestions() {
+  const out = [];
+  for (const key of Object.keys(BANK)) {
+    const cat = BANK[key];
+    const picks = shuffle(cat.questions).slice(0, cat.take);
+    for (const p of picks) {
+      let order = [0, 1, 2, 3];
+      if (EXAM.options.shuffleOptions) order = shuffle(order);
+      const newOpts = order.map(i => p.o[i]);
+      const newAns = order.indexOf(p.a);
+      out.push({ category: cat.title, q: p.q, o: newOpts, a: newAns });
+    }
+  }
+  return shuffle(out);
+}
+
+function renderExam() {
+  const root = document.getElementById("view-exam");
+  const e = t("exam");
+  if (EXAM.state === "intro") {
+    root.innerHTML = `
+      <div class="card">
+        <h2 style="margin-top:0;">${e.introTitle}</h2>
+        <p class="lead">${e.introLead}</p>
+        <div class="grid grid-2">
+          ${e.introStats.map(s => `<div class="stat"><span class="label">${s.label}</span><span class="value">${s.value}</span><span class="hint">${s.hint}</span></div>`).join("")}
+        </div>
+        <h3>${e.noticeTitle}</h3>
+        <ul style="color:var(--muted); padding-left: 20px;">
+          ${e.notices.map(n => `<li>${n}</li>`).join("")}
+        </ul>
+        <div class="footer-bar" style="margin-top:20px;">
+          <button class="btn ghost" onclick="showView('home')">${e.back}</button>
+          <button class="btn" onclick="startExam()">${e.start}</button>
+        </div>
+      </div>`;
+    return;
+  }
+  if (EXAM.state === "running") return renderExamRunning();
+  if (EXAM.state === "submitted") return renderResult();
+}
+
+function startExam() {
+  EXAM.questions = pickQuestions();
+  EXAM.answers = Array(EXAM.questions.length).fill(-1);
+  EXAM.flags = Array(EXAM.questions.length).fill(false);
+  EXAM.current = 0;
+  EXAM.startAt = Date.now();
+  EXAM.remaining = 30 * 60;
+  EXAM.state = "running";
+  if (EXAM.timer) clearInterval(EXAM.timer);
+  EXAM.timer = setInterval(tick, 1000);
+  renderExam();
+}
+
+function tick() {
+  EXAM.remaining--;
+  const tEl = document.getElementById("timer");
+  if (tEl) {
+    tEl.textContent = fmtTime(EXAM.remaining);
+    tEl.classList.toggle("warn", EXAM.remaining <= 300 && EXAM.remaining > 60);
+    tEl.classList.toggle("danger", EXAM.remaining <= 60);
+  }
+  if (EXAM.remaining <= 0) submitExam(true);
+}
+
+function renderExamRunning() {
+  const root = document.getElementById("view-exam");
+  const e = t("exam");
+  const total = EXAM.questions.length;
+  const i = EXAM.current;
+  const q = EXAM.questions[i];
+  const answeredCount = EXAM.answers.filter(x => x >= 0).length;
+  root.innerHTML = `
+    <div class="exam-header">
+      <div class="progress-text"><b>${fmt(e.progress, { i: i + 1, n: total })}</b> · ${fmt(e.answered, { n: answeredCount })}</div>
+      <div class="progress-bar"><span style="width:${(answeredCount / total * 100).toFixed(1)}%"></span></div>
+      <div id="timer" class="timer">${fmtTime(EXAM.remaining)}</div>
+    </div>
+    <div class="question-card">
+      <div class="qmeta">
+        <span class="pill accent">${loc(q.category)}</span>
+        <span class="pill ${EXAM.flags[i] ? "warn" : ""}" style="cursor:pointer;" onclick="toggleFlag()">${EXAM.flags[i] ? e.flagOn : e.flagOff}</span>
+      </div>
+      <p class="qtext">${i + 1}. ${loc(q.q)}</p>
+      <div class="options">
+        ${q.o.map((opt, k) => `
+          <label class="option ${EXAM.answers[i] === k ? "selected" : ""}" onclick="pick(${k})">
+            <span class="marker">${letter(k)}</span>
+            <span class="text">${loc(opt)}</span>
+          </label>`).join("")}
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <h3 style="margin:0;">${e.navTitle}</h3>
+        <span style="color:var(--muted);font-size:13px;">${e.navHint}</span>
+      </div>
+      <div class="nav-grid">
+        ${EXAM.questions.map((_, k) => `
+          <button class="${EXAM.answers[k] >= 0 ? "answered" : ""} ${EXAM.flags[k] ? "flagged" : ""} ${k === i ? "current" : ""}" onclick="goTo(${k})">${k + 1}</button>
+        `).join("")}
+      </div>
+    </div>
+    <div class="footer-bar" style="margin-top:16px;">
+      <button class="btn secondary" onclick="prev()" ${i === 0 ? "disabled" : ""}>${e.prev}</button>
+      <div style="display:flex;gap:10px;">
+        <button class="btn danger" onclick="confirmSubmit()">${e.submit}</button>
+        ${i === total - 1 ? `<button class="btn success" onclick="confirmSubmit()">${e.finish}</button>` : `<button class="btn" onclick="next()">${e.next}</button>`}
+      </div>
+    </div>`;
+}
+
+function pick(k) { EXAM.answers[EXAM.current] = k; renderExamRunning(); }
+function next() { if (EXAM.current < EXAM.questions.length - 1) EXAM.current++; renderExamRunning(); }
+function prev() { if (EXAM.current > 0) EXAM.current--; renderExamRunning(); }
+function goTo(k) { EXAM.current = k; renderExamRunning(); }
+function toggleFlag() { EXAM.flags[EXAM.current] = !EXAM.flags[EXAM.current]; renderExamRunning(); }
+
+function confirmSubmit() {
+  const e = t("exam");
+  const unanswered = EXAM.answers.filter(x => x < 0).length;
+  const flagged = EXAM.flags.filter(Boolean).length;
+  const m = document.createElement("div");
+  m.className = "modal-bg";
+  m.innerHTML = `
+    <div class="modal">
+      <h3>${e.confirmTitle}</h3>
+      <p>${fmt(e.confirmStats, { u: unanswered, f: flagged })}</p>
+      <p style="color:var(--muted);font-size:13px;">${e.confirmNote}</p>
+      <div class="modal-actions">
+        <button class="btn ghost" onclick="this.closest('.modal-bg').remove()">${e.cancel}</button>
+        <button class="btn danger" id="confirm-submit-btn">${e.confirmBtn}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(m);
+  m.querySelector("#confirm-submit-btn").onclick = () => { m.remove(); submitExam(false); };
+}
+
+function submitExam(timeUp) {
+  if (EXAM.timer) clearInterval(EXAM.timer);
+  EXAM.submittedAt = Date.now();
+  EXAM.state = "submitted";
+  let score = 0;
+  EXAM.questions.forEach((q, i) => { if (EXAM.answers[i] === q.a) score++; });
+  const used = 30 * 60 - EXAM.remaining;
+  try {
+    localStorage.setItem("rocket-exam.last", JSON.stringify({ at: Date.now(), score, used, timeUp }));
+  } catch { /* ignore */ }
+  renderExam();
+}
+
+function renderResult() {
+  const root = document.getElementById("view-exam");
+  const e = t("exam");
+  const total = EXAM.questions.length;
+  let score = 0;
+  const byCat = {};
+  EXAM.questions.forEach((q, i) => {
+    const ok = EXAM.answers[i] === q.a;
+    if (ok) score++;
+    const catName = loc(q.category);
+    byCat[catName] = byCat[catName] || { ok: 0, total: 0 };
+    byCat[catName].total++;
+    if (ok) byCat[catName].ok++;
+  });
+  const passed = score >= 35;
+  const used = 30 * 60 - EXAM.remaining;
+  const pct = Math.round(score / total * 100);
+  const ringColor = passed ? "var(--good)" : "var(--bad)";
+  const summaryText = fmt(e.passSummary, { t: fmtTime(used) }) + (EXAM.remaining <= 0 ? e.timedOut : "");
+
+  root.innerHTML = `
+    <div class="card" style="text-align:center;">
+      <div class="score-ring" style="--p:${pct};--ring-color:${ringColor};">
+        <div class="inner">
+          <div class="num" style="color:${passed ? "var(--good)" : "var(--bad)"};">${score}</div>
+          <div class="lbl">/ 40 (${pct}%)</div>
+        </div>
+      </div>
+      <h2 style="margin:0 0 8px;">${passed ? e.passTitle : e.failTitle}</h2>
+      <p style="color:var(--muted);margin:0;">${summaryText}</p>
+      <div style="margin-top:16px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+        <button class="btn" onclick="EXAM.state='intro'; renderExam();">${e.retry}</button>
+        <button class="btn secondary" onclick="showView('study')">${e.goStudy}</button>
+        <button class="btn ghost" onclick="showView('home')">${e.goHome}</button>
+      </div>
+    </div>
+    <h2>${e.catTitle}</h2>
+    <div class="grid grid-4">
+      ${Object.entries(byCat).map(([cat, s]) => {
+        const p = Math.round(s.ok / s.total * 100);
+        return `<div class="stat"><span class="label">${cat}</span><span class="value">${s.ok} / ${s.total}</span><span class="hint">${p}%</span></div>`;
+      }).join("")}
+    </div>
+    <h2>${e.detailTitle}</h2>
+    <div id="review-controls" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      <button class="btn secondary" onclick="filterReview('all')">${e.filterAll}</button>
+      <button class="btn secondary" onclick="filterReview('wrong')">${e.filterWrong}</button>
+      <button class="btn secondary" onclick="filterReview('flag')">${e.filterFlag}</button>
+    </div>
+    <div id="review-list">${reviewListHTML("all")}</div>`;
+}
+
+function filterReview(mode) { document.getElementById("review-list").innerHTML = reviewListHTML(mode); }
+function reviewListHTML(mode) {
+  const e = t("exam");
+  const out = EXAM.questions.map((q, i) => {
+    const userAns = EXAM.answers[i];
+    const ok = userAns === q.a;
+    if (mode === "wrong" && ok) return "";
+    if (mode === "flag" && !EXAM.flags[i]) return "";
+    return `
+      <div class="review-item">
+        <div class="qhead">
+          <span class="pill ${ok ? "good" : (userAns < 0 ? "warn" : "bad")}">${ok ? e.correct : (userAns < 0 ? e.noAnswer : e.wrong)}</span>
+          <span class="pill" style="margin-left:6px;">${loc(q.category)}</span>
+          ${EXAM.flags[i] ? `<span class="pill warn" style="margin-left:6px;">⚑</span>` : ""}
+        </div>
+        <div style="font-weight:600;margin:8px 0;">${i + 1}. ${loc(q.q)}</div>
+        ${q.o.map((opt, k) => {
+          let cls = "";
+          if (k === q.a) cls = "correct";
+          else if (k === userAns) cls = "user";
+          return `<div class="opt ${cls}">${letter(k)}. ${loc(opt)}${k === q.a ? e.answerMark : ""}${k === userAns && k !== q.a ? e.yourAnswer : ""}</div>`;
+        }).join("")}
+      </div>`;
+  }).join("");
+  return out || `<div class="card" style="text-align:center;color:var(--muted);">${e.noMatch}</div>`;
+}
+
+/* =========================================================================
+   Guide view
+   ========================================================================= */
+function renderGuide() {
+  const root = document.getElementById("view-guide");
+  const g = t("guide");
+  const chapters = GUIDE[LANG] || GUIDE["zh-TW"];
+  root.innerHTML = `
+    <div class="guide-toc">
+      <div class="guide-toc-head">
+        <h3>${g.tocHead}</h3>
+        <span style="color:var(--muted);font-size:12px;">${g.tocHint}</span>
+      </div>
+      <ol>
+        ${chapters.map((c, i) => `<li><a href="#${c.id}">${g.tocItems[i][0]} <small>— ${g.tocItems[i][1]}</small></a></li>`).join("")}
+      </ol>
+    </div>
+    ${chapters.map((c, i) => `
+      <article id="${c.id}" class="chapter">
+        <h2><span class="chapter-num">${g.chapterLabel[i]}</span> ${c.title}</h2>
+        <p class="lead">${c.lead}</p>
+        ${c.body}
+        <div class="chapter-nav">
+          <a href="${i > 0 ? "#" + chapters[i - 1].id : "#"}" class="${i === 0 ? "disabled" : ""}">${g.prev}${i > 0 ? ": " + g.tocItems[i - 1][0] : ""}</a>
+          <a href="${i < chapters.length - 1 ? "#" + chapters[i + 1].id : "#" + chapters[0].id}">${i < chapters.length - 1 ? g.next + ": " + g.tocItems[i + 1][0] : g.tocItems[0][0]} →</a>
+        </div>
+      </article>
+    `).join("")}
+  `;
+  root.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener("click", ev => {
+      const id = a.getAttribute("href").slice(1);
+      if (!id) return;
+      const target = document.getElementById(id);
+      if (target) {
+        ev.preventDefault();
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  });
+}
+
+/* =========================================================================
+   Study view
+   ========================================================================= */
+let STUDY_CAT = "all";
+
+function renderStudy() {
+  const root = document.getElementById("view-study");
+  const s = t("study");
+  const kp = KEYPOINTS[LANG] || KEYPOINTS["zh-TW"];
+  root.innerHTML = `
+    <div class="card">
+      <h2 style="margin-top:0;">${s.ruleTitle}</h2>
+      <p class="lead">${s.ruleLead}</p>
+      <div class="grid grid-3">
+        <div class="stat"><span class="label">${s.stat1Label}</span><span class="value" style="font-size:16px;line-height:1.4;">${s.stat1Val}</span></div>
+        <div class="stat"><span class="label">${s.stat2Label}</span><span class="value" style="font-size:16px;">${s.stat2Val}</span></div>
+        <div class="stat"><span class="label">${s.stat3Label}</span><span class="value" style="font-size:16px;">${s.stat3Val}</span></div>
+      </div>
+      <h3>${s.distTitle}</h3>
+      <table class="summary">
+        <thead><tr>${s.distHeads.map(h => `<th>${h}</th>`).join("")}</tr></thead>
+        <tbody>${s.distRows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody>
+      </table>
+    </div>
+    <h2>${s.keyTitle}</h2>
+    <div id="keypoints">${kp.map(group => `
+      <h3>${group.cat}</h3>
+      <div class="keypoints">${group.items.map(it => `<div class="keypoint">${it}</div>`).join("")}</div>
+    `).join("")}</div>
+    <h2>${s.bankTitle}</h2>
+    <input class="search-input" id="study-search" placeholder="${s.searchPh}" oninput="filterStudy()" />
+    <div class="study-toc" id="study-toc">
+      <button class="${STUDY_CAT === "all" ? "active" : ""}" data-cat="all" onclick="setStudyCat('all', this)">${s.tocAll}</button>
+      ${Object.values(BANK).map(c => `<button class="${STUDY_CAT === loc(c.title) ? "active" : ""}" data-cat="${loc(c.title)}" onclick="setStudyCat('${loc(c.title).replace(/'/g, "\\'")}', this)">${loc(c.title)} (${c.questions.length})</button>`).join("")}
+    </div>
+    <div id="study-list">${studyListHTML(STUDY_CAT, "")}</div>`;
+}
+
+function setStudyCat(cat, el) {
+  STUDY_CAT = cat;
+  document.querySelectorAll("#study-toc button").forEach(b => b.classList.toggle("active", b.dataset.cat === cat));
+  filterStudy();
+}
+function filterStudy() {
+  const q = document.getElementById("study-search").value.trim();
+  document.getElementById("study-list").innerHTML = studyListHTML(STUDY_CAT, q);
+}
+function studyListHTML(cat, kw) {
+  const s = t("study");
+  const out = [];
+  let n = 0;
+  for (const key of Object.keys(BANK)) {
+    const c = BANK[key];
+    const catName = loc(c.title);
+    if (cat !== "all" && catName !== cat) continue;
+    c.questions.forEach((q, idx) => {
+      const text = (loc(q.q) + " " + q.o.map(loc).join(" ")).toLowerCase();
+      if (kw && !text.includes(kw.toLowerCase())) return;
+      n++;
+      out.push(`
+        <details>
+          <summary>
+            <span class="pill accent" style="flex:0 0 auto;">${catName}</span>
+            <span><b>${idx + 1}.</b> ${loc(q.q)}</span>
+          </summary>
+          <div class="ans-block">
+            ${q.o.map((opt, k) => `<div class="opt ${k === q.a ? "correct" : "normal"}">${letter(k)}. ${loc(opt)}${k === q.a ? "  ✓" : ""}</div>`).join("")}
+          </div>
+        </details>`);
+    });
+  }
+  if (!out.length) return `<div class="card" style="text-align:center;color:var(--muted);">${s.noMatch || "—"}</div>`;
+  return `<p style="color:var(--muted);font-size:13px;">${fmt(s.countLine, { n })}</p>` + out.join("");
+}
+
+/* init */
+renderChrome();
+renderHome();
+</script>
+
+</body>
+</html>

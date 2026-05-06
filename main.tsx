@@ -51,6 +51,7 @@ app.use("*", rateLimit(RATE_LIMITS.global));
 app.use("/", rateLimit(RATE_LIMITS.html));
 app.use("/search", rateLimit(RATE_LIMITS.html));
 app.use("/detail", rateLimit(RATE_LIMITS.html));
+app.use("/rocket-exam", rateLimit(RATE_LIMITS.html));
 app.use("/api/health", rateLimit(RATE_LIMITS.health));
 app.use("/sitemap.xml", rateLimit(RATE_LIMITS.html));
 app.use("/api/search", rateLimit(RATE_LIMITS.api));
@@ -186,6 +187,15 @@ app.get("/favicon.ico", async (c) => {
   const file = await Deno.readFile(path);
   c.header("Content-Type", "image/png");
   c.header("Cache-Control", STATIC_CACHE_CONTROL);
+  return c.body(file, 200);
+});
+
+// Static: rocket-exam mock test (bilingual, self-contained HTML)
+app.get("/rocket-exam", async (c) => {
+  const path = new URL("./static/rocket-exam.html", import.meta.url);
+  const file = await Deno.readFile(path);
+  c.header("Content-Type", "text/html; charset=utf-8");
+  c.header("Cache-Control", HTML_CACHE_CONTROL);
   return c.body(file, 200);
 });
 

@@ -80,6 +80,11 @@
     "notFoundTitle": "页面未找到 - AstroGroot",
     "notFoundDescription": "未找到您请求的页面。"
   },
+  "tools": {
+    "title": "实用工具",
+    "rocketExamTitle": "初级火箭发射执照 — 模拟考",
+    "rocketExamDesc": "2026 台湾杯火箭竞赛初级发射执照模拟考 — 40 题、30 分钟,附教学指南与完整题库。"
+  },
   "error404": {
     "title": "迷失太空",
     "message": "找不到您要的页面。",

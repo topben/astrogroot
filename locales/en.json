@@ -80,6 +80,11 @@
     "notFoundTitle": "Page Not Found - AstroGroot",
     "notFoundDescription": "The requested page could not be found."
   },
+  "tools": {
+    "title": "Tools",
+    "rocketExamTitle": "Rocket Launch License — Mock Exam",
+    "rocketExamDesc": "2026 Taiwan Cup Level-1 launch license practice — 40 questions, 30 minutes, with a study guide and the full question bank."
+  },
   "error404": {
     "title": "Lost in Space",
     "message": "The page you're looking for doesn't exist in this galaxy.",
