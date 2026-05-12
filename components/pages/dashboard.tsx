@@ -143,7 +143,7 @@ export const DashboardPage: FC<DashboardPageProps> = (props) => {
             </a>
             <a
               class="donate-button"
-              href="https://etherscan.io/enslookup-search?search=tokimi.eth"
+              href="https://etherscan.io/address/tokimi.eth"
               target="_blank"
               rel="noopener noreferrer"
             >
