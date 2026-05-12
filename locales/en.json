@@ -69,6 +69,16 @@
     "source": "Source",
     "recommendedPapers": "Recommend Papers to Library"
   },
+  "donate": {
+    "title": "Fuel the Library",
+    "intro": "AstroGroot runs on curiosity and coffee. Tip a few wei and keep the satellites humming.",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "viewOnEns": "ENS",
+    "viewOnEtherscan": "Etherscan",
+    "thanks": "Thank you — every wei helps.",
+    "ariaCopy": "Copy tokimi.eth to clipboard"
+  },
   "seo": {
     "siteName": "AstroGroot",
     "homeTitle": "AstroGroot - Astronomy & Robotics Research Library",

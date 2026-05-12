@@ -63,6 +63,16 @@ export interface LocaleDict {
     source: string;
     recommendedPapers: string;
   };
+  donate: {
+    title: string;
+    intro: string;
+    copy: string;
+    copied: string;
+    viewOnEns: string;
+    viewOnEtherscan: string;
+    thanks: string;
+    ariaCopy: string;
+  };
   seo: {
     siteName: string;
     homeTitle: string;

@@ -143,6 +143,27 @@ const SHARED_STYLES = `
   .info-list { margin-left: 2rem; margin-bottom: 1.5rem; line-height: 2; color: #c7d2fe; }
   .info-list li { margin-bottom: 0.5rem; }
   .info-list li::marker { color: #a855f7; filter: drop-shadow(0 0 6px rgba(168,85,247,0.6)); }
+  .donate-section { background: linear-gradient(135deg, rgba(168,85,247,0.14) 0%, rgba(34,211,238,0.10) 50%, rgba(255,215,0,0.06) 100%); border-radius: 20px; padding: 2.5rem; margin-bottom: 2rem; border: 1px solid rgba(168,85,247,0.45); backdrop-filter: blur(20px); box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 30px rgba(168,85,247,0.18), inset 0 1px 0 rgba(255,255,255,0.06); position: relative; overflow: hidden; animation: donatePulse 7s ease-in-out infinite; }
+  @keyframes donatePulse { 0%, 100% { box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 30px rgba(168,85,247,0.18), inset 0 1px 0 rgba(255,255,255,0.06); } 50% { box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 70px rgba(168,85,247,0.35), 0 0 110px rgba(34,211,238,0.18), inset 0 1px 0 rgba(255,255,255,0.06); } }
+  .donate-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+  .donate-icon { font-size: 1.75rem; filter: drop-shadow(0 0 14px rgba(255,215,0,0.8)) drop-shadow(0 0 24px rgba(168,85,247,0.5)); }
+  .donate-title { font-size: 1.75rem; font-weight: 700; margin: 0; background: linear-gradient(135deg, #fde68a 0%, #c084fc 50%, #67e8f9 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; filter: drop-shadow(0 0 20px rgba(192,132,252,0.35)); }
+  .donate-intro { color: #c7d2fe; line-height: 1.75; margin-bottom: 1.5rem; font-size: 1.0625rem; }
+  .donate-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+  .ens-pill { display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.85rem 1.4rem; background: rgba(5,8,22,0.85); border: 1px solid rgba(34,211,238,0.55); border-radius: 999px; font-family: "SF Mono", "Fira Code", "Menlo", monospace; font-size: 1.1rem; color: #67e8f9; text-shadow: 0 0 14px rgba(34,211,238,0.55); box-shadow: 0 0 24px rgba(34,211,238,0.22), inset 0 1px 0 rgba(255,255,255,0.05); position: relative; overflow: hidden; }
+  .ens-pill::before { content: ""; position: absolute; top: 0; left: -60%; width: 60%; height: 100%; background: linear-gradient(110deg, transparent 25%, rgba(255,255,255,0.18) 50%, transparent 75%); animation: ensShimmer 4.5s linear infinite; pointer-events: none; }
+  @keyframes ensShimmer { 0% { left: -60%; } 100% { left: 160%; } }
+  .ens-eth-glyph { font-weight: 700; color: #fde68a; text-shadow: 0 0 12px rgba(253,224,71,0.6); }
+  .ens-text { letter-spacing: 0.08em; }
+  .donate-copy { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.75rem 1.15rem; border-radius: 10px; border: 1px solid rgba(168,85,247,0.55); background: rgba(168,85,247,0.14); color: #e0e7ff; cursor: pointer; font-size: 0.95rem; font-weight: 500; font-family: inherit; transition: all 0.2s ease; }
+  .donate-copy:hover { background: rgba(168,85,247,0.28); border-color: rgba(168,85,247,0.75); box-shadow: 0 0 20px rgba(168,85,247,0.4); transform: translateY(-1px); }
+  .donate-copy:focus-visible { outline: 2px solid #c084fc; outline-offset: 2px; }
+  .donate-copy.copied { background: rgba(34,197,94,0.2); border-color: rgba(34,197,94,0.65); color: #86efac; box-shadow: 0 0 18px rgba(34,197,94,0.3); }
+  .donate-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.25rem; }
+  .donate-button { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.1rem; border-radius: 10px; border: 1px solid rgba(34,211,238,0.35); background: rgba(15,23,42,0.6); color: #e0e7ff; text-decoration: none; font-size: 0.95rem; transition: all 0.2s ease; }
+  .donate-button:hover { border-color: rgba(34,211,238,0.65); background: rgba(34,211,238,0.12); box-shadow: 0 0 18px rgba(34,211,238,0.25); transform: translateY(-1px); }
+  .donate-thanks { margin-top: 1.25rem; font-size: 0.95rem; color: #a5b4fc; opacity: 0.9; }
+  @media (prefers-reduced-motion: reduce) { .donate-section, .ens-pill::before { animation: none; } }
   .site-footer { position: relative; z-index: 1; text-align: center; padding: 2rem 1rem 2.5rem; margin-top: 2rem; border-top: 1px solid rgba(34, 211, 238, 0.1); }
   .footer-links { display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; }
   .footer-link { display: inline-flex; align-items: center; gap: 0.4rem; color: #64748b; text-decoration: none; font-size: 0.875rem; transition: color 0.2s ease; }

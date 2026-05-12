@@ -69,6 +69,16 @@
     "source": "來源",
     "recommendedPapers": "推薦論文給知識庫"
   },
+  "donate": {
+    "title": "為這座圖書館加油",
+    "intro": "AstroGroot 靠好奇心與咖啡運作。贊助一點 wei，讓衛星持續運轉。",
+    "copy": "複製",
+    "copied": "已複製！",
+    "viewOnEns": "ENS",
+    "viewOnEtherscan": "Etherscan",
+    "thanks": "感謝每一筆贊助。",
+    "ariaCopy": "複製 tokimi.eth 到剪貼簿"
+  },
   "seo": {
     "siteName": "AstroGroot",
     "homeTitle": "AstroGroot - 天文與機器人研究圖書館",
