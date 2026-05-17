@@ -56,7 +56,9 @@
   .lang-toggle { display: flex; gap: 4px; background: var(--bg-elev); padding: 4px; border-radius: 10px; border: 1px solid var(--border); }
   .lang-toggle button {
     border: 0; background: transparent; color: var(--muted);
-    padding: 6px 12px; font-size: 13px; border-radius: 7px; cursor: pointer; font-weight: 600;
+    padding: 8px 14px; font-size: 13px; border-radius: 7px; cursor: pointer; font-weight: 600;
+    min-height: 36px; touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(91,140,255,.25);
   }
   .lang-toggle button.active { background: var(--bg-card); color: var(--text); box-shadow: var(--shadow); }
 
@@ -1117,14 +1119,19 @@ const GUIDE = {
 /* =========================================================================
    State & helpers
    ========================================================================= */
-let LANG = (() => {
+function readLang() {
+  try {
+    const q = new URLSearchParams(location.search).get("lang");
+    if (q === "en" || q === "zh-TW") return q;
+  } catch { /* ignore */ }
   try {
     const saved = localStorage.getItem("rocket-exam.lang");
     if (saved === "en" || saved === "zh-TW") return saved;
   } catch { /* ignore */ }
   const nav = (navigator.language || "").toLowerCase();
   return nav.startsWith("zh") ? "zh-TW" : "en";
-})();
+}
+let LANG = readLang();
 
 function t(path) {
   const parts = path.split(".");
@@ -1188,12 +1195,28 @@ document.getElementById("tabs").addEventListener("click", e => {
   if (b) showView(b.dataset.view);
 });
 document.getElementById("lang-toggle").addEventListener("click", e => {
-  const b = e.target.closest("button[data-lang]");
+  const t = e.target.nodeType === 3 ? e.target.parentElement : e.target;
+  const b = t && t.closest("button[data-lang]");
   if (!b) return;
   LANG = b.dataset.lang;
   try { localStorage.setItem("rocket-exam.lang", LANG); } catch { /* ignore */ }
+  try {
+    const url = new URL(location.href);
+    url.searchParams.set("lang", LANG);
+    history.replaceState(null, "", url.toString());
+  } catch { /* ignore */ }
   renderChrome();
   showView(CURRENT_VIEW);
+});
+
+window.addEventListener("pageshow", e => {
+  if (!e.persisted) return;
+  const fresh = readLang();
+  if (fresh !== LANG) {
+    LANG = fresh;
+    renderChrome();
+    showView(CURRENT_VIEW);
+  }
 });
 
 /* =========================================================================
