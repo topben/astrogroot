@@ -55,18 +55,6 @@ export const DashboardPage: FC<DashboardPageProps> = (props) => {
           <SearchBar compact={true} showSuggestions={true} locale={locale} dict={d} />
         </section>
 
-        <section class="info-section">
-          <a
-            href="/rocket-exam"
-            class="stat-card"
-            style="display:inline-flex;align-items:center;gap:0.6rem;text-decoration:none;padding:0.5rem 0.9rem;font-size:0.85rem;color:#a5b4fc;"
-          >
-            <span style="font-size:1rem;" aria-hidden="true">🚀</span>
-            <span>{d?.tools?.rocketExamTitle ?? "Rocket Launch License — Mock Exam"}</span>
-            <span style="color:#22d3ee;" aria-hidden="true">→</span>
-          </a>
-        </section>
-
         <section class="stats-section">
           <h2 class="section-title">{d?.stats.title ?? "Library Statistics"}</h2>
           <div class="stats-grid">
@@ -143,6 +131,18 @@ export const DashboardPage: FC<DashboardPageProps> = (props) => {
             </a>
           </div>
           <p class="donate-thanks">{d?.donate.thanks ?? "Thank you — every wei helps."}</p>
+        </section>
+
+        <section class="info-section" style="text-align:center;">
+          <a
+            href="/rocket-exam"
+            class="stat-card"
+            style="display:inline-flex;align-items:center;gap:0.6rem;text-decoration:none;padding:0.5rem 0.9rem;font-size:0.85rem;color:#a5b4fc;"
+          >
+            <span style="font-size:1rem;" aria-hidden="true">🚀</span>
+            <span>{d?.tools?.rocketExamTitle ?? "Rocket Launch License — Mock Exam"}</span>
+            <span style="color:#22d3ee;" aria-hidden="true">→</span>
+          </a>
         </section>
       </main>
       {jsonLd ? (
