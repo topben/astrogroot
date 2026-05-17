@@ -77,7 +77,7 @@ const SHARED_STYLES = `
   .header { text-align: center; padding: 2rem 1rem 2rem; position: relative; z-index: 1; }
   .header-search { padding: 2rem 1rem 1.5rem; }
   .lang-switcher { position: absolute; top: 1rem; right: 1rem; display: flex; gap: 0.35rem; z-index: 2; }
-  .lang-switcher a { padding: 0.4rem 0.65rem; font-size: 0.8125rem; font-weight: 500; color: #94a3b8; text-decoration: none; border-radius: 8px; border: 1px solid rgba(34,211,238,0.25); background: rgba(15,23,42,0.6); backdrop-filter: blur(8px); transition: all 0.2s ease; }
+  .lang-switcher a { padding: 0.55rem 0.85rem; font-size: 0.8125rem; font-weight: 500; color: #94a3b8; text-decoration: none; border-radius: 8px; border: 1px solid rgba(34,211,238,0.25); background: rgba(15,23,42,0.6); backdrop-filter: blur(8px); transition: all 0.2s ease; min-height: 36px; display: inline-flex; align-items: center; touch-action: manipulation; -webkit-tap-highlight-color: rgba(34,211,238,0.25); }
   .lang-switcher a:hover { color: #e0e7ff; border-color: rgba(34,211,238,0.5); background: rgba(34,211,238,0.1); }
   .lang-switcher a.lang-active { color: #22d3ee; border-color: rgba(34,211,238,0.6); background: rgba(34,211,238,0.15); box-shadow: 0 0 12px rgba(34,211,238,0.25); }
   .brand-link { display: inline-flex; flex-direction: column; align-items: center; gap: 0.75rem; text-decoration: none; color: inherit; transition: opacity 0.3s ease; }
@@ -230,7 +230,8 @@ const LOCALE_LABELS: Record<Locale, string> = {
 };
 
 function currentPageHref(activeNav: "dashboard" | "search" | undefined, locale: Locale): string {
-  return activeNav === "search" ? searchHref(locale) : homeHref(locale);
+  const base = activeNav === "search" ? "/search" : "/";
+  return `${base}?lang=${encodeURIComponent(locale)}`;
 }
 
 export const Layout: FC<LayoutProps> = (props) => {
