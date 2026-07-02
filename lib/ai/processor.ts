@@ -1,4 +1,12 @@
+import * as OpenCC from "opencc-js";
 import { sendMessage } from "./client.ts";
+import { checkBudget } from "./usage.ts";
+
+let _twToCn: ((text: string) => string) | null = null;
+function twToCn(text: string): string {
+  if (!_twToCn) _twToCn = OpenCC.Converter({ from: "tw", to: "cn" });
+  return _twToCn(text);
+}
 
 /** Supported content languages for summaries/translations (aligned with i18n locales). */
 export const SUPPORTED_LANGUAGES = [
@@ -102,12 +110,13 @@ export async function summarizeText(params: {
     article: "article or news item",
   }[sourceType];
 
+  const MAX_INPUT_CHARS = 15000;
   const prompt = `Analyze and summarize this ${sourceLabel}:
 
 TITLE: "${title}"
 
 CONTENT:
-${text.slice(0, 50000)}${text.length > 50000 ? "\n[Content truncated...]" : ""}
+${text.slice(0, MAX_INPUT_CHARS)}${text.length > MAX_INPUT_CHARS ? "\n[Content truncated...]" : ""}
 
 Generate a structured summary following the Emerald-style format:
 1. PURPOSE: Research problem, objectives, and significance
@@ -124,6 +133,8 @@ Optimize for semantic search by including relevant technical keywords.`;
       messages: [{ role: "user", content: prompt }],
       systemPrompt: SUMMARIZE_SYSTEM_PROMPT,
       temperature: 0.7,
+      maxTokens: 1024,
+      purpose: "summarize",
     });
 
     return summary.trim();
@@ -148,6 +159,8 @@ ${summary}`;
       messages: [{ role: "user", content: prompt }],
       systemPrompt: TRANSLATE_SYSTEM_PROMPT,
       temperature: 0.5,
+      maxTokens: 1024,
+      purpose: "translate_summary",
     });
 
     return translation.trim();
@@ -168,6 +181,8 @@ ${text}`;
       messages: [{ role: "user", content: prompt }],
       systemPrompt: TRANSLATE_SYSTEM_PROMPT,
       temperature: 0.3,
+      maxTokens: 256,
+      purpose: "translate_title",
     });
 
     return translation.trim();
@@ -196,6 +211,7 @@ Return only a numbered list of key terms/concepts, each 1-5 words, optimized for
       messages: [{ role: "user", content: prompt }],
       systemPrompt: SUMMARIZE_SYSTEM_PROMPT,
       temperature: 0.5,
+      purpose: "extract_key_points",
     });
 
     // Parse numbered list into array
@@ -262,28 +278,25 @@ export async function processMultilingualContent(params: {
 
   console.log(`Processing multilingual ${sourceType}: ${title.substring(0, 50)}...`);
 
+  await checkBudget();
+
   const baseSummary = await summarizeText({
     text,
     title,
     sourceType,
   });
 
-  const targetLangs = SUPPORTED_LANGUAGES.filter((l) => l.code !== "en");
+  // Only zh-TW is translated via the API; zh-CN is derived from it with OpenCC
+  // (deterministic script conversion, no extra API call/cost).
+  const zhTw = SUPPORTED_LANGUAGES.find((l) => l.code === "zh-TW")!;
+  const zhTwTitle = await translateText(title, zhTw.name);
+  const zhTwSummary = await translateSummary({ summary: baseSummary, targetLanguage: zhTw.name });
+
   const translations: MultilingualTranslation[] = [
     { lang: "en", title, summary: baseSummary },
+    { lang: "zh-TW", title: zhTwTitle, summary: zhTwSummary },
+    { lang: "zh-CN", title: twToCn(zhTwTitle), summary: twToCn(zhTwSummary) },
   ];
-
-  const translated = await Promise.all(
-    targetLangs.map(async (lang) => ({
-      lang: lang.code,
-      title: await translateText(title, lang.name),
-      summary: await translateSummary({ summary: baseSummary, targetLanguage: lang.name }),
-    })),
-  );
-
-  for (const t of translated) {
-    translations.push({ lang: t.lang, title: t.title, summary: t.summary });
-  }
 
   return { baseSummary, translations };
 }
@@ -307,6 +320,7 @@ Question: ${question}`;
       messages: [{ role: "user", content: prompt }],
       systemPrompt,
       temperature: 0.7,
+      purpose: "answer_question",
     });
 
     return answer.trim();

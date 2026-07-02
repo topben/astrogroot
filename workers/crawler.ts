@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { ensureFtsTables, ftsInsertPaper, ftsInsertVideo, ftsInsertNasa, ftsInsertTranslation } from "../lib/fts.ts";
 import { initializeCollections } from "../lib/vector.ts";
 import { processMultilingualContent } from "../lib/ai/processor.ts";
+import { isBudgetExceededToday } from "../lib/ai/usage.ts";
 import type { Locale } from "../lib/i18n.ts";
 import { SUPPORTED_LOCALES } from "../lib/i18n.ts";
 import { collectAstronomyPapers, collectRocketPapers, collectRoboticsPapers, collectSatellitePapers, collectSpaceTravelPapers } from "../lib/collectors/arxiv.ts";
@@ -211,6 +212,11 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
     nasaItemsCollected: 0,
     errors: [],
   };
+
+  if (await isBudgetExceededToday()) {
+    console.log("🛑 Daily AI budget already exceeded — skipping this crawl run.");
+    return stats;
+  }
 
   // Initialize vector store collections
   const collections = await initCollections_();

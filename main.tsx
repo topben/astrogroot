@@ -7,6 +7,7 @@ import { bodyLimit } from "hono/body-limit";
 import { timeout } from "hono/timeout";
 import { handleMCPRequest } from "./lib/mcp.ts";
 import { getLibraryStats } from "./lib/stats.ts";
+import { getUsageSummary } from "./lib/ai/usage.ts";
 import { searchLibrary } from "./lib/search.ts";
 import { getLocaleFromRequest, interpolate, loadDictionary } from "./lib/i18n.ts";
 import {
@@ -282,6 +283,7 @@ app.get("/api/health", (c) =>
   c.json({ ok: true, service: "astrogroot", timestamp: new Date().toISOString() })
 );
 app.get("/api/stats", async (c) => c.json(await getLibraryStats()));
+app.get("/api/ai-usage", async (c) => c.json(await getUsageSummary()));
 
 app.get("/api/search", async (c) => {
   const q = c.req.query("q") ?? "";
