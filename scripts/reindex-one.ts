@@ -11,6 +11,7 @@ import { db } from "../db/client.ts";
 import { papers, videos, nasaContent, translations } from "../db/schema.ts";
 import { and, eq } from "drizzle-orm";
 import { processMultilingualContent } from "../lib/ai/processor.ts";
+import { BudgetExceededError } from "../lib/ai/usage.ts";
 import { SUPPORTED_LOCALES } from "../lib/i18n.ts";
 import { initializeCollections } from "../lib/vector.ts";
 
@@ -174,4 +175,11 @@ async function main() {
   console.log("✅ Done");
 }
 
-await main();
+main().catch((error) => {
+  if (error instanceof BudgetExceededError) {
+    console.error(`\n🛑 ${error.message}`);
+    console.error("Reindex stopped to protect the daily AI spend cap. Re-run tomorrow or raise AI_DAILY_BUDGET_USD.");
+    Deno.exit(1);
+  }
+  throw error;
+});

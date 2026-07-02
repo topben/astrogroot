@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { recordUsage } from "./usage.ts";
 
 // Lazy initialization to allow importing without env vars (for tests)
 let _anthropic: Anthropic | null = null;
@@ -20,9 +21,10 @@ export const anthropic = new Proxy({} as Anthropic, {
   },
 });
 
-// Use ANTHROPIC_MODEL in .env to override. If 404, try claude-3-5-sonnet-20240620
+// Use ANTHROPIC_MODEL in .env to override. Defaults to Haiku 4.5 - cheap and
+// strong enough for the summarize/translate workload this app runs.
 export const DEFAULT_MODEL =
-  Deno.env.get("ANTHROPIC_MODEL") || "claude-3-5-sonnet-latest";
+  Deno.env.get("ANTHROPIC_MODEL") || "claude-haiku-4-5-20251001";
 export const MAX_TOKENS = 4096;
 
 export type Message = {
@@ -36,14 +38,23 @@ export async function sendMessage(params: {
   maxTokens?: number;
   temperature?: number;
   systemPrompt?: string;
+  purpose?: string;
 }): Promise<string> {
+  const model = params.model || DEFAULT_MODEL;
   try {
     const response = await anthropic.messages.create({
-      model: params.model || DEFAULT_MODEL,
+      model,
       max_tokens: params.maxTokens || MAX_TOKENS,
       temperature: params.temperature || 0.7,
       system: params.systemPrompt,
       messages: params.messages,
+    });
+
+    await recordUsage({
+      model,
+      purpose: params.purpose ?? "unknown",
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
     });
 
     const content = response.content[0];
