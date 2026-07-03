@@ -7,9 +7,10 @@ import { ensureFtsTables, ftsInsertPaper, ftsInsertVideo, ftsInsertNasa, ftsInse
 import { initializeCollections } from "../lib/vector.ts";
 import { processMultilingualContent } from "../lib/ai/processor.ts";
 import { isBudgetExceededToday } from "../lib/ai/usage.ts";
+import { classifyPaper } from "../lib/relevance.ts";
 import type { Locale } from "../lib/i18n.ts";
 import { SUPPORTED_LOCALES } from "../lib/i18n.ts";
-import { collectAstronomyPapers, collectRocketPapers, collectRoboticsPapers, collectSatellitePapers, collectSpaceTravelPapers } from "../lib/collectors/arxiv.ts";
+import { collectAstronomyPapers, collectRocketPapers, collectRoboticsPapers, collectSatellitePapers, collectSpaceTravelPapers, collectAiPapers } from "../lib/collectors/arxiv.ts";
 import { collectNasaContent } from "../lib/collectors/nasa.ts";
 import {
   collectAstronomyVideos,
@@ -31,6 +32,7 @@ export interface CrawlerStats {
   ntrsReportsCollected: number;
   videosCollected: number;
   nasaItemsCollected: number;
+  skippedOffTopic: number;
   errors: string[];
 }
 
@@ -179,6 +181,7 @@ export interface CrawlerDeps {
   collectSatelliteReports: typeof collectSatelliteReports;
   collectSpaceTravelPapers: typeof collectSpaceTravelPapers;
   collectSpaceTravelReports: typeof collectSpaceTravelReports;
+  collectAiPapers: typeof collectAiPapers;
   collectAstronomyVideos: typeof collectAstronomyVideos;
   fetchCompleteVideoData: typeof fetchCompleteVideoData;
   collectNasaContent: typeof collectNasaContent;
@@ -198,6 +201,7 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
   const collectSatelliteReports_ = deps?.collectSatelliteReports ?? collectSatelliteReports;
   const collectSpaceTravelPapers_ = deps?.collectSpaceTravelPapers ?? collectSpaceTravelPapers;
   const collectSpaceTravelReports_ = deps?.collectSpaceTravelReports ?? collectSpaceTravelReports;
+  const collectAiPapers_ = deps?.collectAiPapers ?? collectAiPapers;
   const collectAstronomyVideos_ = deps?.collectAstronomyVideos ?? collectAstronomyVideos;
   const fetchCompleteVideoData_ = deps?.fetchCompleteVideoData ?? fetchCompleteVideoData;
   const collectNasaContent_ = deps?.collectNasaContent ?? collectNasaContent;
@@ -210,10 +214,14 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
     ntrsReportsCollected: 0,
     videosCollected: 0,
     nasaItemsCollected: 0,
+    skippedOffTopic: 0,
     errors: [],
   };
 
-  if (await isBudgetExceededToday()) {
+  // Skip in test/injected mode: isBudgetExceededToday() reads the real
+  // Turso ai_usage table directly (not part of CrawlerDeps), so it must
+  // not run against production budget state when deps are mocked.
+  if (!deps && (await isBudgetExceededToday())) {
     console.log("🛑 Daily AI budget already exceeded — skipping this crawl run.");
     return stats;
   }
@@ -245,6 +253,11 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
 
         if (existing) {
           console.log(`  ⏭️  Paper ${paper.id} already exists, skipping`);
+          continue;
+        }
+
+        if (!classifyPaper({ title: paper.title, abstract: paper.summary, categories: paper.categories }).keep) {
+          stats.skippedOffTopic++;
           continue;
         }
 
@@ -337,6 +350,11 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
           continue;
         }
 
+        if (!classifyPaper({ title: paper.title, abstract: paper.summary, categories: paper.categories }).keep) {
+          stats.skippedOffTopic++;
+          continue;
+        }
+
         console.log(`  🤖 Processing paper: ${paper.title.substring(0, 50)}...`);
         const { baseSummary, translations: trans } = await processMultilingual_({
           text: paper.summary,
@@ -417,6 +435,11 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
 
         if (existing) {
           console.log(`  ⏭️  Paper ${paper.id} already exists, skipping`);
+          continue;
+        }
+
+        if (!classifyPaper({ title: paper.title, abstract: paper.summary, categories: paper.categories }).keep) {
+          stats.skippedOffTopic++;
           continue;
         }
 
@@ -503,6 +526,11 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
           continue;
         }
 
+        if (!classifyPaper({ title: paper.title, abstract: paper.summary, categories: paper.categories }).keep) {
+          stats.skippedOffTopic++;
+          continue;
+        }
+
         console.log(`  🤖 Processing paper: ${paper.title.substring(0, 50)}...`);
         const { baseSummary, translations: trans } = await processMultilingual_({
           text: paper.summary,
@@ -586,6 +614,11 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
           continue;
         }
 
+        if (!classifyPaper({ title: paper.title, abstract: paper.summary, categories: paper.categories }).keep) {
+          stats.skippedOffTopic++;
+          continue;
+        }
+
         console.log(`  🤖 Processing paper: ${paper.title.substring(0, 50)}...`);
         const { baseSummary, translations: trans } = await processMultilingual_({
           text: paper.summary,
@@ -648,6 +681,96 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
   } catch (error) {
     console.error("❌ Error collecting space travel papers:", error);
     stats.errors.push(`Space travel arXiv collection: ${error}`);
+  }
+
+  // Collect AI papers applied to robotics or astronomy (AI categories are
+  // too broad on their own, so collectAiPapers already requires a keyword
+  // match - classifyPaper below is a defense-in-depth second check)
+  try {
+    console.log("\n🧠 Collecting AI (robotics/astro) papers...");
+    const aiPapers = await collectAiPapers_({
+      maxResults: MAX_ITEMS_PER_SOURCE,
+      daysBack: 1825, // 5 years
+    });
+
+    for (const paper of aiPapers) {
+      try {
+        const existing = await db_.query.papers.findFirst({
+          where: eq(papers.id, paper.id),
+        });
+
+        if (existing) {
+          console.log(`  ⏭️  Paper ${paper.id} already exists, skipping`);
+          continue;
+        }
+
+        if (!classifyPaper({ title: paper.title, abstract: paper.summary, categories: paper.categories }).keep) {
+          stats.skippedOffTopic++;
+          continue;
+        }
+
+        console.log(`  🤖 Processing paper: ${paper.title.substring(0, 50)}...`);
+        const { baseSummary, translations: trans } = await processMultilingual_({
+          text: paper.summary,
+          title: paper.title,
+          sourceType: "paper",
+        });
+
+        await db_.insert(papers).values({
+          id: paper.id,
+          title: paper.title,
+          authors: JSON.stringify(paper.authors),
+          abstract: paper.summary,
+          summary: baseSummary,
+          publishedDate: new Date(paper.published),
+          updatedDate: paper.updated ? new Date(paper.updated) : null,
+          categories: JSON.stringify(paper.categories),
+          pdfUrl: paper.pdfUrl,
+          arxivUrl: paper.arxivUrl,
+          processed: true,
+          vectorId: paper.id,
+        });
+
+        for (const t of trans) {
+          await db_.insert(translations).values({
+            itemType: "paper",
+            itemId: paper.id,
+            lang: t.lang,
+            title: t.title,
+            summary: t.summary,
+          });
+        }
+
+        for (const t of trans) {
+          const locale = t.lang as Locale;
+          if (!SUPPORTED_LOCALES.includes(locale)) continue;
+          await collections.papers[locale].add({
+            id: paper.id,
+            text: `${t.title}\n\n${t.summary}\n\n${paper.summary}`,
+            metadata: {
+              title: t.title,
+              published: paper.published,
+              categories: paper.categories.join(", "),
+            },
+          });
+        }
+
+        // Insert into FTS index
+        try { await ftsInsertPaper(client, { id: paper.id, title: paper.title, abstract: paper.summary, summary: baseSummary }); } catch { /* non-fatal */ }
+        for (const t of trans) {
+          try { await ftsInsertTranslation(client, { itemType: "paper", itemId: paper.id, lang: t.lang, title: t.title, summary: t.summary }); } catch { /* non-fatal */ }
+        }
+
+        stats.papersCollected++;
+        console.log(`  ✅ Saved paper: ${paper.id}`);
+      } catch (error) {
+        console.error(`  ❌ Error processing paper ${paper.id}:`, error);
+        stats.errors.push(`AI paper ${paper.id}: ${error}`);
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error collecting AI papers:", error);
+    stats.errors.push(`AI arXiv collection: ${error}`);
   }
 
   // Collect NASA NTRS technical reports (rocket/propulsion focused)

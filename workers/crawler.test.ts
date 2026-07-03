@@ -118,6 +118,11 @@ Deno.test("runCrawler with empty mocks returns zero counts and no errors", async
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () => Promise.resolve(emptyNasa),
+    collectSatellitePapers: () => Promise.resolve(emptyArxiv),
+    collectSatelliteReports: () => Promise.resolve(emptyNtrs),
+    collectSpaceTravelPapers: () => Promise.resolve(emptyArxiv),
+    collectSpaceTravelReports: () => Promise.resolve(emptyNtrs),
+    collectAiPapers: () => Promise.resolve(emptyArxiv),
   } as unknown as CrawlerDeps;
 
   const stats = await runCrawler(deps);
@@ -142,6 +147,11 @@ Deno.test("runCrawler with one arXiv paper increments papersCollected", async ()
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () => Promise.resolve(emptyNasa),
+    collectSatellitePapers: () => Promise.resolve(emptyArxiv),
+    collectSatelliteReports: () => Promise.resolve(emptyNtrs),
+    collectSpaceTravelPapers: () => Promise.resolve(emptyArxiv),
+    collectSpaceTravelReports: () => Promise.resolve(emptyNtrs),
+    collectAiPapers: () => Promise.resolve(emptyArxiv),
   } as unknown as CrawlerDeps;
 
   const stats = await runCrawler(deps);
@@ -166,6 +176,11 @@ Deno.test("runCrawler with one rocket paper increments papersCollected", async (
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () => Promise.resolve(emptyNasa),
+    collectSatellitePapers: () => Promise.resolve(emptyArxiv),
+    collectSatelliteReports: () => Promise.resolve(emptyNtrs),
+    collectSpaceTravelPapers: () => Promise.resolve(emptyArxiv),
+    collectSpaceTravelReports: () => Promise.resolve(emptyNtrs),
+    collectAiPapers: () => Promise.resolve(emptyArxiv),
   } as unknown as CrawlerDeps;
 
   const stats = await runCrawler(deps);
@@ -202,6 +217,11 @@ Deno.test("runCrawler with one NTRS report increments ntrsReportsCollected", asy
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () => Promise.resolve(emptyNasa),
+    collectSatellitePapers: () => Promise.resolve(emptyArxiv),
+    collectSatelliteReports: () => Promise.resolve(emptyNtrs),
+    collectSpaceTravelPapers: () => Promise.resolve(emptyArxiv),
+    collectSpaceTravelReports: () => Promise.resolve(emptyNtrs),
+    collectAiPapers: () => Promise.resolve(emptyArxiv),
   } as unknown as CrawlerDeps;
 
   const stats = await runCrawler(deps);
@@ -228,6 +248,11 @@ Deno.test("runCrawler skips existing paper without processing", async () => {
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () => Promise.resolve(emptyNasa),
+    collectSatellitePapers: () => Promise.resolve(emptyArxiv),
+    collectSatelliteReports: () => Promise.resolve(emptyNtrs),
+    collectSpaceTravelPapers: () => Promise.resolve(emptyArxiv),
+    collectSpaceTravelReports: () => Promise.resolve(emptyNtrs),
+    collectAiPapers: () => Promise.resolve(emptyArxiv),
   } as unknown as CrawlerDeps;
 
   const stats = await runCrawler(deps);
@@ -263,6 +288,11 @@ Deno.test("runCrawler with one video increments videosCollected", async () => {
         fullText: "Transcript text",
       }),
     collectNasaContent: () => Promise.resolve(emptyNasa),
+    collectSatellitePapers: () => Promise.resolve(emptyArxiv),
+    collectSatelliteReports: () => Promise.resolve(emptyNtrs),
+    collectSpaceTravelPapers: () => Promise.resolve(emptyArxiv),
+    collectSpaceTravelReports: () => Promise.resolve(emptyNtrs),
+    collectAiPapers: () => Promise.resolve(emptyArxiv),
   } as unknown as CrawlerDeps;
 
   const stats = await runCrawler(deps);
@@ -294,6 +324,11 @@ Deno.test("runCrawler with APOD increments nasaItemsCollected", async () => {
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () => Promise.resolve({ apod, libraryItems: [] }),
+    collectSatellitePapers: () => Promise.resolve(emptyArxiv),
+    collectSatelliteReports: () => Promise.resolve(emptyNtrs),
+    collectSpaceTravelPapers: () => Promise.resolve(emptyArxiv),
+    collectSpaceTravelReports: () => Promise.resolve(emptyNtrs),
+    collectAiPapers: () => Promise.resolve(emptyArxiv),
   } as unknown as CrawlerDeps;
 
   const stats = await runCrawler(deps);
@@ -322,6 +357,11 @@ Deno.test("runCrawler with NASA library item increments nasaItemsCollected", asy
         apod: null,
         libraryItems: [oneNasaLibraryItem],
       }),
+    collectSatellitePapers: () => Promise.resolve(emptyArxiv),
+    collectSatelliteReports: () => Promise.resolve(emptyNtrs),
+    collectSpaceTravelPapers: () => Promise.resolve(emptyArxiv),
+    collectSpaceTravelReports: () => Promise.resolve(emptyNtrs),
+    collectAiPapers: () => Promise.resolve(emptyArxiv),
   } as unknown as CrawlerDeps;
 
   const stats = await runCrawler(deps);
@@ -346,6 +386,11 @@ Deno.test("runCrawler records errors when processMultilingualContent throws", as
     collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
     fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
     collectNasaContent: () => Promise.resolve(emptyNasa),
+    collectSatellitePapers: () => Promise.resolve(emptyArxiv),
+    collectSatelliteReports: () => Promise.resolve(emptyNtrs),
+    collectSpaceTravelPapers: () => Promise.resolve(emptyArxiv),
+    collectSpaceTravelReports: () => Promise.resolve(emptyNtrs),
+    collectAiPapers: () => Promise.resolve(emptyArxiv),
   } as unknown as CrawlerDeps;
 
   const stats = await runCrawler(deps);
@@ -361,11 +406,89 @@ Deno.test("CrawlerStats has expected shape", () => {
     ntrsReportsCollected: 0,
     videosCollected: 0,
     nasaItemsCollected: 0,
+    skippedOffTopic: 0,
     errors: [],
   };
   assertEquals(typeof stats.papersCollected, "number");
   assertEquals(typeof stats.ntrsReportsCollected, "number");
   assertEquals(typeof stats.videosCollected, "number");
   assertEquals(typeof stats.nasaItemsCollected, "number");
+  assertEquals(typeof stats.skippedOffTopic, "number");
   assertEquals(Array.isArray(stats.errors), true);
+});
+
+Deno.test("runCrawler skips off-topic papers without spending on AI processing", async () => {
+  const offTopicPaper: ArxivEntry[] = [
+    {
+      id: "2401.00003",
+      title: "Robust Safety-Critical Control of Networked SIR Dynamics",
+      summary: "We study epidemic spread control using Lyapunov methods.",
+      authors: ["Eve"],
+      published: "2024-01-03T00:00:00Z",
+      categories: ["eess.SY"],
+      arxivUrl: "https://arxiv.org/abs/2401.00003",
+    },
+  ];
+  const deps = {
+    db: createMockDb(),
+    initializeCollections: () => Promise.resolve(createMockCollections()),
+    processMultilingualContent: () => Promise.reject(new Error("should not be called - off-topic paper must be skipped before AI processing")),
+    collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
+    collectRocketPapers: () => Promise.resolve(offTopicPaper),
+    collectRocketReports: () => Promise.resolve(emptyNtrs),
+    collectRoboticsPapers: () => Promise.resolve(emptyRoboticsPapers),
+    collectRoboticsReports: () => Promise.resolve(emptyNtrs),
+    collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
+    fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
+    collectNasaContent: () => Promise.resolve(emptyNasa),
+    collectSatellitePapers: () => Promise.resolve(emptyArxiv),
+    collectSatelliteReports: () => Promise.resolve(emptyNtrs),
+    collectSpaceTravelPapers: () => Promise.resolve(emptyArxiv),
+    collectSpaceTravelReports: () => Promise.resolve(emptyNtrs),
+    collectAiPapers: () => Promise.resolve(emptyArxiv),
+  } as unknown as CrawlerDeps;
+
+  const stats = await runCrawler(deps);
+
+  assertEquals(stats.papersCollected, 0);
+  assertEquals(stats.skippedOffTopic, 1);
+  assertEquals(stats.errors.length, 0);
+});
+
+Deno.test("runCrawler processes AI-robotics papers from collectAiPapers", async () => {
+  const aiRoboticsPaper: ArxivEntry[] = [
+    {
+      id: "2401.00004",
+      title: "Vision-Language-Action Models for Robot Manipulation",
+      summary: "We train a VLA model for dexterous robot manipulation.",
+      authors: ["Frank"],
+      published: "2024-01-04T00:00:00Z",
+      categories: ["cs.LG", "cs.RO"],
+      arxivUrl: "https://arxiv.org/abs/2401.00004",
+    },
+  ];
+  const deps = {
+    db: createMockDb(),
+    initializeCollections: () => Promise.resolve(createMockCollections()),
+    processMultilingualContent: createMockProcessMultilingual(),
+    collectAstronomyPapers: () => Promise.resolve(emptyArxiv),
+    collectRocketPapers: () => Promise.resolve(emptyRocketPapers),
+    collectRocketReports: () => Promise.resolve(emptyNtrs),
+    collectRoboticsPapers: () => Promise.resolve(emptyRoboticsPapers),
+    collectRoboticsReports: () => Promise.resolve(emptyNtrs),
+    collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
+    fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
+    collectNasaContent: () => Promise.resolve(emptyNasa),
+    collectSatellitePapers: () => Promise.resolve(emptyArxiv),
+    collectSatelliteReports: () => Promise.resolve(emptyNtrs),
+    collectSpaceTravelPapers: () => Promise.resolve(emptyArxiv),
+    collectSpaceTravelReports: () => Promise.resolve(emptyNtrs),
+    collectAiPapers: () => Promise.resolve(aiRoboticsPaper),
+  } as unknown as CrawlerDeps;
+
+  const stats = await runCrawler(deps);
+
+  assertEquals(stats.papersCollected, 1);
+  assertEquals(stats.skippedOffTopic, 0);
+  assertEquals(stats.errors.length, 0);
 });

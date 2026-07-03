@@ -205,19 +205,29 @@ function generateDateSegments(daysBack: number): Array<{ start: Date; end: Date 
   return segments;
 }
 
+// Build an arXiv abstract-search OR-query from keyword phrases, e.g.
+// (abs:"rocket propulsion" OR abs:"turbopump" OR ...)
+function buildKeywordQuery(keywords: string[]): string {
+  return `(${keywords.map((kw) => `abs:"${kw}"`).join(" OR ")})`;
+}
+
 // Query arXiv for a single date segment
 async function queryArxivSegment(params: {
   categories: string[];
+  keywords?: string[];
   startDate: Date;
   endDate: Date;
   maxResults: number;
 }): Promise<ArxivEntry[]> {
-  const { categories, startDate, endDate, maxResults } = params;
+  const { categories, keywords, startDate, endDate, maxResults } = params;
   const capped = Math.min(maxResults, 30);
 
   const dateQuery = `submittedDate:[${formatArxivDate(startDate)}0000 TO ${formatArxivDate(endDate)}2359]`;
   const catQuery = categories.map((cat) => `cat:${cat}`).join(" OR ");
-  const fullQuery = `${dateQuery} AND (${catQuery})`;
+  const kwQuery = keywords && keywords.length > 0 ? buildKeywordQuery(keywords) : null;
+  const fullQuery = kwQuery
+    ? `${dateQuery} AND (${catQuery}) AND ${kwQuery}`
+    : `${dateQuery} AND (${catQuery})`;
 
   try {
     return await searchArxiv({
@@ -227,19 +237,33 @@ async function queryArxivSegment(params: {
       sortOrder: "descending",
     });
   } catch {
-    // arXiv often returns 500 on complex queries; try category-only fallback for this segment
-    console.warn(`  arXiv segment query failed for ${formatArxivDate(startDate)}-${formatArxivDate(endDate)}, skipping`);
-    return [];
+    // arXiv often returns 500 on complex queries; drop the date bound but
+    // keep category + keywords so a broad-category collector doesn't
+    // degrade into "everything in the field" (see getRecentArxivPapers).
+    console.warn(`  arXiv segment query failed for ${formatArxivDate(startDate)}-${formatArxivDate(endDate)}, retrying without date bound`);
+    try {
+      return await searchArxiv({
+        query: kwQuery ? `(${catQuery}) AND ${kwQuery}` : catQuery,
+        maxResults: capped,
+        sortBy: "submittedDate",
+        sortOrder: "descending",
+      });
+    } catch {
+      console.warn(`  arXiv segment fallback also failed for ${formatArxivDate(startDate)}-${formatArxivDate(endDate)}, skipping`);
+      return [];
+    }
   }
 }
 
 // Get recent papers in specific categories with segmented date queries
 export async function getRecentArxivPapers(params: {
   categories: string[];
+  keywords?: string[];
   maxResults?: number;
   daysBack?: number;
 }): Promise<ArxivEntry[]> {
-  const { categories, maxResults = 30, daysBack = 7 } = params;
+  const { categories, keywords, maxResults = 30, daysBack = 7 } = params;
+  const kwQuery = keywords && keywords.length > 0 ? buildKeywordQuery(keywords) : null;
 
   // For short ranges, use single query (original behavior)
   if (daysBack <= 30) {
@@ -248,7 +272,9 @@ export async function getRecentArxivPapers(params: {
     const startDate = new Date(endDate.getTime() - daysBack * 24 * 60 * 60 * 1000);
     const dateQuery = `submittedDate:[${formatArxivDate(startDate)}0000 TO ${formatArxivDate(endDate)}2359]`;
     const catQuery = categories.map((cat) => `cat:${cat}`).join(" OR ");
-    const fullQuery = `${dateQuery} AND (${catQuery})`;
+    const fullQuery = kwQuery
+      ? `${dateQuery} AND (${catQuery}) AND ${kwQuery}`
+      : `${dateQuery} AND (${catQuery})`;
 
     try {
       return await searchArxiv({
@@ -258,9 +284,9 @@ export async function getRecentArxivPapers(params: {
         sortOrder: "descending",
       });
     } catch (err) {
-      console.warn("arXiv full query failed, trying fallback (categories only, no date filter):", err);
+      console.warn("arXiv full query failed, trying fallback (no date filter):", err);
       return await searchArxiv({
-        query: catQuery,
+        query: kwQuery ? `(${catQuery}) AND ${kwQuery}` : catQuery,
         maxResults: Math.min(capped, 20),
         sortBy: "submittedDate",
         sortOrder: "descending",
@@ -289,6 +315,7 @@ export async function getRecentArxivPapers(params: {
 
     const papers = await queryArxivSegment({
       categories,
+      keywords,
       startDate: segment.start,
       endDate: segment.end,
       maxResults: papersPerSegment,
@@ -390,7 +417,9 @@ export function collectAstronomyPapers(params: {
   });
 }
 
-// Collect recent rocket-related papers using a broad category filter
+// Collect recent rocket-related papers. ROCKET_CATEGORIES spans fields far
+// broader than rocketry (fluid dynamics, applied physics, control theory),
+// so ROCKET_KEYWORDS is required as an AND-filter to keep results on-topic.
 export function collectRocketPapers(params: {
   maxResults?: number;
   daysBack?: number;
@@ -398,6 +427,7 @@ export function collectRocketPapers(params: {
   const { maxResults = 20, daysBack = 14 } = params;
   return getRecentArxivPapers({
     categories: ROCKET_CATEGORIES,
+    keywords: ROCKET_KEYWORDS,
     maxResults,
     daysBack,
   });
@@ -432,7 +462,10 @@ export const ROBOTICS_KEYWORDS = [
   "dexterous hand",
 ];
 
-// Collect recent robotics papers
+// Collect recent robotics papers. ROBOTICS_CATEGORIES includes cs.CV/cs.AI,
+// which cover far more than robotics, so ROBOTICS_KEYWORDS is required as
+// an AND-filter (cs.RO alone is precise enough and gets a lighter touch:
+// see collectAiPapers for the AI∩robotics/AI∩astro stream).
 export function collectRoboticsPapers(params: {
   maxResults?: number;
   daysBack?: number;
@@ -440,6 +473,47 @@ export function collectRoboticsPapers(params: {
   const { maxResults = 20, daysBack = 14 } = params;
   return getRecentArxivPapers({
     categories: ROBOTICS_CATEGORIES,
+    keywords: ROBOTICS_KEYWORDS,
+    maxResults,
+    daysBack,
+  });
+}
+
+// AI applied to robotics or astronomy - the categories alone (cs.AI, cs.LG,
+// cs.CV, stat.ML) are far too broad to imply relevance, so this always
+// requires a keyword match on top of category. Complements collectRoboticsPapers
+// (cs.RO-centric) and collectAstronomyPapers (astro-ph-centric) by picking
+// up AI-first work that lands in general ML categories instead.
+export const AI_CATEGORIES = ["cs.AI", "cs.LG", "cs.CV", "stat.ML"];
+
+export const AI_ROBOTICS_ASTRO_KEYWORDS = [
+  "robot learning",
+  "imitation learning robot",
+  "reinforcement learning robot",
+  "vision-language-action",
+  "visuomotor policy",
+  "sim-to-real robot",
+  "robot manipulation learning",
+  "autonomous navigation robot",
+  "machine learning astronomy",
+  "deep learning exoplanet",
+  "neural network galaxy",
+  "machine learning astrophysics",
+  "deep learning telescope",
+  "AI astrophysics",
+  "neural network spectra",
+  "machine learning cosmology",
+];
+
+// Collect recent AI papers specifically about robotics or astronomy
+export function collectAiPapers(params: {
+  maxResults?: number;
+  daysBack?: number;
+}): Promise<ArxivEntry[]> {
+  const { maxResults = 20, daysBack = 14 } = params;
+  return getRecentArxivPapers({
+    categories: AI_CATEGORIES,
+    keywords: AI_ROBOTICS_ASTRO_KEYWORDS,
     maxResults,
     daysBack,
   });
