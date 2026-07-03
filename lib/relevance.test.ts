@@ -91,6 +91,62 @@ Deno.test("relevance: keeps low-thrust spacecraft trajectory design papers (math
   assertEquals(r.topic, "space");
 });
 
+Deno.test("relevance: drops condensed-matter 'orbital' physics (orbitronics, quantum orbitals)", () => {
+  const cases = [
+    {
+      title: "Challenges and opportunities in orbitronics",
+      abstract: "Orbitronics exploits the orbital degree of freedom of electrons for information processing.",
+    },
+    {
+      title: "Quantum Coulomb Blockade in Orbital Resolved Phosphorus Triple-Donor Molecule",
+      abstract: "We study orbital-resolved transport in a donor molecule.",
+    },
+    {
+      title: "Optimal Transport on Lie Group Orbits",
+      abstract: "We study the orbits of a Lie group action under optimal transport.",
+    },
+  ];
+  for (const c of cases) {
+    const r = classifyPaper({ ...c, categories: ["cond-mat.mes-hall"] });
+    assertEquals(r.keep, false, `expected drop: ${c.title}`);
+  }
+});
+
+Deno.test("relevance: drops bare 'star'/'stars' used as acronym or metaphor", () => {
+  const cases = [
+    {
+      title: "STaR: Scalable Task-Conditioned Retrieval for Long-Horizon Multimodal Memory",
+      abstract: "We propose STaR, a retrieval framework for long-horizon agent memory systems.",
+      categories: ["cs.LG"],
+    },
+    {
+      title: "Every 28 Days the AI Dreams of Soft Skin and Burning Stars",
+      abstract: "A speculative exploration of AI agent scaffolding.",
+      categories: ["cs.AI"],
+    },
+  ];
+  for (const c of cases) {
+    const r = classifyPaper(c);
+    assertEquals(r.keep, false, `expected drop: ${c.title}`);
+  }
+});
+
+Deno.test("relevance: still keeps genuine orbital-mechanics and stellar-astronomy content", () => {
+  const orbital = classifyPaper({
+    title: "Orbital decay prediction for low earth orbit satellites",
+    abstract: "We model orbital debris and station-keeping maneuvers for constellations in earth orbit.",
+    categories: ["eess.SY"],
+  });
+  assertEquals(orbital.keep, true);
+
+  const stellar = classifyPaper({
+    title: "Star formation rates in binary star systems",
+    abstract: "We study star formation efficiency in binary star and star cluster environments.",
+    categories: ["astro-ph.SR"],
+  });
+  assertEquals(stellar.keep, true);
+});
+
 Deno.test("relevance: drops accessibility tool with generic 'navigation controls' UI term", () => {
   const r = classifyPaper({
     title: "StreetReaderAI: Making Street View Accessible Using Context-Aware Multimodal AI",

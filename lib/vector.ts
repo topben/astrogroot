@@ -214,6 +214,20 @@ export class VectorStore {
     }
   }
 
+  /** Delete many ids in a single request instead of one round-trip per id. */
+  async deleteBatch(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+
+    try {
+      await this.collection.delete({
+        ids,
+      });
+    } catch (error) {
+      console.error(`Failed to delete batch from ${this.collectionName}:`, error);
+      throw error;
+    }
+  }
+
   async count(): Promise<number> {
     try {
       return await this.collection.count();
