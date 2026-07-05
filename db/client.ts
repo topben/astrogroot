@@ -30,16 +30,26 @@ function getDb(): LibSQLDatabase<typeof schema> {
   return _db;
 }
 
-// Use getters so the actual initialization is deferred
+// Use getters so the actual initialization is deferred. Methods are bound to
+// the real instance before being returned - otherwise a call like
+// `client.execute(...)` invokes the method with `this` set to this Proxy
+// object (per normal JS method-call semantics), not the real client, which
+// breaks any method relying on private class fields (e.g. libsql's
+// `execute()` reads `this.#promiseLimitFunction`).
+function bindToInstance<T extends object>(instance: T, prop: string | symbol): unknown {
+  const value = Reflect.get(instance, prop);
+  return typeof value === "function" ? value.bind(instance) : value;
+}
+
 export const client = new Proxy({} as Client, {
   get(_, prop) {
-    return Reflect.get(getClient(), prop);
+    return bindToInstance(getClient(), prop);
   },
 });
 
 export const db = new Proxy({} as LibSQLDatabase<typeof schema>, {
   get(_, prop) {
-    return Reflect.get(getDb(), prop);
+    return bindToInstance(getDb(), prop);
   },
 });
 
