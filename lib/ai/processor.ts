@@ -1,6 +1,10 @@
 import * as OpenCC from "opencc-js";
+import { and, eq } from "drizzle-orm";
 import { sendMessage } from "./client.ts";
-import { checkBudget } from "./usage.ts";
+import { checkBudget, isBudgetExceededToday } from "./usage.ts";
+import { translations } from "../../db/schema.ts";
+import type { Locale } from "../i18n.ts";
+import type { Database } from "../../db/client.ts";
 
 let _twToCn: ((text: string) => string) | null = null;
 function twToCn(text: string): string {
@@ -124,7 +128,7 @@ Generate a structured summary following the Emerald-style format:
 3. FINDINGS: Key results, discoveries, or insights
 4. IMPLICATIONS: Contributions, applications, and future directions
 
-${maxLength ? `Target length: approximately ${maxLength} words.` : "Keep concise but comprehensive (200-350 words)."}
+${maxLength ? `Target length: approximately ${maxLength} words.` : "Keep it tight and information-dense (120-180 words)."}
 
 Optimize for semantic search by including relevant technical keywords.`;
 
@@ -133,7 +137,7 @@ Optimize for semantic search by including relevant technical keywords.`;
       messages: [{ role: "user", content: prompt }],
       systemPrompt: SUMMARIZE_SYSTEM_PROMPT,
       temperature: 0.7,
-      maxTokens: 1024,
+      maxTokens: 700,
       purpose: "summarize",
     });
 
@@ -268,7 +272,11 @@ export async function processContent(params: {
   return result;
 }
 
-/** Summarize in base language (English), then translate title + summary to all supported languages. */
+/**
+ * Summarize in base language (English) only. Chinese translations are now
+ * generated lazily on-demand at view time — see `ensureTranslation`. This
+ * drops the crawler's per-item AI cost from 3 calls to 1.
+ */
 export async function processMultilingualContent(params: {
   text: string;
   title: string;
@@ -276,29 +284,126 @@ export async function processMultilingualContent(params: {
 }): Promise<ProcessMultilingualResult> {
   const { text, title, sourceType } = params;
 
-  console.log(`Processing multilingual ${sourceType}: ${title.substring(0, 50)}...`);
+  console.log(`Processing (English-only) ${sourceType}: ${title.substring(0, 50)}...`);
 
   await checkBudget();
 
-  const baseSummary = await summarizeText({
-    text,
-    title,
-    sourceType,
-  });
-
-  // Only zh-TW is translated via the API; zh-CN is derived from it with OpenCC
-  // (deterministic script conversion, no extra API call/cost).
-  const zhTw = SUPPORTED_LANGUAGES.find((l) => l.code === "zh-TW")!;
-  const zhTwTitle = await translateText(title, zhTw.name);
-  const zhTwSummary = await translateSummary({ summary: baseSummary, targetLanguage: zhTw.name });
+  const baseSummary = await summarizeText({ text, title, sourceType });
 
   const translations: MultilingualTranslation[] = [
     { lang: "en", title, summary: baseSummary },
-    { lang: "zh-TW", title: zhTwTitle, summary: zhTwSummary },
-    { lang: "zh-CN", title: twToCn(zhTwTitle), summary: twToCn(zhTwSummary) },
   ];
 
   return { baseSummary, translations };
+}
+
+/**
+ * Translate a title and summary together in a SINGLE API call (returns JSON).
+ * Falls back to two separate calls if the JSON response can't be parsed.
+ */
+export async function translateTitleAndSummary(params: {
+  title: string;
+  summary: string;
+  targetLanguage: string;
+}): Promise<{ title: string; summary: string }> {
+  const { title, summary, targetLanguage } = params;
+
+  const prompt =
+    `Translate the following astronomy/space-science title and summary to ${targetLanguage}.
+Return ONLY a JSON object of the exact form {"title": "...", "summary": "..."} with no markdown fences or commentary.
+
+TITLE: ${title}
+
+SUMMARY:
+${summary}`;
+
+  const raw = await sendMessage({
+    messages: [{ role: "user", content: prompt }],
+    systemPrompt: TRANSLATE_SYSTEM_PROMPT,
+    temperature: 0.3,
+    maxTokens: 1024,
+    purpose: "translate_combined",
+  });
+
+  const cleaned = raw.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+  try {
+    const parsed = JSON.parse(cleaned) as { title?: string; summary?: string };
+    if (parsed.title && parsed.summary) {
+      return { title: parsed.title.trim(), summary: parsed.summary.trim() };
+    }
+  } catch {
+    // fall through to the two-call fallback
+  }
+
+  const [t, s] = await Promise.all([
+    translateText(title, targetLanguage),
+    translateSummary({ summary, targetLanguage }),
+  ]);
+  return { title: t, summary: s };
+}
+
+/**
+ * Return a localized {title, summary}, translating + caching on demand.
+ * Returns null on budget exhaustion or error, so the caller falls back to
+ * English. zh-CN is derived from zh-TW via OpenCC (no extra API call).
+ */
+export async function ensureTranslation(params: {
+  db: Database;
+  itemType: "paper" | "video" | "nasa";
+  itemId: string;
+  locale: Locale;
+  sourceTitle: string;
+  sourceSummary: string;
+}): Promise<{ title: string; summary: string } | null> {
+  const { db, itemType, itemId, locale, sourceTitle, sourceSummary } = params;
+  if (locale === "en") return { title: sourceTitle, summary: sourceSummary };
+
+  const existing = await db.query.translations.findFirst({
+    where: and(
+      eq(translations.itemType, itemType),
+      eq(translations.itemId, itemId),
+      eq(translations.lang, locale),
+    ),
+    columns: { title: true, summary: true },
+  });
+  if (existing?.summary) {
+    return { title: existing.title ?? sourceTitle, summary: existing.summary };
+  }
+
+  if (!sourceSummary) return null;
+
+  try {
+    if (await isBudgetExceededToday()) return null;
+    await checkBudget();
+
+    const zhTw = await translateTitleAndSummary({
+      title: sourceTitle,
+      summary: sourceSummary,
+      targetLanguage: "Traditional Chinese",
+    });
+    const zhCn = { title: twToCn(zhTw.title), summary: twToCn(zhTw.summary) };
+
+    // Persist both variants so future views cost nothing.
+    await db.insert(translations).values({
+      itemType,
+      itemId,
+      lang: "zh-TW",
+      title: zhTw.title,
+      summary: zhTw.summary,
+    });
+    await db.insert(translations).values({
+      itemType,
+      itemId,
+      lang: "zh-CN",
+      title: zhCn.title,
+      summary: zhCn.summary,
+    });
+
+    return locale === "zh-CN" ? zhCn : zhTw;
+  } catch (error) {
+    console.error("ensureTranslation failed:", error);
+    return null;
+  }
 }
 
 export async function answerQuestion(params: {
