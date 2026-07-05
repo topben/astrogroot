@@ -8,6 +8,7 @@ import { timeout } from "hono/timeout";
 import { handleMCPRequest } from "./lib/mcp.ts";
 import { getLibraryStats } from "./lib/stats.ts";
 import { getUsageSummary } from "./lib/ai/usage.ts";
+import { ensureTranslation } from "./lib/ai/processor.ts";
 import { searchLibrary } from "./lib/search.ts";
 import { getLocaleFromRequest, interpolate, loadDictionary } from "./lib/i18n.ts";
 import {
@@ -472,8 +473,22 @@ app.get("/detail", async (c) => {
         404,
       );
     }
-    const summary = trans?.summary ?? row.summary ?? row.abstract ?? "";
-    const title = trans?.title ?? row.title;
+    let summary = trans?.summary ?? row.summary ?? row.abstract ?? "";
+    let title = trans?.title ?? row.title;
+    if (!trans && locale !== "en") {
+      const lazy = await ensureTranslation({
+        db,
+        itemType: "paper",
+        itemId: id,
+        locale,
+        sourceTitle: row.title,
+        sourceSummary: row.summary ?? row.abstract ?? "",
+      });
+      if (lazy) {
+        title = lazy.title;
+        summary = lazy.summary;
+      }
+    }
     const cleanSummary = cleanText(summary);
     const pageDescription = cleanSummary
       ? truncateText(cleanSummary, 155)
@@ -524,8 +539,22 @@ app.get("/detail", async (c) => {
         404,
       );
     }
-    const summary = trans?.summary ?? row.summary ?? row.description ?? "";
-    const title = trans?.title ?? row.title;
+    let summary = trans?.summary ?? row.summary ?? row.description ?? "";
+    let title = trans?.title ?? row.title;
+    if (!trans && locale !== "en") {
+      const lazy = await ensureTranslation({
+        db,
+        itemType: "video",
+        itemId: id,
+        locale,
+        sourceTitle: row.title,
+        sourceSummary: row.summary ?? row.description ?? "",
+      });
+      if (lazy) {
+        title = lazy.title;
+        summary = lazy.summary;
+      }
+    }
     const cleanSummary = cleanText(summary);
     const pageDescription = cleanSummary
       ? truncateText(cleanSummary, 155)
@@ -579,8 +608,22 @@ app.get("/detail", async (c) => {
         404,
       );
     }
-    const summary = trans?.summary ?? row.summary ?? row.explanation ?? row.description ?? "";
-    const title = trans?.title ?? row.title;
+    let summary = trans?.summary ?? row.summary ?? row.explanation ?? row.description ?? "";
+    let title = trans?.title ?? row.title;
+    if (!trans && locale !== "en") {
+      const lazy = await ensureTranslation({
+        db,
+        itemType: "nasa",
+        itemId: id,
+        locale,
+        sourceTitle: row.title,
+        sourceSummary: row.summary ?? row.explanation ?? row.description ?? "",
+      });
+      if (lazy) {
+        title = lazy.title;
+        summary = lazy.summary;
+      }
+    }
     const cleanSummary = cleanText(summary);
     const pageDescription = cleanSummary
       ? truncateText(cleanSummary, 155)
