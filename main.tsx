@@ -200,6 +200,15 @@ app.get("/rocket-exam", async (c) => {
   return c.body(file, 200);
 });
 
+// Static: Astrogroot 知識圖 — 3D knowledge map of the paper corpus (trilingual, self-contained HTML)
+app.get("/map", async (c) => {
+  const path = new URL("./static/knowledge-map.html", import.meta.url);
+  const file = await Deno.readFile(path);
+  c.header("Content-Type", "text/html; charset=utf-8");
+  c.header("Cache-Control", HTML_CACHE_CONTROL);
+  return c.body(file, 200);
+});
+
 app.get("/robots.txt", (c) => {
   const origin = new URL(c.req.url).origin;
   const body = `User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: ${origin}/sitemap.xml\n`;
