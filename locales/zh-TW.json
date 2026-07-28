@@ -1,7 +1,8 @@
 {
   "nav": {
     "dashboard": "儀表板",
-    "search": "搜尋"
+    "search": "搜尋",
+    "map": "知識圖"
   },
   "header": {
     "subtitle": "研究圖書館",

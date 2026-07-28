@@ -9,7 +9,7 @@ export type Locale = (typeof SUPPORTED_LOCALES)[number];
 const DEFAULT_LOCALE: Locale = "en";
 
 export interface LocaleDict {
-  nav: { dashboard: string; search: string };
+  nav: { dashboard: string; search: string; map: string };
   header: { subtitle: string; description: string };
   stats: { title: string; papers: string; videos: string; nasa: string; total: string };
   search: {

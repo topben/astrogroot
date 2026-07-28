@@ -1,5 +1,5 @@
 <title>Astrogroot 知識圖 — 8,303 篇論文的立體索引</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
 <style>
   /* Committed single-theme: deep space. The subject *is* the dark sky. */
@@ -117,13 +117,15 @@
   }
   #info .nbrs button:hover { color: var(--accent); }
 
-  /* ---- digest drawer ---- */
-  #digest-toggle {
-    bottom: 18px; left: 20px; font: 12px var(--sans); color: var(--ink);
-    background: var(--panel); border: 1px solid var(--rule); border-radius: 3px;
-    padding: 8px 14px; cursor: pointer; backdrop-filter: blur(8px);
+  /* ---- bottom toolbar + digest drawer ---- */
+  #toolbar { bottom: 18px; left: 20px; display: flex; gap: 8px; }
+  #toolbar button {
+    font: 12px var(--sans); color: var(--ink); background: var(--panel);
+    border: 1px solid var(--rule); border-radius: 3px; padding: 8px 14px;
+    cursor: pointer; backdrop-filter: blur(8px);
   }
-  #digest-toggle:hover { border-color: var(--accent); }
+  #toolbar button:hover { border-color: var(--accent); }
+  #topics-toggle { display: none; }
   #digest {
     bottom: 60px; left: 20px; width: min(430px, calc(100vw - 40px)); max-height: 62vh;
     overflow-y: auto; display: none;
@@ -143,20 +145,37 @@
     cursor: pointer; text-align: left;
   }
 
-  #reset {
-    bottom: 18px; left: 116px; font: 12px var(--sans); color: var(--muted);
-    background: var(--panel); border: 1px solid var(--rule); border-radius: 3px;
-    padding: 8px 14px; cursor: pointer; backdrop-filter: blur(8px); display: none;
-  }
+  #reset { color: var(--muted); display: none; }
   #reset.on { display: block; }
   #reset:hover { color: var(--ink); }
 
   @media (max-width: 720px) {
-    .masthead { max-width: 210px; }
-    .masthead h1 { font-size: 17px; }
-    .rail { top: auto; bottom: 60px; max-height: 46vh; }
-    #legend { display: none; }
-    #digest { bottom: 60px; }
+    .masthead { max-width: calc(100vw - 40px); }
+    .masthead h1 { font-size: 18px; }
+    .masthead .hint { display: none; }
+    .search { top: 116px; left: 16px; right: 16px; width: auto; }
+    .rail { position: static; pointer-events: none; }
+    #legend {
+      display: none; position: fixed; left: 12px; right: 12px; width: auto;
+      bottom: calc(66px + env(safe-area-inset-bottom)); max-height: 52vh;
+    }
+    #legend.sheet-on { display: block; }
+    #legend .rows button { min-height: 38px; }
+    #info {
+      position: fixed; left: 12px; right: 12px;
+      bottom: calc(66px + env(safe-area-inset-bottom)); max-height: 52vh;
+    }
+    #digest {
+      left: 12px; right: 12px; width: auto;
+      bottom: calc(66px + env(safe-area-inset-bottom)); max-height: 56vh;
+    }
+    #toolbar {
+      left: 0; right: 0; bottom: 0; gap: 8px;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      background: linear-gradient(to top, rgba(5, 7, 13, 0.92) 60%, transparent);
+    }
+    #toolbar button { flex: 1; min-height: 42px; font-size: 13px; }
+    #topics-toggle { display: block; }
   }
 </style>
 
@@ -185,8 +204,11 @@
   </section>
 </div>
 
-<button class="hud" id="digest-toggle"></button>
-<button class="hud" id="reset"></button>
+<div class="hud" id="toolbar">
+  <button id="digest-toggle"></button>
+  <button id="topics-toggle"></button>
+  <button id="reset"></button>
+</div>
 <section class="hud panel" id="digest">
   <h2 id="t-digest"></h2>
   <div class="body" id="digest-body"></div>
@@ -1255,7 +1277,7 @@ const STR = {
   "zh-TW": {
     title: "Astrogroot 知識圖", home: "← AstroGroot 首頁", hint: "拖曳旋轉 · 滾輪縮放 · 點擊節點看論文",
     search: "搜尋論文標題或 arXiv id…", legend: "主題(點擊聚焦)", paper: "論文",
-    nbrs: "相鄰論文", digest: "知識精華導讀", digestBtn: "導讀", reset: "重置視角",
+    nbrs: "相鄰論文", digest: "知識精華導讀", digestBtn: "導讀", topics: "主題", reset: "重置視角",
     commNotes: "主題精華", bridges: "跨域橋接", none: "沒有符合的論文",
     links: "連結", noDigest: "導讀尚未生成。",
     commLine: c => `(${c.size} 篇,近 6 月 ${c.recent6m})`,
@@ -1264,7 +1286,7 @@ const STR = {
   "zh-CN": {
     title: "Astrogroot 知识图", home: "← AstroGroot 首页", hint: "拖拽旋转 · 滚轮缩放 · 点击节点看论文",
     search: "搜索论文标题或 arXiv id…", legend: "主题(点击聚焦)", paper: "论文",
-    nbrs: "相邻论文", digest: "知识精华导读", digestBtn: "导读", reset: "重置视角",
+    nbrs: "相邻论文", digest: "知识精华导读", digestBtn: "导读", topics: "主题", reset: "重置视角",
     commNotes: "主题精华", bridges: "跨域桥接", none: "没有符合的论文",
     links: "连结", noDigest: "导读尚未生成。",
     commLine: c => `(${c.size} 篇,近 6 月 ${c.recent6m})`,
@@ -1273,7 +1295,7 @@ const STR = {
   "en": {
     title: "Astrogroot Knowledge Map", home: "← AstroGroot", hint: "Drag to rotate · scroll to zoom · click a node",
     search: "Search titles or arXiv id…", legend: "Topics (click to focus)", paper: "Paper",
-    nbrs: "Neighbouring papers", digest: "Knowledge Digest", digestBtn: "Digest", reset: "Reset view",
+    nbrs: "Neighbouring papers", digest: "Knowledge Digest", digestBtn: "Digest", topics: "Topics", reset: "Reset view",
     commNotes: "Topic highlights", bridges: "Cross-domain bridges", none: "No matching papers",
     links: "links", noDigest: "Digest not generated yet.",
     commLine: c => `(${c.size} papers, ${c.recent6m} in last 6 mo)`,
@@ -1283,6 +1305,8 @@ const STR = {
 const LANGS = [["zh-TW", "繁體"], ["zh-CN", "简体"], ["en", "EN"]];
 
 function detectLang() {
+  const fromQuery = new URLSearchParams(location.search).get("lang");
+  if (fromQuery && STR[fromQuery]) return fromQuery;
   const saved = localStorage.getItem("astrokb-lang");
   if (saved && STR[saved]) return saved;
   const nav = (navigator.language || "").toLowerCase();
@@ -1440,6 +1464,8 @@ function recolor() {
 /* ---------- info panel ---------- */
 const infoEl = document.getElementById("info");
 const infoBody = document.getElementById("info-body");
+const legendEl = document.getElementById("legend");
+const isMobile = () => matchMedia("(max-width: 720px)").matches;
 
 function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
 
@@ -1469,6 +1495,10 @@ function showInfo(i) {
 
 function select(i, fly) {
   selected = i;
+  if (isMobile()) {
+    document.getElementById("digest").classList.remove("on");
+    legendEl.classList.remove("sheet-on");
+  }
   recolor();
   showInfo(i);
   ring.position.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]);
@@ -1495,7 +1525,7 @@ function flyTo(i) {
 
 /* ---------- picking ---------- */
 const raycaster = new THREE.Raycaster();
-raycaster.params.Points.threshold = 14;
+raycaster.params.Points.threshold = matchMedia("(pointer: coarse)").matches ? 24 : 14;
 const pointer = new THREE.Vector2();
 let downAt = null;
 canvas.addEventListener("pointerdown", e => { downAt = [e.clientX, e.clientY]; pauseRotate(); });
@@ -1572,8 +1602,16 @@ q.addEventListener("blur", () => setTimeout(() => qResults.classList.remove("on"
 /* ---------- digest ---------- */
 const digestEl = document.getElementById("digest");
 const digestBody = document.getElementById("digest-body");
-document.getElementById("digest-toggle").addEventListener("click", () =>
-  digestEl.classList.toggle("on"));
+document.getElementById("digest-toggle").addEventListener("click", () => {
+  legendEl.classList.remove("sheet-on");
+  if (isMobile()) infoEl.classList.remove("on");
+  digestEl.classList.toggle("on");
+});
+document.getElementById("topics-toggle").addEventListener("click", () => {
+  digestEl.classList.remove("on");
+  infoEl.classList.remove("on");
+  legendEl.classList.toggle("sheet-on");
+});
 document.getElementById("reset").addEventListener("click", () => {
   clearSelection();
   flight = { t0: performance.now(), from: controls.target.clone(), to: new THREE.Vector3(0, 0, 0),
@@ -1618,6 +1656,7 @@ function applyLang() {
   document.getElementById("t-paper").textContent = S().paper;
   document.getElementById("t-digest").textContent = S().digest;
   document.getElementById("digest-toggle").textContent = S().digestBtn;
+  document.getElementById("topics-toggle").textContent = S().topics;
   document.getElementById("reset").textContent = S().reset;
   q.placeholder = S().search;
   document.getElementById("stats").textContent =

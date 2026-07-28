@@ -223,6 +223,11 @@ function homeHref(locale?: Locale): string {
   return "/";
 }
 
+function mapHref(locale?: Locale): string {
+  if (locale && locale !== "en") return `/map?lang=${encodeURIComponent(locale)}`;
+  return "/map";
+}
+
 const LOCALE_LABELS: Record<Locale, string> = {
   "en": "EN",
   "zh-TW": "繁中",
@@ -259,6 +264,7 @@ export const Layout: FC<LayoutProps> = (props) => {
   const ogLocale = currentLocale === "en" ? "en_US" : currentLocale === "zh-TW" ? "zh_TW" : "zh_CN";
   const navDashboard = dict?.nav.dashboard ?? "Dashboard";
   const navSearch = dict?.nav.search ?? "Search";
+  const navMap = dict?.nav.map ?? "Knowledge Map";
   const headerSubtitle = dict?.header.subtitle ?? "Research Library";
   const headerDescription = dict?.header.description ?? "Your astronomy and space science knowledge hub";
   const calendarWeekdays = dict?.calendar.weekdays ?? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -352,6 +358,9 @@ export const Layout: FC<LayoutProps> = (props) => {
                 </a>
                 <a href={searchHref(locale)} class={activeNav === "search" ? "nav-link active" : "nav-link"}>
                   <span class="nav-glow">{navSearch}</span>
+                </a>
+                <a href={mapHref(locale)} class="nav-link">
+                  <span class="nav-glow">{navMap}</span>
                 </a>
               </nav>
             ) : null}

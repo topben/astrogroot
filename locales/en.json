@@ -1,7 +1,8 @@
 {
   "nav": {
     "dashboard": "Dashboard",
-    "search": "Search"
+    "search": "Search",
+    "map": "Knowledge Map"
   },
   "header": {
     "subtitle": "Research Library",

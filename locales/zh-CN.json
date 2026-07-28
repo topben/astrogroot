@@ -1,7 +1,8 @@
 {
   "nav": {
     "dashboard": "仪表板",
-    "search": "搜索"
+    "search": "搜索",
+    "map": "知识图"
   },
   "header": {
     "subtitle": "研究图书馆",
