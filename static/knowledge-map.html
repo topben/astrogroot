@@ -38,12 +38,12 @@
   .masthead .hint { font-size: 11.5px; color: var(--faint); margin-top: 6px; }
 
   .lang { display: flex; gap: 4px; margin-top: 10px; pointer-events: auto; }
-  .lang button {
+  .lang button, .lang a {
     font: 11px var(--mono); color: var(--muted); background: var(--panel);
     border: 1px solid var(--rule); border-radius: 2px; padding: 4px 9px;
-    cursor: pointer; backdrop-filter: blur(8px);
+    cursor: pointer; backdrop-filter: blur(8px); text-decoration: none;
   }
-  .lang button:hover { color: var(--ink); }
+  .lang button:hover, .lang a:hover { color: var(--ink); }
   .lang button.on { color: var(--ink); border-color: var(--accent); }
 
   /* ---- search ---- */
@@ -1253,7 +1253,7 @@ const SITE = "https://astrogroot.org";
 /* ---------- i18n ---------- */
 const STR = {
   "zh-TW": {
-    title: "Astrogroot 知識圖", hint: "拖曳旋轉 · 滾輪縮放 · 點擊節點看論文",
+    title: "Astrogroot 知識圖", home: "← AstroGroot 首頁", hint: "拖曳旋轉 · 滾輪縮放 · 點擊節點看論文",
     search: "搜尋論文標題或 arXiv id…", legend: "主題(點擊聚焦)", paper: "論文",
     nbrs: "相鄰論文", digest: "知識精華導讀", digestBtn: "導讀", reset: "重置視角",
     commNotes: "主題精華", bridges: "跨域橋接", none: "沒有符合的論文",
@@ -1262,7 +1262,7 @@ const STR = {
     stats: (n, e, c) => `${n} 論文 · ${e} 連結 · ${c} 主題`,
   },
   "zh-CN": {
-    title: "Astrogroot 知识图", hint: "拖拽旋转 · 滚轮缩放 · 点击节点看论文",
+    title: "Astrogroot 知识图", home: "← AstroGroot 首页", hint: "拖拽旋转 · 滚轮缩放 · 点击节点看论文",
     search: "搜索论文标题或 arXiv id…", legend: "主题(点击聚焦)", paper: "论文",
     nbrs: "相邻论文", digest: "知识精华导读", digestBtn: "导读", reset: "重置视角",
     commNotes: "主题精华", bridges: "跨域桥接", none: "没有符合的论文",
@@ -1271,7 +1271,7 @@ const STR = {
     stats: (n, e, c) => `${n} 论文 · ${e} 连结 · ${c} 主题`,
   },
   "en": {
-    title: "Astrogroot Knowledge Map", hint: "Drag to rotate · scroll to zoom · click a node",
+    title: "Astrogroot Knowledge Map", home: "← AstroGroot", hint: "Drag to rotate · scroll to zoom · click a node",
     search: "Search titles or arXiv id…", legend: "Topics (click to focus)", paper: "Paper",
     nbrs: "Neighbouring papers", digest: "Knowledge Digest", digestBtn: "Digest", reset: "Reset view",
     commNotes: "Topic highlights", bridges: "Cross-domain bridges", none: "No matching papers",
@@ -1597,7 +1597,7 @@ function renderDigest() {
 
 /* ---------- language ---------- */
 const langEl = document.getElementById("lang");
-langEl.innerHTML = LANGS.map(([code, name]) =>
+langEl.innerHTML = `<a id="home-link" href="${SITE}" rel="noopener"></a>` + LANGS.map(([code, name]) =>
   `<button data-l="${code}">${name}</button>`).join("");
 langEl.querySelectorAll("button").forEach(btn =>
   btn.addEventListener("click", () => {
@@ -1610,6 +1610,9 @@ function applyLang() {
   document.documentElement.lang = LANG;
   document.title = S().title;
   document.getElementById("t-title").textContent = S().title;
+  const home = document.getElementById("home-link");
+  home.textContent = S().home;
+  home.href = `${SITE}/?lang=${LANG}`;
   document.getElementById("t-hint").textContent = S().hint;
   document.getElementById("t-legend").textContent = S().legend;
   document.getElementById("t-paper").textContent = S().paper;
