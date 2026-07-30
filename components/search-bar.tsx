@@ -38,7 +38,8 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
   const showSuggestions = props.showSuggestions ?? false;
   const noFiltersPanel = props.hideFilters ?? false;
   const d = props.dict;
-  const placeholder = d?.search.placeholder ?? "Search astronomy papers, videos, and NASA content...";
+  const placeholder = d?.search.placeholder ??
+    "Search astronomy papers, videos, and NASA content...";
   const buttonLabel = d?.search.button ?? "Search";
   const showFilters = d?.search.showFilters ?? "Show Filters";
   const hideFilters = d?.search.hideFilters ?? "Hide Filters";
@@ -61,7 +62,7 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
   const formAction = "/search";
 
   // Get localized quick searches
-  const quickSearches = QUICK_SEARCHES.map(s => s[locale as keyof typeof s] || s.en);
+  const quickSearches = QUICK_SEARCHES.map((s) => s[locale as keyof typeof s] || s.en);
   // Compact mode for dashboard
   if (compact) {
     return (
@@ -81,13 +82,20 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
             placeholder={placeholder}
             class="search-input-compact"
             autocomplete="off"
-            autofocus
+            aria-label={placeholder}
+            aria-describedby="search-error-compact"
           />
           <button type="submit" class="search-button-compact">
             {buttonLabel}
           </button>
         </form>
-        <p class="search-input-error search-input-error-compact" hidden></p>
+        <p
+          id="search-error-compact"
+          class="search-input-error search-input-error-compact"
+          role="alert"
+          hidden
+        >
+        </p>
         <div
           id="recent-searches-compact"
           class="recent-searches-compact"
@@ -95,7 +103,8 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
           data-recent-label={recentLabel}
           data-clear-label={clearRecentLabel}
           data-locale={locale}
-        ></div>
+        >
+        </div>
         {showSuggestions && (
           <div class="quick-searches-compact">
             <span class="quick-label">{tryLabel}</span>
@@ -106,7 +115,9 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
             ))}
           </div>
         )}
-        <style dangerouslySetInnerHTML={{ __html: `
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
 .search-bar-compact { max-width: 650px; margin: 0 auto; }
 .search-form-compact { display: flex; gap: 0.5rem; }
 .search-input-compact { flex: 1; padding: 0.75rem 1rem; font-size: 1rem; background: rgba(5, 8, 22, 0.8); border: 2px solid rgba(34, 211, 238, 0.3); border-radius: 10px; outline: none; color: #e0e7ff; transition: all 0.3s ease; backdrop-filter: blur(10px); }
@@ -125,7 +136,45 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
 .quick-label { font-size: 0.875rem; color: #64748b; }
 .quick-link { font-size: 0.875rem; color: #22d3ee; text-decoration: none; padding: 0.25rem 0.75rem; background: rgba(34, 211, 238, 0.1); border-radius: 20px; transition: all 0.2s ease; }
 .quick-link:hover { background: rgba(34, 211, 238, 0.2); color: #a855f7; }
-` }} />
+.search-form-compact { gap: 0.65rem; }
+.search-input-compact {
+  min-width: 0; min-height: 52px; padding: 0.85rem 1rem;
+  border: 1px solid var(--line); border-radius: 13px;
+  background: rgba(6, 9, 20, 0.8); color: var(--text); box-shadow: none;
+}
+.search-input-compact::placeholder { color: var(--muted); opacity: 0.82; }
+.search-input-compact:focus {
+  border-color: var(--line-strong); background: #090f1e;
+  box-shadow: 0 0 0 4px rgba(94, 234, 212, 0.08);
+}
+.search-button-compact {
+  min-height: 52px; padding-inline: 1.6rem; border-radius: 13px;
+  color: #07121d; background: linear-gradient(135deg, var(--cyan), #67e8f9);
+  box-shadow: 0 10px 24px rgba(45, 212, 191, 0.16);
+}
+.search-button-compact:hover {
+  transform: none; filter: brightness(1.05);
+  box-shadow: 0 12px 28px rgba(45, 212, 191, 0.22);
+}
+.quick-label { color: var(--muted); }
+.quick-link, .recent-link {
+  min-height: 36px; display: inline-flex; align-items: center;
+  color: var(--text-soft); background: rgba(148, 163, 184, 0.07);
+  border: 1px solid var(--line);
+}
+.quick-link:hover, .recent-link:hover {
+  color: var(--cyan); background: rgba(94, 234, 212, 0.08);
+  border-color: var(--line-strong); transform: none;
+}
+.recent-clear-btn { min-height: 36px; color: var(--muted); }
+@media (max-width: 560px) {
+  .search-form-compact { flex-direction: column; }
+  .search-button-compact { width: 100%; }
+  .quick-searches-compact { justify-content: flex-start; }
+}
+`,
+          }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -219,113 +268,158 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
   }
 
   return (
-  <div class="search-bar-container">
-    <form
-      id="search-form"
-      class="search-form"
-      method="get"
-      action={formAction}
-      data-search-form="true"
-      data-locale={locale}
-      data-invalid-msg={invalidLanguage}
-    >
-      <input type="hidden" name="lang" value={locale} />
-      <div class="search-input-wrapper">
-        <input
-          type="text"
-          name="q"
-          id="search-input"
-          placeholder={placeholder}
-          class="search-input"
-          autocomplete="off"
-          defaultValue={q}
-        />
-        <button type="submit" class="search-button" id="search-btn">
-          {buttonLabel}
-        </button>
-      </div>
-      <p class="search-input-error" hidden></p>
-
-      {/* Content Type Tabs - Always visible */}
-      <div class="content-type-tabs" role="tablist">
-        <label class={`type-tab ${type === "all" ? "active" : ""}`}>
-          <input type="radio" name="type" value="all" checked={type === "all"} />
-          <span>📚 {allContent}</span>
-        </label>
-        <label class={`type-tab ${type === "papers" ? "active" : ""}`}>
-          <input type="radio" name="type" value="papers" checked={type === "papers"} />
-          <span>📄 {papersLabel}</span>
-        </label>
-        <label class={`type-tab ${type === "videos" ? "active" : ""}`}>
-          <input type="radio" name="type" value="videos" checked={type === "videos"} />
-          <span>🎥 {videosLabel}</span>
-        </label>
-        <label class={`type-tab ${type === "nasa" ? "active" : ""}`}>
-          <input type="radio" name="type" value="nasa" checked={type === "nasa"} />
-          <span>🚀 {nasaLabel}</span>
-        </label>
-      </div>
-
-      {/* Quick Search Suggestions */}
-      {showSuggestions && !q && (
-        <div class="quick-searches">
-          <span class="quick-label">{tryLabel}</span>
-          {quickSearches.map((term) => (
-            <a href={`/search?q=${encodeURIComponent(term)}&lang=${locale}`} class="quick-link">
-              {term}
-            </a>
-          ))}
-        </div>
-      )}
-
-      {!noFiltersPanel && (
-        <>
-          <button type="button" class="filter-toggle" id="filter-toggle" aria-expanded="false" data-show={showFilters} data-hide={hideFilters}>
-            {showFilters}
+    <div class="search-bar-container">
+      <form
+        id="search-form"
+        class="search-form"
+        method="get"
+        action={formAction}
+        data-search-form="true"
+        data-locale={locale}
+        data-invalid-msg={invalidLanguage}
+      >
+        <input type="hidden" name="lang" value={locale} />
+        <div class="search-input-wrapper">
+          <input
+            type="text"
+            name="q"
+            id="search-input"
+            placeholder={placeholder}
+            class="search-input"
+            autocomplete="off"
+            defaultValue={q}
+            aria-label={placeholder}
+            aria-describedby="search-input-error"
+          />
+          <button type="submit" class="search-button" id="search-btn">
+            {buttonLabel}
           </button>
-          <div class="filters-panel" id="filters-panel" hidden>
-            <div class="filter-group">
-              <label for="filter-type">{contentType}</label>
-              <select name="typeFilter" id="filter-type" defaultValue={type}>
-                <option value="all">{allContent}</option>
-                <option value="papers">{papersLabel}</option>
-                <option value="videos">{videosLabel}</option>
-                <option value="nasa">{nasaLabel}</option>
-              </select>
-            </div>
-            <div class="filter-group">
-              <label for="filter-sort">{sortByLabel}</label>
-              <select name="sortBy" id="filter-sort" defaultValue={sortBy}>
-                <option value="relevance">{relevanceLabel}</option>
-                <option value="date">{dateLabel}</option>
-                <option value="title">{titleLabel}</option>
-              </select>
-            </div>
-            <div class="filter-group date-picker-group">
-              <label for="filter-dateFrom">{dateFromLabel}</label>
-              <div class="date-picker-wrap">
-                <input type="date" name="dateFrom" id="filter-dateFrom" class="date-input" defaultValue={dateFrom} />
-                <button type="button" class="calendar-btn" data-target="filter-dateFrom" title={pickDateLabel} aria-label={pickDateLabel}>
-                  <span class="calendar-btn-icon" aria-hidden="true">📅</span>
-                </button>
-              </div>
-            </div>
-            <div class="filter-group date-picker-group">
-              <label for="filter-dateTo">{dateToLabel}</label>
-              <div class="date-picker-wrap">
-                <input type="date" name="dateTo" id="filter-dateTo" class="date-input" defaultValue={dateTo} />
-                <button type="button" class="calendar-btn" data-target="filter-dateTo" title={pickDateLabel} aria-label={pickDateLabel}>
-                  <span class="calendar-btn-icon" aria-hidden="true">📅</span>
-                </button>
-              </div>
-            </div>
+        </div>
+        <p id="search-input-error" class="search-input-error" role="alert" hidden></p>
+
+        {/* Content Type Tabs - Always visible */}
+        <div class="content-type-tabs" role="radiogroup" aria-label={contentType}>
+          <label class={`type-tab ${type === "all" ? "active" : ""}`}>
+            <input type="radio" name="type" value="all" checked={type === "all"} />
+            <span>
+              <span class="type-dot type-dot-all" aria-hidden="true"></span>
+              {allContent}
+            </span>
+          </label>
+          <label class={`type-tab ${type === "papers" ? "active" : ""}`}>
+            <input type="radio" name="type" value="papers" checked={type === "papers"} />
+            <span>
+              <span class="type-dot type-dot-papers" aria-hidden="true"></span>
+              {papersLabel}
+            </span>
+          </label>
+          <label class={`type-tab ${type === "videos" ? "active" : ""}`}>
+            <input type="radio" name="type" value="videos" checked={type === "videos"} />
+            <span>
+              <span class="type-dot type-dot-videos" aria-hidden="true"></span>
+              {videosLabel}
+            </span>
+          </label>
+          <label class={`type-tab ${type === "nasa" ? "active" : ""}`}>
+            <input type="radio" name="type" value="nasa" checked={type === "nasa"} />
+            <span>
+              <span class="type-dot type-dot-nasa" aria-hidden="true"></span>
+              {nasaLabel}
+            </span>
+          </label>
+        </div>
+
+        {/* Quick Search Suggestions */}
+        {showSuggestions && !q && (
+          <div class="quick-searches">
+            <span class="quick-label">{tryLabel}</span>
+            {quickSearches.map((term) => (
+              <a href={`/search?q=${encodeURIComponent(term)}&lang=${locale}`} class="quick-link">
+                {term}
+              </a>
+            ))}
           </div>
-        </>
-      )}
-    </form>
-    <script
-      dangerouslySetInnerHTML={{
-        __html: `
+        )}
+
+        {!noFiltersPanel && (
+          <>
+            <button
+              type="button"
+              class="filter-toggle"
+              id="filter-toggle"
+              aria-expanded="false"
+              data-show={showFilters}
+              data-hide={hideFilters}
+            >
+              {showFilters}
+            </button>
+            <div class="filters-panel" id="filters-panel" hidden>
+              <div class="filter-group">
+                <label for="filter-type">{contentType}</label>
+                <select name="typeFilter" id="filter-type" defaultValue={type}>
+                  <option value="all">{allContent}</option>
+                  <option value="papers">{papersLabel}</option>
+                  <option value="videos">{videosLabel}</option>
+                  <option value="nasa">{nasaLabel}</option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <label for="filter-sort">{sortByLabel}</label>
+                <select name="sortBy" id="filter-sort" defaultValue={sortBy}>
+                  <option value="relevance">{relevanceLabel}</option>
+                  <option value="date">{dateLabel}</option>
+                  <option value="title">{titleLabel}</option>
+                </select>
+              </div>
+              <div class="filter-group date-picker-group">
+                <label for="filter-dateFrom">{dateFromLabel}</label>
+                <div class="date-picker-wrap">
+                  <input
+                    type="date"
+                    name="dateFrom"
+                    id="filter-dateFrom"
+                    class="date-input"
+                    defaultValue={dateFrom}
+                  />
+                  <button
+                    type="button"
+                    class="calendar-btn"
+                    data-target="filter-dateFrom"
+                    title={pickDateLabel}
+                    aria-label={pickDateLabel}
+                  >
+                    <span class="calendar-btn-icon" aria-hidden="true">📅</span>
+                  </button>
+                </div>
+              </div>
+              <div class="filter-group date-picker-group">
+                <label for="filter-dateTo">{dateToLabel}</label>
+                <div class="date-picker-wrap">
+                  <input
+                    type="date"
+                    name="dateTo"
+                    id="filter-dateTo"
+                    class="date-input"
+                    defaultValue={dateTo}
+                  />
+                  <button
+                    type="button"
+                    class="calendar-btn"
+                    data-target="filter-dateTo"
+                    title={pickDateLabel}
+                    aria-label={pickDateLabel}
+                  >
+                    <span class="calendar-btn-icon" aria-hidden="true">📅</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </form>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
 (function() {
   function initFilters() {
     var toggle = document.getElementById('filter-toggle');
@@ -535,11 +629,11 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
   }
 })();
 `,
-      }}
-    />
-    <style
-      dangerouslySetInnerHTML={{
-        __html: `
+        }}
+      />
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
 .search-bar-container { width: 100%; max-width: 800px; margin: 0 auto; }
 .search-form { display: flex; flex-direction: column; gap: 1.25rem; }
 .search-input-wrapper { display: flex; gap: 0.75rem; }
@@ -571,9 +665,73 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
 .quick-label { font-size: 0.875rem; color: #64748b; margin-right: 0.25rem; }
 .quick-link { font-size: 0.875rem; color: #a855f7; text-decoration: none; padding: 0.375rem 0.875rem; background: rgba(168, 85, 247, 0.1); border-radius: 20px; transition: all 0.2s ease; border: 1px solid rgba(168, 85, 247, 0.2); }
 .quick-link:hover { background: rgba(168, 85, 247, 0.2); color: #c4b5fd; border-color: rgba(168, 85, 247, 0.4); transform: translateY(-1px); }
+.search-bar-container { max-width: none; }
+.search-form { gap: 1rem; }
+.search-input-wrapper { gap: 0.65rem; }
+.search-input {
+  min-width: 0; min-height: 54px; padding: 0.9rem 1rem;
+  border: 1px solid var(--line); border-radius: 13px;
+  background: rgba(6, 9, 20, 0.82); color: var(--text); box-shadow: none;
+}
+.search-input::placeholder { color: var(--muted); opacity: 0.82; }
+.search-input:focus {
+  border-color: var(--line-strong); background: #090f1e;
+  box-shadow: 0 0 0 4px rgba(94, 234, 212, 0.08);
+}
+.search-button {
+  min-height: 54px; padding-inline: 1.8rem; border-radius: 13px;
+  color: #07121d; background: linear-gradient(135deg, var(--cyan), #67e8f9);
+  box-shadow: 0 10px 24px rgba(45, 212, 191, 0.16);
+}
+.search-button:hover {
+  transform: none; filter: brightness(1.05);
+  box-shadow: 0 12px 28px rgba(45, 212, 191, 0.22);
+}
+.content-type-tabs { margin-top: 0.25rem; gap: 0.55rem; }
+.type-tab {
+  min-height: 42px; padding: 0.58rem 0.9rem; position: relative;
+  border-color: var(--line); color: var(--muted);
+  background: rgba(148, 163, 184, 0.05);
+}
+.type-tab > span { display: inline-flex; align-items: center; gap: 0.5rem; }
+.type-tab input {
+  position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;
+}
+.type-tab:focus-within {
+  outline: 3px solid rgba(94, 234, 212, 0.78); outline-offset: 2px;
+}
+.type-tab:hover { border-color: rgba(148, 163, 184, 0.34); background: rgba(148, 163, 184, 0.08); }
+.type-tab.active {
+  color: var(--text); border-color: var(--line-strong);
+  background: rgba(94, 234, 212, 0.09); box-shadow: none;
+}
+.type-dot { width: 0.48rem; height: 0.48rem; border-radius: 50%; background: var(--muted); }
+.type-dot-all { background: var(--text-soft); }
+.type-dot-papers { background: var(--cyan); }
+.type-dot-videos { background: var(--violet); }
+.type-dot-nasa { background: var(--gold); }
+.quick-searches {
+  padding: 0; margin-top: 0.35rem; border: 0; background: transparent;
+}
+.quick-label { color: var(--muted); }
+.quick-link {
+  min-height: 36px; display: inline-flex; align-items: center;
+  color: var(--text-soft); background: rgba(148, 163, 184, 0.07);
+  border-color: var(--line);
+}
+.quick-link:hover {
+  color: var(--cyan); background: rgba(94, 234, 212, 0.08);
+  border-color: var(--line-strong); transform: none;
+}
+@media (max-width: 560px) {
+  .search-input-wrapper { flex-direction: column; }
+  .search-button { width: 100%; }
+  .content-type-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .type-tab { justify-content: center; }
+}
 `,
-      }}
-    />
-  </div>
+        }}
+      />
+    </div>
   );
 };

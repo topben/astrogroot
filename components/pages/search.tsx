@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
 import type { Locale, LocaleDict } from "../../lib/i18n.ts";
-import { Layout, type AlternateUrls } from "../layout.tsx";
+import { type AlternateUrls, Layout } from "../layout.tsx";
 import { SearchBar } from "../search-bar.tsx";
 
 interface SearchPageProps {
@@ -27,14 +27,17 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
   const locale = props.locale ?? "en";
   const d = props.dict;
   const searchTitle = d?.search.title ?? "Search the Library";
-  const searchDescription = d?.search.description ?? "Explore astronomy papers, videos, and NASA content";
+  const searchDescription = d?.search.description ??
+    "Explore astronomy papers, videos, and NASA content";
   const searchingText = d?.search.searching ?? "Searching…";
-  const hintText = d?.search.hint ?? "Enter a query above and click Search (e.g. dark energy, black holes, Mars).";
+  const hintText = d?.search.hint ??
+    "Enter a query above and click Search (e.g. dark energy, black holes, Mars).";
   const foundTpl = d?.search.found ?? "Found {count} result(s)";
   const noResultsText = d?.search.noResults ?? "No results. Try different keywords or filters.";
   const errorTpl = d?.search.error ?? "Search failed";
   const invalidLanguage = d?.search.invalidLanguage ?? "Please enter English keywords only.";
-  const relatedNotice = d?.search.relatedNotice ?? "No exact matches found. Showing related content:";
+  const relatedNotice = d?.search.relatedNotice ??
+    "No exact matches found. Showing related content:";
   const relatedLabel = d?.search.relatedLabel ?? "Related";
   const pageLabel = d?.search.page ?? "Page";
   const ofLabel = d?.search.of ?? "of";
@@ -44,8 +47,12 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
   const labelVideo = d?.common.video ?? "Video";
   const labelNasa = d?.common.nasa ?? "NASA";
   const labelMore = d?.common.more ?? "More";
+  const labelSource = d?.common.source ?? "Source";
   const dateRangeLabel = d?.search.dateRange ?? "Date Range";
-  const monthsStr = d?.calendar.months.join("|") ?? "January|February|March|April|May|June|July|August|September|October|November|December";
+  const showFiltersLabel = d?.search.showFilters ?? "Show Filters";
+  const hideFiltersLabel = d?.search.hideFilters ?? "Hide Filters";
+  const monthsStr = d?.calendar.months.join("|") ??
+    "January|February|March|April|May|June|July|August|September|October|November|December";
   const weekdaysStr = d?.calendar.weekdays.join("|") ?? "Su|Mo|Tu|We|Th|Fr|Sa";
   return (
     <Layout
@@ -60,10 +67,10 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
       alternateUrls={props.alternateUrls}
       robots={props.robots}
     >
-      <main class="main-content">
+      <main class="main-content" id="main-content">
         <div class="search-container">
           <div class="search-top">
-            <h2 class="section-title section-title-search">{searchTitle}</h2>
+            <h1 class="section-title section-title-search">{searchTitle}</h1>
             <p class="search-description">{searchDescription}</p>
             <SearchBar
               initialQuery={query}
@@ -73,14 +80,27 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
               initialDateTo={dateTo}
               locale={locale}
               dict={d}
-              showSuggestions={true}
-              hideFilters={true}
+              showSuggestions
+              hideFilters
             />
           </div>
           <div class="search-page-body">
+            <button
+              type="button"
+              class="mobile-filter-toggle"
+              id="mobile-filter-toggle"
+              aria-expanded="false"
+              aria-controls="search-sidebar"
+              data-show={showFiltersLabel}
+              data-hide={hideFiltersLabel}
+            >
+              <span aria-hidden="true">⚙</span>
+              <span data-filter-toggle-label="">{showFiltersLabel}</span>
+            </button>
             <aside
               class="search-sidebar"
               id="search-sidebar"
+              aria-label={showFiltersLabel}
               data-date-from={dateFrom}
               data-date-to={dateTo}
               data-sort-by={sortBy}
@@ -96,7 +116,9 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
                 </button>
               </div>
               <div class="sidebar-section">
-                <h3 class="sidebar-heading">{d?.search.sortBy ?? "Sort By"}</h3>
+                <label class="sidebar-heading" for="sidebar-sort">
+                  {d?.search.sortBy ?? "Sort By"}
+                </label>
                 <select id="sidebar-sort" class="sidebar-select">
                   <option value="relevance">{d?.search.relevance ?? "Relevance"}</option>
                   <option value="date">{d?.search.date ?? "Date"}</option>
@@ -120,6 +142,7 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
                 data-label-video={labelVideo}
                 data-label-nasa={labelNasa}
                 data-label-more={labelMore}
+                data-label-source={labelSource}
                 data-error-tpl={errorTpl}
                 data-invalid-msg={invalidLanguage}
                 data-related-notice={relatedNotice}
@@ -128,16 +151,38 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
                 data-of-label={ofLabel}
                 data-prev-label={prevLabel}
                 data-next-label={nextLabel}
+                aria-live="polite"
+                aria-busy={query ? "true" : "false"}
+                tabindex={-1}
               >
-                {query ? (
-                  <div class="search-skeleton" id="search-results-loading">
-                    <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-title"></div><div class="skeleton-line"></div><div class="skeleton-line skeleton-line-short"></div></div>
-                    <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-title"></div><div class="skeleton-line"></div><div class="skeleton-line skeleton-line-short"></div></div>
-                    <div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-title"></div><div class="skeleton-line"></div><div class="skeleton-line skeleton-line-short"></div></div>
-                  </div>
-                ) : (
-                  <p class="search-results-hint">{hintText}</p>
-                )}
+                {query
+                  ? (
+                    <div
+                      class="search-skeleton"
+                      id="search-results-loading"
+                      aria-label={searchingText}
+                    >
+                      <div class="skeleton-card">
+                        <div class="skeleton-badge"></div>
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line skeleton-line-short"></div>
+                      </div>
+                      <div class="skeleton-card">
+                        <div class="skeleton-badge"></div>
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line skeleton-line-short"></div>
+                      </div>
+                      <div class="skeleton-card">
+                        <div class="skeleton-badge"></div>
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line skeleton-line-short"></div>
+                      </div>
+                    </div>
+                  )
+                  : <p class="search-results-hint">{hintText}</p>}
               </div>
             </div>
           </div>
@@ -158,6 +203,7 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
   var labelVideo = el.getAttribute('data-label-video') || 'Video';
   var labelNasa = el.getAttribute('data-label-nasa') || 'NASA';
   var labelMore = el.getAttribute('data-label-more') || 'More';
+  var labelSource = el.getAttribute('data-label-source') || 'Source';
   var errorTpl = el.getAttribute('data-error-tpl') || 'Search failed';
   var invalidMsg = el.getAttribute('data-invalid-msg') || 'Please enter English keywords only.';
   var relatedNotice = el.getAttribute('data-related-notice') || 'No exact matches found. Showing related content:';
@@ -179,6 +225,7 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
   var initialPage = parseInt(urlParams.get('page') || '1', 10) || 1;
   var currentPage = initialPage;
   var perPage = 20;
+  var requestSequence = 0;
   function updateUrl(page) {
     var params = new URLSearchParams(window.location.search || '');
     params.set('q', q);
@@ -194,11 +241,14 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
     return '<div class="search-skeleton"><div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-title"></div><div class="skeleton-line"></div><div class="skeleton-line skeleton-line-short"></div></div><div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-title"></div><div class="skeleton-line"></div><div class="skeleton-line skeleton-line-short"></div></div><div class="skeleton-card"><div class="skeleton-badge"></div><div class="skeleton-title"></div><div class="skeleton-line"></div><div class="skeleton-line skeleton-line-short"></div></div></div>';
   }
   function itemHtml(item, label) {
-    var title = (item.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    var snippet = (item.snippet || '').slice(0, 200).replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    var url = (item.url || '#').replace(/"/g, '&quot;');
+    var title = (item.title || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    var snippet = (item.snippet || '').slice(0, 200).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    var url = (item.url || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
     var detailUrl = '/detail?type=' + encodeURIComponent(item.type || '') + '&id=' + encodeURIComponent(item.id || '') + '&lang=' + encodeURIComponent(locale) + '&returnUrl=' + encodeURIComponent(window.location.pathname + window.location.search);
     var moreBtn = '<a href="' + detailUrl + '" class="search-result-more">' + labelMore + ' \u203a</a>';
+    var sourceBtn = url
+      ? '<a href="' + url + '" target="_blank" rel="noopener noreferrer" class="search-result-source">' + labelSource + ' <span aria-hidden="true">\u2197</span></a>'
+      : '';
     var isLowRelevance = item.lowRelevance || false;
     var cardClass = 'search-result-card' + (isLowRelevance ? ' search-result-card-low-relevance' : '');
     var relatedBadge = isLowRelevance ? '<span class="search-result-related-badge">' + relatedLabel + '</span>' : '';
@@ -210,16 +260,18 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
     var metaRow = item.publishedDate
       ? '<div class="search-result-meta"><span class="search-result-date">' + item.publishedDate + '</span></div>'
       : '';
-    return '<div class="' + cardClass + '">'
+    return '<article class="' + cardClass + '">'
       + '<div class="search-result-header">' + typeTag + relatedBadge + '</div>'
-      + '<a href="' + url + '" target="_blank" rel="noopener" class="search-result-title">' + title + '</a>'
+      + '<a href="' + detailUrl + '" class="search-result-title">' + title + '</a>'
       + metaRow
       + (snippet ? '<p class="search-result-snippet">' + snippet + '\u2026</p>' : '')
-      + '<div class="search-result-actions">' + moreBtn + '</div>'
-      + '</div>';
+      + '<div class="search-result-actions">' + moreBtn + sourceBtn + '</div>'
+      + '</article>';
   }
-  function doSearch(page) {
+  function doSearch(page, focusResults) {
+    var requestId = ++requestSequence;
     currentPage = page;
+    el.setAttribute('aria-busy', 'true');
     el.innerHTML = skeletonHtml();
     var params = new URLSearchParams({ q: q, type: type, limit: String(perPage), page: String(page), lang: locale });
     if (currentDateFrom) params.set('dateFrom', currentDateFrom);
@@ -228,10 +280,12 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
     fetch('/api/search?' + params.toString())
       .then(function(r) { return r.json(); })
       .then(function(data) {
+        if (requestId !== requestSequence) return;
         el.innerHTML = '';
         if (data.error) {
           var errMsg = (data.error || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
           el.insertAdjacentHTML('beforeend', '<p class="search-results-error">' + errorTpl + ': ' + errMsg + '</p>');
+          el.setAttribute('aria-busy', 'false');
           return;
         }
         var total = data.total || 0;
@@ -263,21 +317,39 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
         el.insertAdjacentHTML('beforeend', html);
         var prevBtn = el.querySelector('.pagination-prev');
         var nextBtn = el.querySelector('.pagination-next');
-        if (prevBtn) prevBtn.addEventListener('click', function() { if (pagination.hasPrev) doSearch(currentPage - 1); });
-        if (nextBtn) nextBtn.addEventListener('click', function() { if (pagination.hasNext) doSearch(currentPage + 1); });
+        if (prevBtn) prevBtn.addEventListener('click', function() { if (pagination.hasPrev) doSearch(currentPage - 1, true); });
+        if (nextBtn) nextBtn.addEventListener('click', function() { if (pagination.hasNext) doSearch(currentPage + 1, true); });
         updateUrl(pagination.page || page);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        el.setAttribute('aria-busy', 'false');
+        if (focusResults) {
+          el.focus({ preventScroll: true });
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       })
       .catch(function(err) {
+        if (requestId !== requestSequence) return;
         el.innerHTML = '';
         var msg = (err && err.message) ? err.message : String(err);
         el.insertAdjacentHTML('beforeend', '<p class="search-results-error">' + errorTpl + ': ' + msg.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</p>');
+        el.setAttribute('aria-busy', 'false');
       });
   }
   // ── Sidebar: inline date-range calendar + sort ───────────────────────────
   function initSidebar() {
     var sidebar = document.getElementById('search-sidebar');
     if (!sidebar) return;
+    var mobileToggle = document.getElementById('mobile-filter-toggle');
+    if (mobileToggle) {
+      mobileToggle.addEventListener('click', function() {
+        var isOpen = sidebar.classList.toggle('is-open');
+        var labelEl = mobileToggle.querySelector('[data-filter-toggle-label]');
+        var nextLabel = isOpen
+          ? (mobileToggle.getAttribute('data-hide') || 'Hide Filters')
+          : (mobileToggle.getAttribute('data-show') || 'Show Filters');
+        if (labelEl) labelEl.textContent = nextLabel;
+        mobileToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+    }
     var MONTHS = (sidebar.getAttribute('data-months') || '').split('|');
     var WD = (sidebar.getAttribute('data-weekdays') || '').split('|');
     if (MONTHS.length < 12) MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -347,10 +419,10 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
           updateDateDisplay();
           if (calFrom && calTo) {
             currentDateFrom = calFrom; currentDateTo = calTo;
-            if (q) doSearch(1);
+            if (q) doSearch(1, false);
           } else if (!calFrom) {
             currentDateFrom = ''; currentDateTo = '';
-            if (q) doSearch(1);
+            if (q) doSearch(1, false);
           }
         });
       });
@@ -374,7 +446,7 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
         calFrom = null; calTo = null;
         currentDateFrom = ''; currentDateTo = '';
         renderCalendar(); updateDateDisplay();
-        if (q) doSearch(1);
+        if (q) doSearch(1, false);
       });
     }
     var sortSelect = document.getElementById('sidebar-sort');
@@ -382,7 +454,7 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
       sortSelect.value = currentSortBy;
       sortSelect.addEventListener('change', function() {
         currentSortBy = sortSelect.value;
-        if (q) doSearch(1);
+        if (q) doSearch(1, false);
       });
     }
     renderCalendar();
@@ -394,6 +466,7 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
   }
   if (isInvalidForLocale(q, locale)) {
     el.innerHTML = '';
+    el.setAttribute('aria-busy', 'false');
     var errEl = document.createElement('p');
     errEl.className = 'search-results-error';
     errEl.textContent = invalidMsg;
@@ -402,7 +475,7 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
     return;
   }
   initSidebar();
-  doSearch(currentPage);
+  doSearch(currentPage, false);
 })();
 `,
         }}
@@ -482,6 +555,98 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
 .skeleton-title { width: 70%; height: 16px; margin-bottom: 0.55rem; }
 .skeleton-line { width: 100%; height: 11px; margin-bottom: 0.35rem; }
 .skeleton-line-short { width: 55%; }
+/* ── Refined search experience ─────────────────────────────────────── */
+.search-container { padding: clamp(1.15rem, 3vw, 2rem); }
+.search-top { margin-bottom: 1.5rem; }
+.section-title-search { margin-bottom: 0.35rem; }
+.search-description { margin-bottom: 1.5rem; color: var(--text-soft); line-height: 1.65; }
+.search-page-body { grid-template-columns: 240px minmax(0, 1fr); gap: 1.25rem; }
+.mobile-filter-toggle {
+  display: none; min-height: 46px; align-items: center; justify-content: center; gap: 0.55rem;
+  border: 1px solid var(--line); border-radius: 12px;
+  color: var(--text-soft); background: rgba(148, 163, 184, 0.07); cursor: pointer;
+}
+.search-sidebar {
+  top: 5.6rem; padding: 1rem; border-color: var(--line);
+  background: rgba(8, 13, 27, 0.8); box-shadow: none;
+}
+.sidebar-heading {
+  display: block; margin-bottom: 0.8rem; color: var(--muted);
+  font-size: 0.72rem; letter-spacing: 0.09em;
+}
+.sidebar-select {
+  min-height: 44px; padding: 0.6rem 0.75rem;
+  border-color: var(--line); color: var(--text-soft); background: #080d1b;
+}
+.sidebar-select:focus { border-color: var(--line-strong); }
+.sidebar-date-display {
+  color: var(--text-soft); background: rgba(167, 139, 250, 0.08);
+  border-color: rgba(167, 139, 250, 0.22);
+}
+.sidebar-clear-btn { min-height: 36px; color: var(--muted); }
+.cal-month-year { color: var(--text-soft); }
+.cal-nav-btn {
+  width: 2rem; height: 2rem; border-radius: 8px;
+  border-color: var(--line); color: var(--cyan); background: rgba(94, 234, 212, 0.06);
+}
+.cal-weekday { color: var(--muted); }
+.cal-day-btn { min-height: 29px; color: var(--muted); }
+.cal-day-btn:hover { color: var(--text); background: rgba(167, 139, 250, 0.13); }
+.cal-day-btn.cal-selected { background: var(--violet); color: #080d1b; box-shadow: none; }
+.cal-day-btn.cal-in-range { color: var(--text-soft); background: rgba(167, 139, 250, 0.12); }
+.search-results:focus { outline: none; }
+.search-results-hint, .search-results-empty, .search-results-error {
+  padding: 1.25rem; border: 1px dashed var(--line); border-radius: 12px;
+  color: var(--text-soft); line-height: 1.65;
+}
+.search-results-error { color: var(--danger); border-color: rgba(253, 164, 175, 0.28); }
+.search-results-count { margin-bottom: 0.85rem; color: var(--muted); }
+.search-result-card {
+  padding: 1.2rem 1.25rem; margin-bottom: 0.75rem;
+  border-color: var(--line); border-radius: 14px;
+  background: rgba(12, 18, 35, 0.74); box-shadow: none;
+}
+.search-result-card:hover {
+  border-color: rgba(94, 234, 212, 0.3); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
+}
+.search-result-title {
+  color: var(--text); font-size: 1.05rem; line-height: 1.45;
+  text-decoration: underline; text-decoration-color: transparent;
+  text-underline-offset: 3px;
+}
+.search-result-title:hover { color: var(--cyan); text-decoration-color: currentColor; }
+.search-result-date { color: var(--muted); }
+.search-result-snippet { color: var(--text-soft); line-height: 1.62; }
+.search-result-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.search-result-more, .search-result-source {
+  min-height: 38px; padding: 0.45rem 0.8rem;
+  display: inline-flex; align-items: center; border: 1px solid var(--line);
+  border-radius: 10px; color: var(--text-soft);
+  background: rgba(148, 163, 184, 0.06); text-decoration: none; font-size: 0.8rem;
+}
+.search-result-more:hover, .search-result-source:hover {
+  border-color: var(--line-strong); color: var(--cyan);
+  background: rgba(94, 234, 212, 0.07);
+}
+.search-results-related-notice { color: #fde68a; border-color: rgba(251, 191, 36, 0.22); }
+.search-result-card-low-relevance { opacity: 0.82; }
+.search-pagination { flex-wrap: wrap; }
+.pagination-btn {
+  min-height: 44px; border-color: var(--line); border-radius: 11px;
+  color: var(--text-soft); background: rgba(148, 163, 184, 0.06);
+}
+.pagination-info { color: var(--muted); }
+.skeleton-card { border-color: var(--line); background: rgba(12, 18, 35, 0.74); }
+@media (max-width: 720px) {
+  .search-page-body { display: block; }
+  .mobile-filter-toggle { width: 100%; display: flex; margin-bottom: 0.85rem; }
+  .search-sidebar {
+    display: none; position: static; margin-bottom: 1rem;
+    border-radius: 14px; background: rgba(8, 13, 27, 0.92);
+  }
+  .search-sidebar.is-open { display: block; }
+  .search-result-card { padding: 1rem; }
+}
 `,
         }}
       />

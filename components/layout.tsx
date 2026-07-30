@@ -12,7 +12,7 @@ const SHARED_STYLES = `
     color: #e0e7ff;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
     position: relative;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
   .starfield {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -187,12 +187,309 @@ const SHARED_STYLES = `
   .calendar-day.other-month:hover { background: rgba(34, 211, 238, 0.1); color: #94a3b8; }
 `;
 
+const UI_REFRESH_STYLES = `
+  :root {
+    color-scheme: dark;
+    --page: #060914;
+    --surface: rgba(12, 18, 35, 0.92);
+    --surface-strong: #10182a;
+    --surface-soft: rgba(17, 26, 46, 0.72);
+    --line: rgba(148, 163, 184, 0.18);
+    --line-strong: rgba(94, 234, 212, 0.38);
+    --text: #f8fafc;
+    --text-soft: #cbd5e1;
+    --muted: #94a3b8;
+    --cyan: #5eead4;
+    --violet: #a78bfa;
+    --gold: #fbbf24;
+    --danger: #fda4af;
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--page); }
+  button, input, select { font: inherit; }
+  a, button, input, select { -webkit-tap-highlight-color: transparent; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+  :where(a, button, input, select):focus-visible {
+    outline: 3px solid rgba(94, 234, 212, 0.78);
+    outline-offset: 3px;
+  }
+  .skip-link {
+    position: fixed; top: 0.75rem; left: 0.75rem; z-index: 10000;
+    padding: 0.7rem 1rem; border-radius: 10px; color: #06111d;
+    background: var(--cyan); font-weight: 750; text-decoration: none;
+    transform: translateY(-160%); transition: transform 0.18s ease;
+  }
+  .skip-link:focus { transform: translateY(0); }
+  .dashboard, .search-page, .error-page, .detail-page {
+    background:
+      radial-gradient(circle at 85% 4%, rgba(124, 58, 237, 0.14), transparent 28rem),
+      radial-gradient(circle at 8% 85%, rgba(8, 145, 178, 0.12), transparent 30rem),
+      var(--page);
+    color: var(--text);
+    font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .starfield { animation: none; opacity: 0.22; background-size: 115% 115%; }
+  .starfield-2, .starfield-js { display: none; }
+  .nebula { opacity: 0.1; filter: blur(130px); pointer-events: none; }
+  .header {
+    width: min(100%, 1180px); margin: 0 auto; padding: 1.35rem 1.5rem 0.9rem;
+  }
+  .header-search { padding-bottom: 0.4rem; }
+  .brand-link { gap: 0; }
+  .logo-img {
+    width: 132px; height: 132px; border-radius: 24px;
+    filter: drop-shadow(0 15px 35px rgba(34, 211, 238, 0.16));
+  }
+  .brand-link:hover .logo-img {
+    filter: drop-shadow(0 18px 42px rgba(94, 234, 212, 0.24));
+  }
+  .header-search .logo-img { width: 84px; height: 84px; border-radius: 18px; }
+  .header-subtitle {
+    margin: 0.7rem 0 0.35rem; color: var(--text);
+    font-size: clamp(1.65rem, 3vw, 2.4rem); font-weight: 760;
+    letter-spacing: -0.035em; text-shadow: none;
+  }
+  .header-description {
+    max-width: 640px; margin: 0 auto; color: var(--text-soft);
+    font-size: clamp(0.98rem, 2vw, 1.1rem); line-height: 1.65;
+  }
+  .lang-switcher { top: 1.25rem; right: 1.5rem; }
+  .lang-switcher a {
+    min-height: 40px; padding: 0.5rem 0.72rem; border-color: var(--line);
+    border-radius: 10px; color: var(--muted); background: rgba(10, 15, 29, 0.78);
+    box-shadow: none;
+  }
+  .lang-switcher a:hover {
+    color: var(--text); border-color: rgba(94, 234, 212, 0.45);
+    background: var(--surface-strong);
+  }
+  .lang-switcher a.lang-active {
+    color: var(--cyan); border-color: var(--line-strong);
+    background: rgba(94, 234, 212, 0.09); box-shadow: none;
+  }
+  .navigation {
+    position: sticky; top: 0.75rem; z-index: 30;
+    width: max-content; max-width: calc(100% - 2rem); margin: 0.4rem auto 0;
+    padding: 0.35rem; gap: 0.25rem; border: 1px solid var(--line);
+    border-radius: 16px; background: rgba(6, 9, 20, 0.84);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.24); backdrop-filter: blur(18px);
+  }
+  .nav-link {
+    min-height: 44px; padding: 0.72rem 1.15rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 0; border-radius: 11px; color: var(--muted);
+    background: transparent; box-shadow: none; font-size: 0.92rem; font-weight: 650;
+  }
+  .nav-link:hover {
+    color: var(--text); border-color: transparent; background: rgba(148, 163, 184, 0.09);
+    transform: none; box-shadow: none;
+  }
+  .nav-link.active {
+    color: #07121d; background: linear-gradient(135deg, var(--cyan), #67e8f9);
+    border-color: transparent; box-shadow: 0 8px 22px rgba(45, 212, 191, 0.16);
+  }
+  .nav-link.active .nav-glow { color: inherit; text-shadow: none; }
+  .main-content {
+    width: min(100%, 1180px); margin: 1.6rem auto 4rem; padding: 0 1.5rem;
+  }
+  .main-content-narrow { max-width: 830px; }
+  .section-title {
+    margin-bottom: 1.3rem; color: var(--text); background: none;
+    -webkit-text-fill-color: currentColor;
+    font-size: clamp(1.35rem, 2.5vw, 1.8rem); font-weight: 740;
+    letter-spacing: -0.025em; text-shadow: none;
+  }
+  .stats-section, .info-section, .search-container, .detail-section, .donate-section,
+  .quick-search-section {
+    padding: clamp(1.25rem, 3vw, 2rem); margin-bottom: 1.25rem;
+    border: 1px solid var(--line); border-radius: var(--radius-lg);
+    background: var(--surface); box-shadow: var(--shadow); backdrop-filter: blur(18px);
+  }
+  .quick-search-section {
+    padding-block: clamp(1.75rem, 5vw, 3rem); text-align: center;
+    background:
+      linear-gradient(135deg, rgba(94, 234, 212, 0.09), transparent 42%),
+      linear-gradient(315deg, rgba(167, 139, 250, 0.1), transparent 48%),
+      var(--surface);
+    border-color: rgba(94, 234, 212, 0.22);
+  }
+  .quick-search-section .section-title { margin-bottom: 1.5rem; }
+  .stats-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.8rem; }
+  .stat-card {
+    min-width: 0; padding: 1.25rem; display: grid;
+    grid-template-columns: auto 1fr; grid-template-areas: "icon value" "icon label";
+    column-gap: 0.9rem; align-items: center; text-align: left;
+    border: 1px solid var(--line); border-radius: var(--radius-md);
+    background: var(--surface-soft); box-shadow: none;
+  }
+  .stat-card:hover {
+    transform: none; border-color: rgba(94, 234, 212, 0.33); box-shadow: none;
+  }
+  .stat-icon {
+    grid-area: icon; width: 2.6rem; height: 2.6rem; margin: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 12px; color: var(--cyan); background: rgba(94, 234, 212, 0.09);
+    font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em; filter: none;
+  }
+  .stat-value {
+    grid-area: value; margin: 0; color: var(--text); background: none;
+    -webkit-text-fill-color: currentColor; font-size: clamp(1.55rem, 3vw, 2rem);
+    line-height: 1.05; text-shadow: none;
+  }
+  .stat-label {
+    grid-area: label; margin-top: 0.25rem; color: var(--muted); font-size: 0.8rem;
+  }
+  .dashboard-grid {
+    display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
+    gap: 1.25rem; margin-bottom: 1.25rem;
+  }
+  .dashboard-grid > section { margin-bottom: 0; }
+  .info-text, .info-list, .donate-intro {
+    color: var(--text-soft); font-size: 1rem; line-height: 1.75;
+  }
+  .info-list { margin-left: 1.25rem; line-height: 1.7; }
+  .info-list li { margin-bottom: 0.75rem; padding-left: 0.25rem; }
+  .donate-section {
+    animation: none;
+    background: linear-gradient(145deg, rgba(167, 139, 250, 0.1), transparent 55%), var(--surface);
+    border-color: rgba(167, 139, 250, 0.22);
+  }
+  .donate-title {
+    color: var(--text); background: none; -webkit-text-fill-color: currentColor;
+    font-size: 1.45rem; filter: none;
+  }
+  .donate-icon { color: var(--gold); filter: none; }
+  .ens-pill {
+    max-width: 100%; border-color: var(--line); color: var(--cyan);
+    background: rgba(6, 9, 20, 0.65); box-shadow: none; font-size: 0.95rem;
+  }
+  .ens-pill::before { display: none; }
+  .donate-copy, .donate-button, .detail-button {
+    min-height: 44px; border-color: var(--line);
+    background: rgba(148, 163, 184, 0.07); color: var(--text-soft);
+  }
+  .donate-copy:hover, .donate-button:hover, .detail-button:hover {
+    border-color: var(--line-strong); background: rgba(94, 234, 212, 0.09);
+    color: var(--text); box-shadow: none; transform: none;
+  }
+  .tool-section { padding: 0; overflow: hidden; }
+  .tool-card {
+    padding: 1.35rem 1.5rem; display: grid;
+    grid-template-columns: auto 1fr auto; gap: 1rem; align-items: center;
+    color: inherit; text-decoration: none;
+  }
+  .tool-card:hover { background: rgba(94, 234, 212, 0.05); }
+  .tool-card-icon {
+    width: 2.75rem; height: 2.75rem; display: inline-flex;
+    align-items: center; justify-content: center; border-radius: 12px;
+    color: var(--gold); background: rgba(251, 191, 36, 0.1); font-size: 1.15rem;
+  }
+  .tool-card-title { display: block; color: var(--text); font-weight: 700; }
+  .tool-card-description {
+    display: block; margin-top: 0.25rem; color: var(--muted);
+    font-size: 0.88rem; line-height: 1.55;
+  }
+  .tool-card-arrow { color: var(--cyan); font-size: 1.35rem; }
+  .detail-section { padding: clamp(1.4rem, 4vw, 2.7rem); }
+  .detail-back-link {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    margin-bottom: 1.5rem; color: var(--muted); text-decoration: none; font-size: 0.9rem;
+  }
+  .detail-back-link:hover { color: var(--cyan); }
+  .detail-title {
+    margin-bottom: 1.15rem; color: var(--text);
+    font-size: clamp(1.75rem, 4vw, 2.55rem); line-height: 1.18;
+    letter-spacing: -0.035em;
+  }
+  .detail-meta { margin-bottom: 0.8rem; color: var(--muted); font-size: 0.86rem; }
+  .detail-type {
+    padding: 0.25rem 0.6rem; border: 1px solid rgba(94, 234, 212, 0.25);
+    border-radius: 999px; color: var(--cyan); background: rgba(94, 234, 212, 0.07);
+    font-size: 0.72rem; font-weight: 750; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .detail-summary-label {
+    margin: 2rem 0 0.85rem; color: var(--text);
+    font-size: 1.1rem; font-weight: 720; letter-spacing: -0.01em; text-transform: none;
+  }
+  .detail-summary { color: var(--text-soft); font-size: 1.02rem; line-height: 1.82; }
+  .markdown-body p { margin-bottom: 1em; }
+  .site-footer { margin-top: 0; padding-bottom: 2.5rem; border-color: var(--line); }
+  .footer-link { min-height: 44px; color: var(--muted); }
+  .footer-link:hover { color: var(--cyan); }
+  @media (max-width: 900px) {
+    .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dashboard-grid { grid-template-columns: 1fr; }
+    .navigation { position: relative; top: auto; }
+  }
+  @media (max-width: 640px) {
+    .header { padding: 4.3rem 1rem 0.65rem; }
+    .header-search { padding-top: 4.15rem; }
+    .lang-switcher { top: 0.75rem; right: 0.75rem; }
+    .logo-img { width: 104px; height: 104px; border-radius: 20px; }
+    .header-search .logo-img { width: 70px; height: 70px; }
+    .navigation {
+      width: calc(100% - 1.5rem); max-width: none; overflow-x: auto;
+      justify-content: flex-start; scrollbar-width: none;
+    }
+    .navigation::-webkit-scrollbar { display: none; }
+    .nav-link { flex: 1 0 auto; padding-inline: 0.9rem; }
+    .main-content { margin-top: 1rem; padding-inline: 0.75rem; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .stat-card { padding: 1rem; }
+    .tool-card { grid-template-columns: auto 1fr; }
+    .tool-card-arrow { display: none; }
+    .detail-section { border-radius: 16px; }
+    .detail-actions { flex-direction: column; }
+    .detail-button { justify-content: center; }
+    .markdown-body table { display: block; overflow-x: auto; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+`;
+
 export type AlternateUrls = {
   en: string;
   "zh-TW": string;
   "zh-CN": string;
   xDefault?: string;
 };
+
+export function localeSwitcherHref(alternateUrls: AlternateUrls, locale: Locale): string {
+  const href = alternateUrls[locale];
+
+  try {
+    const pageUrl = new URL(href);
+    const returnUrl = pageUrl.searchParams.get("returnUrl");
+    if (!returnUrl?.startsWith("/search")) return href;
+
+    const localizedReturnUrl = new URL(returnUrl, pageUrl.origin);
+    if (locale === "en") {
+      localizedReturnUrl.searchParams.delete("lang");
+    } else {
+      localizedReturnUrl.searchParams.set("lang", locale);
+    }
+
+    pageUrl.searchParams.set(
+      "returnUrl",
+      `${localizedReturnUrl.pathname}${localizedReturnUrl.search}${localizedReturnUrl.hash}`,
+    );
+    return pageUrl.toString();
+  } catch {
+    return href;
+  }
+}
 
 type LayoutProps = PropsWithChildren<{
   pageClass: string;
@@ -234,11 +531,6 @@ const LOCALE_LABELS: Record<Locale, string> = {
   "zh-CN": "簡中",
 };
 
-function currentPageHref(activeNav: "dashboard" | "search" | undefined, locale: Locale): string {
-  const base = activeNav === "search" ? "/search" : "/";
-  return `${base}?lang=${encodeURIComponent(locale)}`;
-}
-
 export const Layout: FC<LayoutProps> = (props) => {
   const {
     pageClass,
@@ -266,13 +558,44 @@ export const Layout: FC<LayoutProps> = (props) => {
   const navSearch = dict?.nav.search ?? "Search";
   const navMap = dict?.nav.map ?? "Knowledge Map";
   const headerSubtitle = dict?.header.subtitle ?? "Research Library";
-  const headerDescription = dict?.header.description ?? "Your astronomy and space science knowledge hub";
-  const calendarWeekdays = dict?.calendar.weekdays ?? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const calendarMonths = dict?.calendar.months ?? ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const headerDescription = dict?.header.description ??
+    "Your astronomy and space science knowledge hub";
+  const calendarWeekdays = dict?.calendar.weekdays ??
+    ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const calendarMonths = dict?.calendar.months ??
+    [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
   const calendarPickDate = dict?.calendar.pickDate ?? "Pick a date";
   const calendarPrevMonth = dict?.calendar.prevMonth ?? "Previous month";
   const calendarNextMonth = dict?.calendar.nextMonth ?? "Next month";
   const calendarClose = dict?.calendar.close ?? "Close calendar";
+  const skipLabel = currentLocale === "zh-TW"
+    ? "跳至主要內容"
+    : currentLocale === "zh-CN"
+    ? "跳至主要内容"
+    : "Skip to main content";
+  const primaryNavLabel = currentLocale === "zh-TW"
+    ? "主要導覽"
+    : currentLocale === "zh-CN"
+    ? "主要导航"
+    : "Primary navigation";
+  const languageLabel = currentLocale === "zh-TW"
+    ? "語言"
+    : currentLocale === "zh-CN"
+    ? "语言"
+    : "Language";
   const calendarMonthsStr = calendarMonths.join("\u001F");
   const fallbackOgImage = "/static/astrogroot-logo.png";
   const ogImageUrl = (() => {
@@ -312,132 +635,172 @@ export const Layout: FC<LayoutProps> = (props) => {
           <meta name="twitter:description" content={pageDescription} />
           <meta name="twitter:image" content={ogImageUrl} />
           <style dangerouslySetInnerHTML={{ __html: SHARED_STYLES }} />
+          <style dangerouslySetInnerHTML={{ __html: UI_REFRESH_STYLES }} />
         </head>
         <body>
+          <a class="skip-link" href="#main-content">{skipLabel}</a>
           <div class={pageClass}>
             <div class="starfield" />
             <div class="starfield-2" />
-            <div id="starfield-js" class="starfield-js" aria-hidden="true" />
             <div class="nebula nebula-1" />
             <div class="nebula nebula-2" />
-            {showHeader ? (
-              <header class={headerClass}>
-                <div class="lang-switcher" role="group" aria-label="Language">
-                  {SUPPORTED_LOCALES.map((loc) => (
-                    <a
-                      href={currentPageHref(activeNav, loc)}
-                      class={currentLocale === loc ? "lang-active" : ""}
-                      aria-current={currentLocale === loc ? "true" : undefined}
-                      aria-label={loc === "en" ? "English" : loc === "zh-TW" ? "繁體中文" : "简体中文"}
-                    >
-                      {LOCALE_LABELS[loc]}
-                    </a>
-                  ))}
-                </div>
-                <a href={homeHref(locale)} class="brand-link" aria-label="AstroGroot home">
-                  <img
-                    src="/static/astrogroot-logo.png"
-                    alt="AstroGroot - Astronomy Research Library"
-                    class="logo-img"
-                    width="420"
-                    height="180"
-                  />
-                </a>
-                {headerVariant === "default" && (
-                  <>
-                    <p class="header-subtitle">{headerSubtitle}</p>
-                    <p class="header-description">{headerDescription}</p>
-                  </>
-                )}
-              </header>
-            ) : null}
-            {showNav && (activeNav === "dashboard" || activeNav === "search") ? (
-              <nav class="navigation">
-                <a href={homeHref(locale)} class={activeNav === "dashboard" ? "nav-link active" : "nav-link"}>
-                  <span class="nav-glow">{navDashboard}</span>
-                </a>
-                <a href={searchHref(locale)} class={activeNav === "search" ? "nav-link active" : "nav-link"}>
-                  <span class="nav-glow">{navSearch}</span>
-                </a>
-                <a href={mapHref(locale)} class="nav-link">
-                  <span class="nav-glow">{navMap}</span>
-                </a>
-              </nav>
-            ) : null}
+            {showHeader
+              ? (
+                <header class={headerClass}>
+                  <div class="lang-switcher" role="group" aria-label={languageLabel}>
+                    {SUPPORTED_LOCALES.map((loc) => (
+                      <a
+                        href={localeSwitcherHref(alternateUrls, loc)}
+                        class={currentLocale === loc ? "lang-active" : ""}
+                        aria-current={currentLocale === loc ? "page" : undefined}
+                        aria-label={loc === "en"
+                          ? "English"
+                          : loc === "zh-TW"
+                          ? "繁體中文"
+                          : "简体中文"}
+                      >
+                        {LOCALE_LABELS[loc]}
+                      </a>
+                    ))}
+                  </div>
+                  <a href={homeHref(locale)} class="brand-link" aria-label="AstroGroot home">
+                    <img
+                      src="/static/astrogroot-logo.png"
+                      alt=""
+                      class="logo-img"
+                      width="132"
+                      height="132"
+                      decoding="async"
+                    />
+                  </a>
+                  {headerVariant === "default" && (
+                    <>
+                      <h1 class="header-subtitle">{headerSubtitle}</h1>
+                      <p class="header-description">{headerDescription}</p>
+                    </>
+                  )}
+                </header>
+              )
+              : null}
+            {showNav && (activeNav === "dashboard" || activeNav === "search")
+              ? (
+                <nav class="navigation" aria-label={primaryNavLabel}>
+                  <a
+                    href={homeHref(locale)}
+                    class={activeNav === "dashboard" ? "nav-link active" : "nav-link"}
+                    aria-current={activeNav === "dashboard" ? "page" : undefined}
+                  >
+                    <span class="nav-glow">{navDashboard}</span>
+                  </a>
+                  <a
+                    href={searchHref(locale)}
+                    class={activeNav === "search" ? "nav-link active" : "nav-link"}
+                    aria-current={activeNav === "search" ? "page" : undefined}
+                  >
+                    <span class="nav-glow">{navSearch}</span>
+                  </a>
+                  <a href={mapHref(locale)} class="nav-link">
+                    <span class="nav-glow">{navMap}</span>
+                  </a>
+                </nav>
+              )
+              : null}
             {children}
-            {showFooter ? (
-              <footer class="site-footer">
-                <div class="footer-links">
-                  <a href="https://github.com/topben/astrogroot" target="_blank" rel="noopener" class="footer-link">
-                    <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-                    GitHub
-                  </a>
-                  <a href="https://docs.google.com/spreadsheets/d/1tc5hTo12MniREvjuCuKNT03Qss7ovJecBMWrU9dnQRQ/edit?usp=sharing" target="_blank" rel="noopener" class="footer-link">
-                    <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0112.25 16h-8.5A1.75 1.75 0 012 14.25V1.75zm1.75-.25a.25.25 0 00-.25.25v12.5c0 .138.112.25.25.25h8.5a.25.25 0 00.25-.25V4.664a.25.25 0 00-.073-.177l-2.914-2.914a.25.25 0 00-.177-.073H3.75zM5.5 7a.75.75 0 000 1.5h5a.75.75 0 000-1.5h-5zm0 3a.75.75 0 000 1.5h5a.75.75 0 000-1.5h-5z"/></svg>
-                    {dict?.common.recommendedPapers ?? "Recommended Papers"}
-                  </a>
-                </div>
-              </footer>
-            ) : null}
-            {showFooter ? (
-              <div id="calendar-modal-backdrop" class="calendar-modal-backdrop" hidden aria-hidden="true">
+            {showFooter
+              ? (
+                <footer class="site-footer">
+                  <div class="footer-links">
+                    <a
+                      href="https://github.com/topben/astrogroot"
+                      target="_blank"
+                      rel="noopener"
+                      class="footer-link"
+                    >
+                      <svg
+                        viewBox="0 0 16 16"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+                      </svg>
+                      GitHub
+                    </a>
+                    <a
+                      href="https://docs.google.com/spreadsheets/d/1tc5hTo12MniREvjuCuKNT03Qss7ovJecBMWrU9dnQRQ/edit?usp=sharing"
+                      target="_blank"
+                      rel="noopener"
+                      class="footer-link"
+                    >
+                      <svg
+                        viewBox="0 0 16 16"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0112.25 16h-8.5A1.75 1.75 0 012 14.25V1.75zm1.75-.25a.25.25 0 00-.25.25v12.5c0 .138.112.25.25.25h8.5a.25.25 0 00.25-.25V4.664a.25.25 0 00-.073-.177l-2.914-2.914a.25.25 0 00-.177-.073H3.75zM5.5 7a.75.75 0 000 1.5h5a.75.75 0 000-1.5h-5zm0 3a.75.75 0 000 1.5h5a.75.75 0 000-1.5h-5z" />
+                      </svg>
+                      {dict?.common.recommendedPapers ?? "Recommended Papers"}
+                    </a>
+                  </div>
+                </footer>
+              )
+              : null}
+            {showFooter
+              ? (
                 <div
-                  id="calendar-popover"
-                  class="calendar-popover"
-                  role="dialog"
-                  aria-modal="true"
-                  aria-label={calendarPickDate}
-                  data-weekdays={calendarWeekdays.join("\u001F")}
-                  data-months={calendarMonthsStr}
-                  data-pick-date={calendarPickDate}
-                  data-prev-month={calendarPrevMonth}
-                  data-next-month={calendarNextMonth}
-                  data-close={calendarClose}
+                  id="calendar-modal-backdrop"
+                  class="calendar-modal-backdrop"
+                  hidden
+                  aria-hidden="true"
                 >
-                  <button type="button" class="calendar-close" aria-label={calendarClose}>×</button>
-                  <div class="calendar-header">
-                    <button type="button" class="calendar-nav calendar-prev" aria-label={calendarPrevMonth}>‹</button>
-                    <div class="calendar-month-year" id="calendar-month-year"></div>
-                    <button type="button" class="calendar-nav calendar-next" aria-label={calendarNextMonth}>›</button>
+                  <div
+                    id="calendar-popover"
+                    class="calendar-popover"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={calendarPickDate}
+                    data-weekdays={calendarWeekdays.join("\u001F")}
+                    data-months={calendarMonthsStr}
+                    data-pick-date={calendarPickDate}
+                    data-prev-month={calendarPrevMonth}
+                    data-next-month={calendarNextMonth}
+                    data-close={calendarClose}
+                  >
+                    <button type="button" class="calendar-close" aria-label={calendarClose}>
+                      ×
+                    </button>
+                    <div class="calendar-header">
+                      <button
+                        type="button"
+                        class="calendar-nav calendar-prev"
+                        aria-label={calendarPrevMonth}
+                      >
+                        ‹
+                      </button>
+                      <div class="calendar-month-year" id="calendar-month-year"></div>
+                      <button
+                        type="button"
+                        class="calendar-nav calendar-next"
+                        aria-label={calendarNextMonth}
+                      >
+                        ›
+                      </button>
+                    </div>
+                    <div class="calendar-weekdays">
+                      {calendarWeekdays.map((w) => <span key={w}>{w}</span>)}
+                    </div>
+                    <div class="calendar-days" id="calendar-days"></div>
                   </div>
-                  <div class="calendar-weekdays">
-                    {calendarWeekdays.map((w) => <span key={w}>{w}</span>)}
-                  </div>
-                  <div class="calendar-days" id="calendar-days"></div>
                 </div>
-              </div>
-            ) : null}
+              )
+              : null}
           </div>
           <script
             dangerouslySetInnerHTML={{
               __html: SEARCH_VALIDATION_SCRIPT,
-            }}
-          />
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `
-(function() {
-  var container = document.getElementById('starfield-js');
-  if (!container) return;
-  var colors = ['#fff', 'rgba(34,211,238,0.9)', 'rgba(255,215,0,0.7)', 'rgba(168,85,247,0.8)', 'rgba(255,255,255,0.85)'];
-  var count = 60 + Math.floor(Math.random() * 90);
-  for (var i = 0; i < count; i++) {
-    var star = document.createElement('div');
-    star.className = 'star';
-    var size = 1 + Math.random() * 2.5;
-    var left = Math.random() * 100;
-    var top = Math.random() * 100;
-    var tx = (Math.random() - 0.5) * 240;
-    var ty = (Math.random() - 0.5) * 240;
-    var duration = 25 + Math.random() * 55;
-    var delay = Math.random() * 12;
-    var op = 0.5 + Math.random() * 0.5;
-    var opMid = op * 0.5 + Math.random() * 0.3;
-    star.style.cssText = 'left:' + left + '%;top:' + top + '%;width:' + size + 'px;height:' + size + 'px;color:' + colors[Math.floor(Math.random() * colors.length)] + ';--tx:' + tx + 'px;--ty:' + ty + 'px;--op:' + op + ';--op-mid:' + opMid + ';animation-duration:' + duration + 's;animation-delay:-' + delay + 's;';
-    container.appendChild(star);
-  }
-})();
-`,
             }}
           />
         </body>

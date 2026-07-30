@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
 import type { Locale, LocaleDict } from "../../lib/i18n.ts";
-import { Layout, type AlternateUrls } from "../layout.tsx";
+import { type AlternateUrls, Layout } from "../layout.tsx";
 
 export interface DetailPageProps {
   title: string;
@@ -25,7 +25,9 @@ export const DetailPage: FC<DetailPageProps> = (props) => {
   const backLabel = d?.common.back ?? "Back";
   const summaryLabel = d?.common.fullSummary ?? "Full Summary";
   const sourceLabel = d?.common.source ?? "Source";
-  const defaultSearchHref = locale !== "en" ? `/search?lang=${encodeURIComponent(locale)}` : "/search";
+  const defaultSearchHref = locale !== "en"
+    ? `/search?lang=${encodeURIComponent(locale)}`
+    : "/search";
   const searchHref = props.returnUrl ?? defaultSearchHref;
   return (
     <Layout
@@ -42,31 +44,48 @@ export const DetailPage: FC<DetailPageProps> = (props) => {
       ogType="article"
       twitterCard={props.ogImage ? "summary_large_image" : "summary"}
     >
-      <main class="main-content main-content-narrow">
-        <section class="detail-section">
+      <main class="main-content main-content-narrow" id="main-content">
+        <article class="detail-section">
+          <a class="detail-back-link" href={searchHref}>
+            <span aria-hidden="true">←</span> {backLabel}
+          </a>
           <div class="detail-meta">
-            <span>{props.typeLabel}</span>
-            {props.publishedDate ? <span>{props.publishedDate}</span> : null}
+            <span class="detail-type">{props.typeLabel}</span>
+            {props.publishedDate
+              ? <time datetime={props.publishedDate}>{props.publishedDate}</time>
+              : null}
           </div>
           <h1 class="detail-title">{props.title}</h1>
-          <div class="detail-summary-label">{summaryLabel}</div>
-          <div class="detail-summary markdown-body" dangerouslySetInnerHTML={{ __html: props.summaryHtml }} />
+          <h2 class="detail-summary-label">{summaryLabel}</h2>
+          <div
+            class="detail-summary markdown-body"
+            dangerouslySetInnerHTML={{ __html: props.summaryHtml }}
+          />
           <div class="detail-actions">
             <a class="detail-button" href={searchHref}>{backLabel}</a>
-            {props.sourceUrl ? (
-              <a class="detail-button" href={props.sourceUrl} target="_blank" rel="noopener">
-                {sourceLabel}
-              </a>
-            ) : null}
+            {props.sourceUrl
+              ? (
+                <a
+                  class="detail-button"
+                  href={props.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {sourceLabel} <span aria-hidden="true">↗</span>
+                </a>
+              )
+              : null}
           </div>
-        </section>
+        </article>
       </main>
-      {props.jsonLd ? (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(props.jsonLd) }}
-        />
-      ) : null}
+      {props.jsonLd
+        ? (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(props.jsonLd) }}
+          />
+        )
+        : null}
     </Layout>
   );
 };
