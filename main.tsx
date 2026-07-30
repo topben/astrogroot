@@ -5,6 +5,7 @@ import { secureHeaders } from "hono/secure-headers";
 import { cors } from "hono/cors";
 import { bodyLimit } from "hono/body-limit";
 import { timeout } from "hono/timeout";
+import { compress } from "hono/compress";
 import { handleMCPRequest } from "./lib/mcp.ts";
 import { getLibraryStats } from "./lib/stats.ts";
 import { getUsageSummary } from "./lib/ai/usage.ts";
@@ -40,6 +41,7 @@ const STATIC_CACHE_CONTROL = "public, max-age=604800";
 // Global Security Headers
 // ─────────────────────────────────────────────────────────────────────────────
 app.use("*", secureHeaders());
+app.use("*", compress());
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Global Rate Limit (covers all paths including unmatched 404s)
@@ -153,7 +155,10 @@ function addLangToUrl(urlStr: string, locale: "en" | "zh-TW" | "zh-CN"): string 
   return normalizeUrl(url);
 }
 
-function setHtmlHeaders(c: { header: (name: string, value: string) => void }, locale: string): void {
+function setHtmlHeaders(
+  c: { header: (name: string, value: string) => void },
+  locale: string,
+): void {
   c.header("Cache-Control", HTML_CACHE_CONTROL);
   c.header("Content-Language", locale);
   c.header("Vary", "Accept-Language");
@@ -171,6 +176,14 @@ app.get("/static/astrogroot-logo.png", async (c) => {
   const path = new URL("./static/astrogroot-logo.png", import.meta.url);
   const file = await Deno.readFile(path);
   c.header("Content-Type", "image/png");
+  c.header("Cache-Control", STATIC_CACHE_CONTROL);
+  return c.body(file, 200);
+});
+
+app.get("/static/astrogroot-logo-320.webp", async (c) => {
+  const path = new URL("./static/astrogroot-logo-320.webp", import.meta.url);
+  const file = await Deno.readFile(path);
+  c.header("Content-Type", "image/webp");
   c.header("Cache-Control", STATIC_CACHE_CONTROL);
   return c.body(file, 200);
 });
@@ -239,7 +252,9 @@ app.get("/sitemap.xml", async (c) => {
       xml += `    <lastmod>${lastmod}</lastmod>\n`;
     }
     for (const alt of alternates) {
-      xml += `    <xhtml:link rel="alternate" hreflang="${alt.hreflang}" href="${escapeXml(alt.href)}" />\n`;
+      xml += `    <xhtml:link rel="alternate" hreflang="${alt.hreflang}" href="${
+        escapeXml(alt.href)
+      }" />\n`;
     }
     xml += "  </url>";
     urls.push(xml);
@@ -275,8 +290,7 @@ app.get("/sitemap.xml", async (c) => {
     pushUrl(loc, lastmod, undefined, "0.7");
   }
 
-  const xml =
-    `<?xml version="1.0" encoding="UTF-8"?>\n` +
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +
     `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" ` +
     `xmlns:xhtml="http://www.w3.org/1999/xhtml">\n` +
     `${urls.join("\n")}\n` +
@@ -288,8 +302,9 @@ app.get("/sitemap.xml", async (c) => {
 });
 
 // API
-app.get("/api/health", (c) =>
-  c.json({ ok: true, service: "astrogroot", timestamp: new Date().toISOString() })
+app.get(
+  "/api/health",
+  (c) => c.json({ ok: true, service: "astrogroot", timestamp: new Date().toISOString() }),
 );
 app.get("/api/stats", async (c) => c.json(await getLibraryStats()));
 app.get("/api/ai-usage", async (c) => c.json(await getUsageSummary()));
@@ -347,7 +362,8 @@ app.get("/", async (c) => {
   const canonicalUrl = buildCanonicalUrl(c.req.url);
   const alternateUrls = buildAlternateUrls(c.req.url);
   const pageTitle = dict.seo?.homeTitle ?? "AstroGroot - Astronomy Research Library";
-  const pageDescription = dict.seo?.homeDescription ?? "Explore astronomy papers, videos, and NASA content";
+  const pageDescription = dict.seo?.homeDescription ??
+    "Explore astronomy papers, videos, and NASA content";
   const origin = new URL(c.req.url).origin;
   const searchActionUrl = `${origin}/search?q={search_term_string}`;
   setHtmlHeaders(c, locale);
@@ -403,13 +419,16 @@ app.get("/search", async (c) => {
   const alternateUrls = buildAlternateUrls(c.req.url);
   const queryText = q.trim();
   const pageTitle = queryText
-    ? interpolate(dict.seo?.searchResultsTitle ?? "\"{query}\" - Search - AstroGroot", { query: queryText })
+    ? interpolate(dict.seo?.searchResultsTitle ?? '"{query}" - Search - AstroGroot', {
+      query: queryText,
+    })
     : dict.seo?.searchTitle ?? "Search - AstroGroot";
   const pageDescription = queryText
     ? interpolate(
-        dict.seo?.searchResultsDescription ?? "Search results for \"{query}\" in astronomy papers, videos, and NASA content",
-        { query: queryText },
-      )
+      dict.seo?.searchResultsDescription ??
+        'Search results for "{query}" in astronomy papers, videos, and NASA content',
+      { query: queryText },
+    )
     : dict.seo?.searchDescription ?? "Search astronomy research papers, videos, and NASA content";
   const robots = queryText && page > 1 ? "noindex,follow" : undefined;
   setHtmlHeaders(c, locale);
@@ -427,7 +446,7 @@ app.get("/search", async (c) => {
       canonicalUrl={canonicalUrl}
       alternateUrls={alternateUrls}
       robots={robots}
-    />
+    />,
   );
 });
 
@@ -461,7 +480,11 @@ app.get("/detail", async (c) => {
   }
 
   const trans = await db.query.translations.findFirst({
-    where: and(eq(translations.itemType, type), eq(translations.itemId, id), eq(translations.lang, locale)),
+    where: and(
+      eq(translations.itemType, type),
+      eq(translations.itemId, id),
+      eq(translations.lang, locale),
+    ),
     columns: { title: true, summary: true },
   });
 
@@ -474,7 +497,8 @@ app.get("/detail", async (c) => {
           locale={locale}
           dict={dict}
           pageTitle={dict.seo?.notFoundTitle ?? "Page Not Found - AstroGroot"}
-          pageDescription={dict.seo?.notFoundDescription ?? "The requested page could not be found."}
+          pageDescription={dict.seo?.notFoundDescription ??
+            "The requested page could not be found."}
           canonicalUrl={canonicalUrl}
           alternateUrls={alternateUrls}
         />,
@@ -502,7 +526,9 @@ app.get("/detail", async (c) => {
       <DetailPage
         title={title}
         typeLabel={dict.common.paper}
-        publishedDate={row.publishedDate ? new Date(row.publishedDate).toISOString().slice(0, 10) : undefined}
+        publishedDate={row.publishedDate
+          ? new Date(row.publishedDate).toISOString().slice(0, 10)
+          : undefined}
         summaryHtml={renderMarkdown(summary)}
         sourceUrl={row.arxivUrl ?? row.pdfUrl ?? undefined}
         returnUrl={returnUrl}
@@ -526,7 +552,8 @@ app.get("/detail", async (c) => {
           locale={locale}
           dict={dict}
           pageTitle={dict.seo?.notFoundTitle ?? "Page Not Found - AstroGroot"}
-          pageDescription={dict.seo?.notFoundDescription ?? "The requested page could not be found."}
+          pageDescription={dict.seo?.notFoundDescription ??
+            "The requested page could not be found."}
           canonicalUrl={canonicalUrl}
           alternateUrls={alternateUrls}
         />,
@@ -556,7 +583,9 @@ app.get("/detail", async (c) => {
       <DetailPage
         title={title}
         typeLabel={dict.common.video}
-        publishedDate={row.publishedDate ? new Date(row.publishedDate).toISOString().slice(0, 10) : undefined}
+        publishedDate={row.publishedDate
+          ? new Date(row.publishedDate).toISOString().slice(0, 10)
+          : undefined}
         summaryHtml={renderMarkdown(summary)}
         sourceUrl={row.videoUrl}
         returnUrl={returnUrl}
@@ -581,7 +610,8 @@ app.get("/detail", async (c) => {
           locale={locale}
           dict={dict}
           pageTitle={dict.seo?.notFoundTitle ?? "Page Not Found - AstroGroot"}
-          pageDescription={dict.seo?.notFoundDescription ?? "The requested page could not be found."}
+          pageDescription={dict.seo?.notFoundDescription ??
+            "The requested page could not be found."}
           canonicalUrl={canonicalUrl}
           alternateUrls={alternateUrls}
         />,
@@ -595,29 +625,30 @@ app.get("/detail", async (c) => {
       ? truncateText(cleanSummary, 155)
       : dict.seo?.searchDescription ?? "Search astronomy research papers, videos, and NASA content";
     const pageTitle = `${title} - ${(dict.seo?.siteName ?? "AstroGroot")}`;
-    const isImage = row.mediaType === "image" || row.contentType === "image" || row.contentType === "apod";
+    const isImage = row.mediaType === "image" || row.contentType === "image" ||
+      row.contentType === "apod";
     const imageUrl = row.hdUrl ?? row.thumbnailUrl ?? row.url ?? undefined;
     const jsonLd = isImage
       ? {
-          "@context": "https://schema.org",
-          "@type": "ImageObject",
-          name: title,
-          description: cleanSummary || undefined,
-          datePublished: formatDate(row.date),
-          contentUrl: row.hdUrl ?? row.url,
-          thumbnailUrl: row.thumbnailUrl ?? undefined,
-          url: canonicalUrl,
-          inLanguage: locale,
-        }
+        "@context": "https://schema.org",
+        "@type": "ImageObject",
+        name: title,
+        description: cleanSummary || undefined,
+        datePublished: formatDate(row.date),
+        contentUrl: row.hdUrl ?? row.url,
+        thumbnailUrl: row.thumbnailUrl ?? undefined,
+        url: canonicalUrl,
+        inLanguage: locale,
+      }
       : {
-          "@context": "https://schema.org",
-          "@type": "Article",
-          headline: title,
-          description: cleanSummary || undefined,
-          datePublished: formatDate(row.date),
-          url: canonicalUrl,
-          inLanguage: locale,
-        };
+        "@context": "https://schema.org",
+        "@type": "Article",
+        headline: title,
+        description: cleanSummary || undefined,
+        datePublished: formatDate(row.date),
+        url: canonicalUrl,
+        inLanguage: locale,
+      };
     setHtmlHeaders(c, locale);
     return c.html(
       <DetailPage
@@ -742,11 +773,12 @@ if (import.meta.main) {
         }
         break;
       } catch (err) {
-        const code = err && typeof err === "object" && "code" in err ? (err as { code: unknown }).code : null;
+        const code = err && typeof err === "object" && "code" in err
+          ? (err as { code: unknown }).code
+          : null;
         const name = err instanceof Error ? err.name : "";
         const msg = err instanceof Error ? err.message : String(err);
-        const addrInUse =
-          name === "AddrInUse" ||
+        const addrInUse = name === "AddrInUse" ||
           code === "AddrInUse" ||
           code === 48 ||
           code === "48" ||

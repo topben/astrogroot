@@ -14,66 +14,6 @@ const SHARED_STYLES = `
     position: relative;
     overflow-x: clip;
   }
-  .starfield {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background-image:
-      radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,0.9), transparent),
-      radial-gradient(2px 2px at 60% 70%, rgba(255,255,255,0.9), transparent),
-      radial-gradient(1px 1px at 50% 50%, #fff, transparent),
-      radial-gradient(1px 1px at 80% 10%, rgba(255,215,0,0.4), transparent),
-      radial-gradient(2px 2px at 90% 40%, #fff, transparent),
-      radial-gradient(1px 1px at 33% 60%, rgba(34,211,238,0.5), transparent),
-      radial-gradient(1px 1px at 55% 80%, #fff, transparent),
-      radial-gradient(2px 2px at 15% 90%, rgba(255,215,0,0.3), transparent),
-      radial-gradient(1px 1px at 75% 20%, #fff, transparent),
-      radial-gradient(1px 1px at 40% 10%, rgba(168,85,247,0.4), transparent),
-      radial-gradient(1px 1px at 10% 20%, #fff, transparent),
-      radial-gradient(2px 2px at 85% 85%, rgba(255,255,255,0.8), transparent),
-      radial-gradient(1px 1px at 25% 45%, rgba(34,211,238,0.6), transparent),
-      radial-gradient(1px 1px at 70% 15%, rgba(255,215,0,0.35), transparent),
-      radial-gradient(2px 2px at 5% 60%, #fff, transparent),
-      radial-gradient(1px 1px at 95% 55%, rgba(168,85,247,0.5), transparent),
-      radial-gradient(1px 1px at 45% 5%, #fff, transparent),
-      radial-gradient(1px 1px at 12% 78%, rgba(255,255,255,0.85), transparent),
-      radial-gradient(2px 2px at 65% 35%, rgba(255,215,0,0.3), transparent),
-      radial-gradient(1px 1px at 88% 92%, rgba(34,211,238,0.45), transparent),
-      radial-gradient(1px 1px at 38% 25%, #fff, transparent),
-      radial-gradient(1px 1px at 52% 65%, rgba(168,85,247,0.4), transparent),
-      radial-gradient(2px 2px at 72% 48%, #fff, transparent),
-      radial-gradient(1px 1px at 18% 12%, rgba(255,255,255,0.9), transparent),
-      radial-gradient(1px 1px at 92% 28%, #fff, transparent);
-    background-size: 200% 200%; background-position: 0% 0%;
-    animation: starfield 60s linear infinite; opacity: 0.8; z-index: 0;
-  }
-  .starfield-2 {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background-image:
-      radial-gradient(1px 1px at 8% 42%, #fff, transparent),
-      radial-gradient(1px 1px at 62% 8%, rgba(255,255,255,0.9), transparent),
-      radial-gradient(2px 2px at 28% 88%, rgba(34,211,238,0.5), transparent),
-      radial-gradient(1px 1px at 78% 62%, #fff, transparent),
-      radial-gradient(1px 1px at 42% 38%, rgba(255,215,0,0.4), transparent),
-      radial-gradient(1px 1px at 15% 55%, rgba(168,85,247,0.45), transparent),
-      radial-gradient(2px 2px at 92% 75%, #fff, transparent),
-      radial-gradient(1px 1px at 55% 22%, rgba(255,255,255,0.85), transparent),
-      radial-gradient(1px 1px at 35% 72%, #fff, transparent),
-      radial-gradient(1px 1px at 68% 45%, rgba(34,211,238,0.5), transparent),
-      radial-gradient(1px 1px at 22% 18%, rgba(255,215,0,0.35), transparent),
-      radial-gradient(1px 1px at 48% 82%, #fff, transparent),
-      radial-gradient(1px 1px at 82% 32%, rgba(168,85,247,0.4), transparent),
-      radial-gradient(2px 2px at 5% 95%, #fff, transparent),
-      radial-gradient(1px 1px at 98% 15%, rgba(255,255,255,0.9), transparent);
-    background-size: 250% 250%; background-position: 0% 0%;
-    animation: starfield-2 45s linear infinite reverse; opacity: 0.75; z-index: 0;
-  }
-  @keyframes starfield { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
-  @keyframes starfield-2 { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
-  .starfield-js { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: hidden; }
-  .starfield-js .star { position: absolute; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; animation: starTrack linear infinite; }
-  @keyframes starTrack { 0% { transform: translate(0, 0); opacity: var(--op, 0.9); } 50% { opacity: var(--op-mid, 0.6); } 100% { transform: translate(var(--tx, 80px), var(--ty, -60px)); opacity: var(--op, 0.9); } }
-  .nebula { position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.2; z-index: 0; }
-  .nebula-1 { width: 600px; height: 600px; background: radial-gradient(circle, #a855f7 0%, #7c3aed 40%, transparent 70%); top: -200px; right: -200px; }
-  .nebula-2 { width: 500px; height: 500px; background: radial-gradient(circle, #22d3ee 0%, #06b6d4 40%, transparent 70%); bottom: -150px; left: -150px; }
   .header { text-align: center; padding: 2rem 1rem 2rem; position: relative; z-index: 1; }
   .header-search { padding: 2rem 1rem 1.5rem; }
   .lang-switcher { position: absolute; top: 1rem; right: 1rem; display: flex; gap: 0.35rem; z-index: 2; }
@@ -234,14 +174,12 @@ const UI_REFRESH_STYLES = `
     color: var(--text);
     font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
-  .starfield { animation: none; opacity: 0.22; background-size: 115% 115%; }
-  .starfield-2, .starfield-js { display: none; }
-  .nebula { opacity: 0.1; filter: blur(130px); pointer-events: none; }
   .header {
     width: min(100%, 1180px); margin: 0 auto; padding: 1.35rem 1.5rem 0.9rem;
   }
   .header-search { padding-bottom: 0.4rem; }
   .brand-link { gap: 0; }
+  .brand-link picture { display: block; line-height: 0; }
   .logo-img {
     width: 132px; height: 132px; border-radius: 24px;
     filter: drop-shadow(0 15px 35px rgba(34, 211, 238, 0.16));
@@ -423,9 +361,32 @@ const UI_REFRESH_STYLES = `
   .footer-link { min-height: 44px; color: var(--muted); }
   .footer-link:hover { color: var(--cyan); }
   @media (max-width: 900px) {
+    html { scroll-behavior: auto; }
+    .dashboard, .search-page, .error-page, .detail-page {
+      background: linear-gradient(180deg, #060914 0%, #090d1b 46%, #060914 100%);
+    }
     .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .dashboard-grid { grid-template-columns: 1fr; }
-    .navigation { position: relative; top: auto; }
+    .navigation {
+      position: relative; top: auto; background: #080d1b;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18); backdrop-filter: none;
+    }
+    .lang-switcher a, .nav-link, .stats-section, .info-section, .search-container,
+    .detail-section, .donate-section, .quick-search-section,
+    .calendar-modal-backdrop, .calendar-popover {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+    .lang-switcher a { background: #0a0f1d; }
+    .stats-section, .info-section, .search-container, .detail-section,
+    .donate-section, .quick-search-section {
+      background: #0c1223;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+    }
+    .stats-section, .info-section, .donate-section, .tool-section {
+      content-visibility: auto;
+      contain-intrinsic-block-size: auto 320px;
+    }
   }
   @media (max-width: 640px) {
     .header { padding: 4.3rem 1rem 0.65rem; }
@@ -640,10 +601,6 @@ export const Layout: FC<LayoutProps> = (props) => {
         <body>
           <a class="skip-link" href="#main-content">{skipLabel}</a>
           <div class={pageClass}>
-            <div class="starfield" />
-            <div class="starfield-2" />
-            <div class="nebula nebula-1" />
-            <div class="nebula nebula-2" />
             {showHeader
               ? (
                 <header class={headerClass}>
@@ -664,14 +621,17 @@ export const Layout: FC<LayoutProps> = (props) => {
                     ))}
                   </div>
                   <a href={homeHref(locale)} class="brand-link" aria-label="AstroGroot home">
-                    <img
-                      src="/static/astrogroot-logo.png"
-                      alt=""
-                      class="logo-img"
-                      width="132"
-                      height="132"
-                      decoding="async"
-                    />
+                    <picture>
+                      <source srcset="/static/astrogroot-logo-320.webp" type="image/webp" />
+                      <img
+                        src="/static/astrogroot-logo.png"
+                        alt=""
+                        class="logo-img"
+                        width="132"
+                        height="132"
+                        decoding="async"
+                      />
+                    </picture>
                   </a>
                   {headerVariant === "default" && (
                     <>

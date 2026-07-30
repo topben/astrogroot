@@ -8,16 +8,6 @@ function homeHref(locale?: Locale): string {
 }
 
 const ERROR_STYLES = `
-  .starfield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,0.9), transparent), radial-gradient(2px 2px at 60% 70%, rgba(255,255,255,0.9), transparent), radial-gradient(1px 1px at 50% 50%, #fff, transparent), radial-gradient(1px 1px at 80% 10%, rgba(255,215,0,0.4), transparent), radial-gradient(1px 1px at 33% 60%, rgba(34,211,238,0.5), transparent), radial-gradient(1px 1px at 10% 20%, #fff, transparent), radial-gradient(2px 2px at 85% 85%, rgba(255,255,255,0.8), transparent), radial-gradient(1px 1px at 25% 45%, rgba(34,211,238,0.6), transparent), radial-gradient(1px 1px at 70% 15%, rgba(255,215,0,0.35), transparent), radial-gradient(2px 2px at 5% 60%, #fff, transparent), radial-gradient(1px 1px at 95% 55%, rgba(168,85,247,0.5), transparent), radial-gradient(1px 1px at 45% 5%, #fff, transparent), radial-gradient(1px 1px at 12% 78%, rgba(255,255,255,0.85), transparent), radial-gradient(2px 2px at 65% 35%, rgba(255,215,0,0.3), transparent), radial-gradient(1px 1px at 88% 92%, rgba(34,211,238,0.45), transparent); background-size: 200% 200%; animation: starfield 60s linear infinite; opacity: 0.8; z-index: 0; }
-  .starfield-2 { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(1px 1px at 8% 42%, #fff, transparent), radial-gradient(1px 1px at 62% 8%, rgba(255,255,255,0.9), transparent), radial-gradient(2px 2px at 28% 88%, rgba(34,211,238,0.5), transparent), radial-gradient(1px 1px at 78% 62%, #fff, transparent), radial-gradient(1px 1px at 42% 38%, rgba(255,215,0,0.4), transparent), radial-gradient(1px 1px at 15% 55%, rgba(168,85,247,0.45), transparent), radial-gradient(2px 2px at 92% 75%, #fff, transparent), radial-gradient(1px 1px at 55% 22%, rgba(255,255,255,0.85), transparent), radial-gradient(1px 1px at 35% 72%, #fff, transparent), radial-gradient(1px 1px at 68% 45%, rgba(34,211,238,0.5), transparent); background-size: 250% 250%; animation: starfield-2 45s linear infinite reverse; opacity: 0.75; z-index: 0; }
-  @keyframes starfield { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
-  @keyframes starfield-2 { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
-  .starfield-js { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: hidden; }
-  .starfield-js .star { position: absolute; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; animation: starTrack linear infinite; }
-  @keyframes starTrack { 0% { transform: translate(0, 0); opacity: var(--op, 0.9); } 50% { opacity: var(--op-mid, 0.6); } 100% { transform: translate(var(--tx, 80px), var(--ty, -60px)); opacity: var(--op, 0.9); } }
-  .nebula { position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.2; z-index: 0; }
-  .nebula-1 { width: 600px; height: 600px; background: radial-gradient(circle, #a855f7 0%, transparent 70%); top: -200px; right: -200px; }
-  .nebula-2 { width: 500px; height: 500px; background: radial-gradient(circle, #22d3ee 0%, transparent 70%); bottom: -150px; left: -150px; }
   .error-page { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #050816; color: #e0e7ff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif; text-align: center; padding: 2rem; position: relative; overflow: hidden; }
   .error-content { position: relative; z-index: 1; }
   .error-title { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
@@ -33,8 +23,6 @@ const ERROR_STYLES = `
       var(--page);
     color: var(--text);
   }
-  .error-page .starfield { animation: none; opacity: 0.2; }
-  .error-page .starfield-2, .error-page .starfield-js { display: none; }
   .error-content {
     width: min(100%, 620px); padding: clamp(2rem, 7vw, 4rem);
     border: 1px solid var(--line); border-radius: 24px;

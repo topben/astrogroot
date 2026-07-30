@@ -120,7 +120,7 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
             __html: `
 .search-bar-compact { max-width: 650px; margin: 0 auto; }
 .search-form-compact { display: flex; gap: 0.5rem; }
-.search-input-compact { flex: 1; padding: 0.75rem 1rem; font-size: 1rem; background: rgba(5, 8, 22, 0.8); border: 2px solid rgba(34, 211, 238, 0.3); border-radius: 10px; outline: none; color: #e0e7ff; transition: all 0.3s ease; backdrop-filter: blur(10px); }
+.search-input-compact { flex: 1; padding: 0.75rem 1rem; font-size: 1rem; background: rgba(5, 8, 22, 0.8); border: 2px solid rgba(34, 211, 238, 0.3); border-radius: 10px; outline: none; color: #e0e7ff; transition: border-color 0.2s ease, background-color 0.2s ease; }
 .search-input-compact:focus { border-color: rgba(168, 85, 247, 0.6); box-shadow: 0 0 20px rgba(168, 85, 247, 0.3); }
 .search-input-compact::placeholder { color: #64748b; }
 .search-button-compact { padding: 0.75rem 1.5rem; font-size: 0.9375rem; font-weight: 600; color: #e0e7ff; background: linear-gradient(135deg, #22d3ee 0%, #a855f7 100%); border: none; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; white-space: nowrap; }
@@ -171,6 +171,8 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
   .search-form-compact { flex-direction: column; }
   .search-button-compact { width: 100%; }
   .quick-searches-compact { justify-content: flex-start; }
+  .search-input-compact { background: #080d1b; }
+  .search-button-compact, .quick-link, .recent-link { transition: none; }
 }
 `,
           }}
@@ -637,7 +639,7 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
 .search-bar-container { width: 100%; max-width: 800px; margin: 0 auto; }
 .search-form { display: flex; flex-direction: column; gap: 1.25rem; }
 .search-input-wrapper { display: flex; gap: 0.75rem; }
-.search-input { flex: 1; padding: 1rem 1.25rem; font-size: 1.0625rem; background: rgba(5, 8, 22, 0.8); border: 2px solid rgba(34, 211, 238, 0.3); border-radius: 12px; outline: none; color: #e0e7ff; transition: all 0.3s ease; backdrop-filter: blur(10px); }
+.search-input { flex: 1; padding: 1rem 1.25rem; font-size: 1.0625rem; background: rgba(5, 8, 22, 0.8); border: 2px solid rgba(34, 211, 238, 0.3); border-radius: 12px; outline: none; color: #e0e7ff; transition: border-color 0.2s ease, background-color 0.2s ease; }
 .search-input::placeholder { color: #64748b; }
 .search-input:focus { border-color: rgba(168, 85, 247, 0.6); box-shadow: 0 0 25px rgba(168, 85, 247, 0.4), 0 0 40px rgba(34, 211, 238, 0.15); background: rgba(5, 8, 22, 0.95); }
 .search-button { padding: 1rem 2.5rem; font-size: 1.0625rem; font-weight: 600; color: #e0e7ff; background: linear-gradient(135deg, #22d3ee 0%, #a855f7 100%); border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 20px rgba(168, 85, 247, 0.35), 0 0 30px rgba(34, 211, 238, 0.2); }
@@ -645,7 +647,7 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
 .search-input-error { margin: -0.25rem 0 0; font-size: 0.9375rem; color: #f87171; }
 .filter-toggle { align-self: flex-start; padding: 0.625rem 1.25rem; font-size: 0.9375rem; color: #a855f7; background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 10px; cursor: pointer; transition: all 0.3s ease; font-weight: 500; }
 .filter-toggle:hover { background: rgba(168, 85, 247, 0.2); border-color: rgba(168, 85, 247, 0.6); box-shadow: 0 0 15px rgba(168, 85, 247, 0.3); transform: translateY(-1px); }
-.filters-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; padding: 2rem; background: rgba(5, 8, 22, 0.8); border-radius: 16px; margin-top: 1rem; border: 1px solid rgba(34, 211, 238, 0.2); backdrop-filter: blur(10px); box-shadow: 0 0 30px rgba(0,0,0,0.2); }
+.filters-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; padding: 2rem; background: rgba(5, 8, 22, 0.95); border-radius: 16px; margin-top: 1rem; border: 1px solid rgba(34, 211, 238, 0.2); box-shadow: 0 0 30px rgba(0,0,0,0.2); }
 .filter-group { display: flex; flex-direction: column; gap: 0.75rem; }
 .filter-group label { font-size: 0.9375rem; font-weight: 600; color: #c7d2fe; }
 .filter-group select, .filter-group input { padding: 0.75rem; background: rgba(5, 8, 22, 0.9); border: 1px solid rgba(34, 211, 238, 0.3); border-radius: 10px; font-size: 0.9375rem; color: #e0e7ff; outline: none; }
@@ -728,6 +730,8 @@ export const SearchBar: FC<SearchBarProps> = (props) => {
   .search-button { width: 100%; }
   .content-type-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .type-tab { justify-content: center; }
+  .search-input { background: #080d1b; }
+  .search-button, .type-tab, .quick-link { transition: none; }
 }
 `,
         }}
