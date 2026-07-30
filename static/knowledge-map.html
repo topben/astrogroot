@@ -176,11 +176,6 @@
     }
     #toolbar button { flex: 1; min-height: 42px; font-size: 13px; }
     #topics-toggle { display: block; }
-    .lang button, .lang a, .search input, .search .results, .panel, #toolbar button {
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-      background: #0d111b;
-    }
   }
 </style>
 
@@ -1344,13 +1339,8 @@ otherComms.forEach((c, i) => {
 
 /* ---------- three.js scene ---------- */
 const canvas = document.getElementById("stage");
-const LOW_POWER_MODE = matchMedia("(max-width: 720px), (pointer: coarse)").matches;
-const renderer = new THREE.WebGLRenderer({
-  canvas,
-  antialias: !LOW_POWER_MODE,
-  alpha: false,
-});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, LOW_POWER_MODE ? 1 : 2));
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x05070d);
 scene.fog = new THREE.FogExp2(0x05070d, 0.00042);
@@ -1359,12 +1349,12 @@ const camera = new THREE.PerspectiveCamera(55, 1, 1, 12000);
 camera.position.set(0, 260, 1750);
 
 const controls = new THREE.OrbitControls(camera, canvas);
-controls.enableDamping = !LOW_POWER_MODE;
+controls.enableDamping = true;
 controls.dampingFactor = 0.06;
 controls.minDistance = 120;
 controls.maxDistance = 5200;
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-controls.autoRotate = !reducedMotion && !LOW_POWER_MODE;
+controls.autoRotate = !reducedMotion;
 controls.autoRotateSpeed = 0.35;
 
 /* nodes */
@@ -1403,17 +1393,12 @@ scene.add(points);
 
 /* edges: one LineSegments, additive dim strands = the web */
 const E = DATA.edges.length / 2;
-const EDGE_STEP = LOW_POWER_MODE ? 3 : 1;
-const DRAW_E = Math.ceil(E / EDGE_STEP);
-const drawnEdgeIndices = new Uint32Array(DRAW_E);
-const edgePos = new Float32Array(DRAW_E * 6);
-const edgeBase = new Float32Array(DRAW_E * 6);
-const edgeDraw = new Float32Array(DRAW_E * 6);
+const edgePos = new Float32Array(E * 6);
+const edgeBase = new Float32Array(E * 6);
+const edgeDraw = new Float32Array(E * 6);
 const EDGE_DIM = 0.055;
-for (let e = 0; e < DRAW_E; e++) {
-  const sourceEdge = e * EDGE_STEP;
-  drawnEdgeIndices[e] = sourceEdge;
-  const a = DATA.edges[sourceEdge * 2], b = DATA.edges[sourceEdge * 2 + 1];
+for (let e = 0; e < E; e++) {
+  const a = DATA.edges[e * 2], b = DATA.edges[e * 2 + 1];
   for (let k = 0; k < 3; k++) {
     edgePos[e * 6 + k] = positions[a * 3 + k];
     edgePos[e * 6 + 3 + k] = positions[b * 3 + k];
@@ -1464,9 +1449,8 @@ function recolor() {
   }
   nodeGeo.attributes.color.needsUpdate = true;
 
-  for (let e = 0; e < DRAW_E; e++) {
-    const sourceEdge = drawnEdgeIndices[e];
-    const a = DATA.edges[sourceEdge * 2], b = DATA.edges[sourceEdge * 2 + 1];
+  for (let e = 0; e < E; e++) {
+    const a = DATA.edges[e * 2], b = DATA.edges[e * 2 + 1];
     let f = 1;
     if (focusComm !== null && (DATA.nodes[a][3] !== focusComm || DATA.nodes[b][3] !== focusComm)) f = 0.06;
     if (nbr) f = (a === selected || b === selected) ? 14 : 0.05;
@@ -1475,7 +1459,6 @@ function recolor() {
   edgeGeo.attributes.color.needsUpdate = true;
 
   document.getElementById("reset").classList.toggle("on", selected !== null || focusComm !== null);
-  requestSceneRender();
 }
 
 /* ---------- info panel ---------- */
@@ -1565,9 +1548,7 @@ let idleTimer = null;
 function pauseRotate() {
   controls.autoRotate = false;
   clearTimeout(idleTimer);
-  if (!reducedMotion && !LOW_POWER_MODE) {
-    idleTimer = setTimeout(() => { controls.autoRotate = true; }, 30000);
-  }
+  if (!reducedMotion) idleTimer = setTimeout(() => { controls.autoRotate = true; }, 30000);
 }
 
 /* ---------- legend ---------- */
@@ -1595,8 +1576,7 @@ function renderLegend() {
 /* ---------- search (matches all three title languages + arXiv id) ---------- */
 const q = document.getElementById("q");
 const qResults = document.getElementById("q-results");
-let searchTimer = null;
-function runSearch() {
+q.addEventListener("input", () => {
   const term = q.value.trim().toLowerCase();
   if (term.length < 2) { qResults.classList.remove("on"); return; }
   const hits = [];
@@ -1616,10 +1596,6 @@ function runSearch() {
       select(Number(btn.dataset.i), true);
       pauseRotate();
     }));
-}
-q.addEventListener("input", () => {
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(runSearch, LOW_POWER_MODE ? 140 : 40);
 });
 q.addEventListener("blur", () => setTimeout(() => qResults.classList.remove("on"), 200));
 
@@ -1693,18 +1669,10 @@ function applyLang() {
 }
 
 /* ---------- boot ---------- */
-let renderRequested = true;
-let lastRenderAt = 0;
-function requestSceneRender() {
-  renderRequested = true;
-}
-controls.addEventListener("change", requestSceneRender);
-
 function resize() {
   renderer.setSize(innerWidth, innerHeight);
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
-  requestSceneRender();
 }
 addEventListener("resize", resize);
 resize();
@@ -1713,17 +1681,12 @@ recolor();
 
 (function loop(now) {
   requestAnimationFrame(loop);
-  if (LOW_POWER_MODE && !flight && !renderRequested) return;
-  if (LOW_POWER_MODE && now - lastRenderAt < 33) return;
-  renderRequested = false;
-  lastRenderAt = now;
   if (flight) {
     const t = Math.min(1, (now - flight.t0) / 700);
     const e = t * t * (3 - 2 * t);
     controls.target.lerpVectors(flight.from, flight.to, e);
     camera.position.lerpVectors(flight.camFrom, flight.camTo, e);
     if (t >= 1) flight = null;
-    else requestSceneRender();
   }
   controls.update();
   renderer.render(scene, camera);
