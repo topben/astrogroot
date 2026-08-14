@@ -1307,8 +1307,10 @@ const LANGS = [["zh-TW", "繁體"], ["zh-CN", "简体"], ["en", "EN"]];
 function detectLang() {
   const fromQuery = new URLSearchParams(location.search).get("lang");
   if (fromQuery && STR[fromQuery]) return fromQuery;
-  const saved = localStorage.getItem("astrokb-lang");
-  if (saved && STR[saved]) return saved;
+  try {
+    const saved = localStorage.getItem("astrokb-lang");
+    if (saved && STR[saved]) return saved;
+  } catch { /* storage may be unavailable in private browsing */ }
   const nav = (navigator.language || "").toLowerCase();
   if (nav.startsWith("zh")) return (nav.includes("cn") || nav.includes("hans")) ? "zh-CN" : "zh-TW";
   return "en";
@@ -1640,7 +1642,12 @@ langEl.innerHTML = `<a id="home-link" href="${SITE}" rel="noopener"></a>` + LANG
 langEl.querySelectorAll("button").forEach(btn =>
   btn.addEventListener("click", () => {
     LANG = btn.dataset.l;
-    localStorage.setItem("astrokb-lang", LANG);
+    try { localStorage.setItem("astrokb-lang", LANG); } catch { /* ignore */ }
+    try {
+      const url = new URL(location.href);
+      url.searchParams.set("lang", LANG);
+      history.replaceState(null, "", url.toString());
+    } catch { /* ignore */ }
     applyLang();
   }));
 

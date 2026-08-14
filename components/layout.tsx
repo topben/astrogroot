@@ -432,15 +432,14 @@ export function localeSwitcherHref(alternateUrls: AlternateUrls, locale: Locale)
 
   try {
     const pageUrl = new URL(href);
+    // UI language choices must be explicit. If English omits ?lang=en, a browser
+    // with Chinese Accept-Language immediately resolves the page back to Chinese.
+    pageUrl.searchParams.set("lang", locale);
     const returnUrl = pageUrl.searchParams.get("returnUrl");
-    if (!returnUrl?.startsWith("/search")) return href;
+    if (!returnUrl?.startsWith("/search")) return pageUrl.toString();
 
     const localizedReturnUrl = new URL(returnUrl, pageUrl.origin);
-    if (locale === "en") {
-      localizedReturnUrl.searchParams.delete("lang");
-    } else {
-      localizedReturnUrl.searchParams.set("lang", locale);
-    }
+    localizedReturnUrl.searchParams.set("lang", locale);
 
     pageUrl.searchParams.set(
       "returnUrl",
@@ -462,6 +461,7 @@ type LayoutProps = PropsWithChildren<{
   pageDescription: string;
   canonicalUrl: string;
   alternateUrls: AlternateUrls;
+  localeSwitcherUrls?: AlternateUrls;
   ogImage?: string;
   ogType?: "website" | "article";
   twitterCard?: "summary" | "summary_large_image";
@@ -472,17 +472,17 @@ type LayoutProps = PropsWithChildren<{
 }>;
 
 function searchHref(locale?: Locale): string {
-  if (locale && locale !== "en") return `/search?lang=${encodeURIComponent(locale)}`;
+  if (locale) return `/search?lang=${encodeURIComponent(locale)}`;
   return "/search";
 }
 
 function homeHref(locale?: Locale): string {
-  if (locale && locale !== "en") return `/?lang=${encodeURIComponent(locale)}`;
+  if (locale) return `/?lang=${encodeURIComponent(locale)}`;
   return "/";
 }
 
 function mapHref(locale?: Locale): string {
-  if (locale && locale !== "en") return `/map?lang=${encodeURIComponent(locale)}`;
+  if (locale) return `/map?lang=${encodeURIComponent(locale)}`;
   return "/map";
 }
 
@@ -504,6 +504,7 @@ export const Layout: FC<LayoutProps> = (props) => {
     pageDescription,
     canonicalUrl,
     alternateUrls,
+    localeSwitcherUrls,
     ogImage,
     ogType = "website",
     twitterCard = "summary",
@@ -607,7 +608,7 @@ export const Layout: FC<LayoutProps> = (props) => {
                   <div class="lang-switcher" role="group" aria-label={languageLabel}>
                     {SUPPORTED_LOCALES.map((loc) => (
                       <a
-                        href={localeSwitcherHref(alternateUrls, loc)}
+                        href={localeSwitcherHref(localeSwitcherUrls ?? alternateUrls, loc)}
                         class={currentLocale === loc ? "lang-active" : ""}
                         aria-current={currentLocale === loc ? "page" : undefined}
                         aria-label={loc === "en"

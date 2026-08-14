@@ -118,6 +118,22 @@ function buildAlternateUrls(requestUrl: string): { en: string; "zh-TW": string; 
   };
 }
 
+function buildLocaleSwitcherUrls(
+  requestUrl: string,
+): { en: string; "zh-TW": string; "zh-CN": string } {
+  const base = new URL(requestUrl);
+  const build = (locale: "en" | "zh-TW" | "zh-CN") => {
+    const url = new URL(base.toString());
+    url.searchParams.set("lang", locale);
+    return normalizeUrl(url);
+  };
+  return {
+    en: build("en"),
+    "zh-TW": build("zh-TW"),
+    "zh-CN": build("zh-CN"),
+  };
+}
+
 function cleanText(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
@@ -445,6 +461,7 @@ app.get("/search", async (c) => {
       pageDescription={pageDescription}
       canonicalUrl={canonicalUrl}
       alternateUrls={alternateUrls}
+      localeSwitcherUrls={buildLocaleSwitcherUrls(c.req.url)}
       robots={robots}
     />,
   );

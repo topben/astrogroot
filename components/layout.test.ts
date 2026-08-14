@@ -31,7 +31,7 @@ Deno.test("locale switcher localizes a nested detail return URL", () => {
   assertEquals(returnUrl.searchParams.get("lang"), "zh-TW");
 });
 
-Deno.test("locale switcher removes the nested language parameter for English", () => {
+Deno.test("locale switcher keeps English explicit for Chinese-language browsers", () => {
   const urls = alternateUrls("/search?q=%E9%BB%91%E6%B4%9E&lang=zh-CN&sortBy=date");
   const switchedUrl = new URL(localeSwitcherHref(urls, "en"));
   const returnUrl = new URL(
@@ -39,14 +39,15 @@ Deno.test("locale switcher removes the nested language parameter for English", (
     switchedUrl.origin,
   );
 
-  assertEquals(switchedUrl.searchParams.get("lang"), null);
+  assertEquals(switchedUrl.searchParams.get("lang"), "en");
   assertEquals(returnUrl.searchParams.get("q"), "黑洞");
   assertEquals(returnUrl.searchParams.get("sortBy"), "date");
-  assertEquals(returnUrl.searchParams.get("lang"), null);
+  assertEquals(returnUrl.searchParams.get("lang"), "en");
 });
 
-Deno.test("locale switcher leaves non-search return URLs unchanged", () => {
+Deno.test("locale switcher adds an explicit language to non-search URLs", () => {
   const urls = alternateUrls("https://example.com/elsewhere?lang=en");
+  const switchedUrl = new URL(localeSwitcherHref(urls, "zh-CN"));
 
-  assertEquals(localeSwitcherHref(urls, "zh-CN"), urls["zh-CN"]);
+  assertEquals(switchedUrl.searchParams.get("lang"), "zh-CN");
 });

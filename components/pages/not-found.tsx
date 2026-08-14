@@ -3,7 +3,7 @@ import type { Locale, LocaleDict } from "../../lib/i18n.ts";
 import { type AlternateUrls, Layout } from "../layout.tsx";
 
 function homeHref(locale?: Locale): string {
-  if (locale && locale !== "en") return `/?lang=${encodeURIComponent(locale)}`;
+  if (locale) return `/?lang=${encodeURIComponent(locale)}`;
   return "/";
 }
 

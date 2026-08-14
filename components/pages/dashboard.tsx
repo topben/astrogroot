@@ -151,7 +151,7 @@ export const DashboardPage: FC<DashboardPageProps> = (props) => {
 
         <section class="info-section tool-section">
           <a
-            href="/rocket-exam"
+            href={`/rocket-exam?lang=${encodeURIComponent(locale)}`}
             class="tool-card"
           >
             <span class="tool-card-icon" aria-hidden="true">🚀</span>

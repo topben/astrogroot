@@ -25,9 +25,7 @@ export const DetailPage: FC<DetailPageProps> = (props) => {
   const backLabel = d?.common.back ?? "Back";
   const summaryLabel = d?.common.fullSummary ?? "Full Summary";
   const sourceLabel = d?.common.source ?? "Source";
-  const defaultSearchHref = locale !== "en"
-    ? `/search?lang=${encodeURIComponent(locale)}`
-    : "/search";
+  const defaultSearchHref = `/search?lang=${encodeURIComponent(locale)}`;
   const searchHref = props.returnUrl ?? defaultSearchHref;
   return (
     <Layout

@@ -1123,6 +1123,8 @@ function readLang() {
   try {
     const q = new URLSearchParams(location.search).get("lang");
     if (q === "en" || q === "zh-TW") return q;
+    // This exam is bilingual; Simplified Chinese falls back predictably to Traditional Chinese.
+    if (q === "zh-CN") return "zh-TW";
   } catch { /* ignore */ }
   try {
     const saved = localStorage.getItem("rocket-exam.lang");
@@ -1178,8 +1180,14 @@ function showView(name) {
 }
 
 function renderChrome() {
+  try {
+    const url = new URL(location.href);
+    url.searchParams.set("lang", LANG);
+    history.replaceState(null, "", url.toString());
+  } catch { /* ignore */ }
   document.title = t("docTitle");
   document.documentElement.lang = LANG;
+  document.getElementById("back-link").href = "/?lang=" + encodeURIComponent(LANG);
   document.getElementById("brand-title").textContent = t("brandTitle");
   document.getElementById("brand-sub").textContent = t("brandSub");
   document.querySelectorAll("#tabs button").forEach(b => {

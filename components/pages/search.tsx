@@ -15,6 +15,7 @@ interface SearchPageProps {
   pageDescription: string;
   canonicalUrl: string;
   alternateUrls: AlternateUrls;
+  localeSwitcherUrls?: AlternateUrls;
   robots?: string;
 }
 
@@ -65,6 +66,7 @@ export const SearchPage: FC<SearchPageProps> = (props) => {
       pageDescription={props.pageDescription}
       canonicalUrl={props.canonicalUrl}
       alternateUrls={props.alternateUrls}
+      localeSwitcherUrls={props.localeSwitcherUrls}
       robots={props.robots}
     >
       <main class="main-content" id="main-content">
