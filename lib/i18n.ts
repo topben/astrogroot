@@ -11,6 +11,11 @@ const DEFAULT_LOCALE: Locale = "en";
 export interface LocaleDict {
   nav: { dashboard: string; search: string; map: string };
   header: { subtitle: string; description: string };
+  antiFraud: {
+    label: string;
+    message: string;
+    officialSite: string;
+  };
   stats: { title: string; papers: string; videos: string; nasa: string; total: string };
   search: {
     title: string;

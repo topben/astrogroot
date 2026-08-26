@@ -18,6 +18,9 @@
 
 </div>
 
+> [!WARNING]
+> **防詐騙：任何以 `@gmail.com` 結尾、並自稱 Tokimi 的帳號，都不是 Tokimi 官方聯絡管道。** 請勿付款或提供驗證碼；只透過 [Tokimi 官方網站](https://tokimi.space/) 或 [ben@tokimi.space](mailto:ben@tokimi.space) 核實身分。
+
 AstroGroot 以 Deno、Hono、Turso 與 ChromaDB 建構。程式包含 arXiv、YouTube、NASA 與 NASA Technical Reports Server（NTRS）收集器，以及三語網頁、搜尋 API、知識圖與 MCP 介面。
 
 > [!IMPORTANT]

@@ -53,6 +53,24 @@
   }
   .back-link:hover { color: var(--text); border-color: var(--accent); }
 
+  .identity-notice {
+    display: grid; grid-template-columns: auto 1fr; align-items: start; gap: 8px 14px;
+    margin-bottom: 18px; padding: 10px 14px;
+    border: 1px solid rgba(255,200,87,.32); border-left: 3px solid var(--warn);
+    border-radius: 10px; background: rgba(43,34,20,.72);
+    color: var(--muted); font-size: 13px; line-height: 1.55;
+  }
+  .identity-notice strong {
+    color: var(--warn); font-size: 11px; letter-spacing: .06em;
+    text-transform: uppercase; white-space: nowrap;
+  }
+  .identity-notice p { margin: 0; }
+  .identity-notice a { color: #ffe19a; font-weight: 700; text-underline-offset: 2px; }
+  .identity-notice a:focus-visible { outline: 2px solid var(--warn); outline-offset: 3px; }
+  @media (max-width: 640px) {
+    .identity-notice { grid-template-columns: 1fr; gap: 3px; }
+  }
+
   .lang-toggle { display: flex; gap: 4px; background: var(--bg-elev); padding: 4px; border-radius: 10px; border: 1px solid var(--border); }
   .lang-toggle button {
     border: 0; background: transparent; color: var(--muted);
@@ -258,6 +276,14 @@
 <body>
 
 <div class="container">
+  <aside class="identity-notice" role="note" aria-labelledby="fraud-label">
+    <strong id="fraud-label"></strong>
+    <p>
+      <span id="fraud-message"></span>
+      <a href="https://tokimi.space/" id="fraud-site"></a>
+      / <a href="mailto:ben@tokimi.space">ben@tokimi.space</a>.
+    </p>
+  </aside>
   <header class="app">
     <div class="brand">
       <div class="logo">🚀</div>
@@ -296,6 +322,11 @@ const I18N = {
     brandTitle: "初級火箭發射執照 — 模擬考",
     brandSub: "2026 台灣盃火箭競賽 · 國家太空中心 / 屏東縣政府",
     docTitle: "2026 台灣盃火箭競賽 — 初級火箭發射執照模擬考",
+    antiFraud: {
+      label: "防詐騙提醒",
+      message: "任何以 @gmail.com 結尾、並自稱 Tokimi 的帳號，都不是 Tokimi 官方聯絡管道。請勿付款或提供驗證碼；請透過 ",
+      officialSite: "Tokimi 官方網站"
+    },
     tabs: { home: "首頁", exam: "開始考試", guide: "教學指南", study: "題庫速覽" },
     home: {
       heroTitle: "準備好取得發射執照了嗎?",
@@ -419,6 +450,11 @@ const I18N = {
     brandTitle: "Level-1 Rocket Launch License — Mock Exam",
     brandSub: "2026 Taiwan Cup Rocket Competition · TASA / Pingtung County Gov.",
     docTitle: "2026 Taiwan Cup Rocket — Level-1 Launch License Mock Exam",
+    antiFraud: {
+      label: "Fraud warning",
+      message: "Any @gmail.com address claiming to represent Tokimi is not an official Tokimi contact channel. Do not pay or share verification codes. Verify through ",
+      officialSite: "Tokimi's official website"
+    },
     tabs: { home: "Home", exam: "Start Exam", guide: "Study Guide", study: "Question Bank" },
     home: {
       heroTitle: "Ready to earn your launch license?",
@@ -1190,6 +1226,9 @@ function renderChrome() {
   document.getElementById("back-link").href = "/?lang=" + encodeURIComponent(LANG);
   document.getElementById("brand-title").textContent = t("brandTitle");
   document.getElementById("brand-sub").textContent = t("brandSub");
+  document.getElementById("fraud-label").textContent = t("antiFraud.label");
+  document.getElementById("fraud-message").textContent = t("antiFraud.message");
+  document.getElementById("fraud-site").textContent = t("antiFraud.officialSite");
   document.querySelectorAll("#tabs button").forEach(b => {
     b.textContent = t("tabs." + b.dataset.view);
   });
