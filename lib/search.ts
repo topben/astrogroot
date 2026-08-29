@@ -3,6 +3,7 @@ import { papers, videos, nasaContent, translations } from "../db/schema.ts";
 import { inArray, and, eq, like, or } from "drizzle-orm";
 import { initializeCollections, initializeLegacyCollections } from "./vector.ts";
 import { ftsSearch } from "./fts.ts";
+import { SEARCH_VECTOR_DISABLED } from "./config.ts";
 import type { Locale } from "./i18n.ts";
 import { SUPPORTED_LOCALES } from "./i18n.ts";
 
@@ -465,7 +466,6 @@ export async function searchLibrary(params: {
 
   const perPage = Math.max(1, limit);
   const requestedResults = perPage * Math.max(1, page);
-  const collections = await initializeCollections_();
   const n = Math.min(MAX_COLLECTION_LIMIT, Math.max(PER_COLLECTION_LIMIT, requestedResults));
   const paperIds: string[] = [];
   const videoIds: string[] = [];
@@ -473,111 +473,125 @@ export async function searchLibrary(params: {
   const paperScores: Record<string, number> = {};
   const videoScores: Record<string, number> = {};
   const nasaScores: Record<string, number> = {};
-
-  const [paperRes, videoRes, nasaRes] = await Promise.all([
-    searchPapers
-      ? collections.papers[locale].query({ queryText: trimmed, nResults: n })
-      : Promise.resolve({ ids: [[]], distances: [[]] }),
-    searchVideos
-      ? collections.videos[locale].query({ queryText: trimmed, nResults: n })
-      : Promise.resolve({ ids: [[]], distances: [[]] }),
-    searchNasa
-      ? collections.nasa[locale].query({ queryText: trimmed, nResults: n })
-      : Promise.resolve({ ids: [[]], distances: [[]] }),
-  ]);
-
-  if (searchPapers && paperRes.ids[0]?.length) {
-    paperRes.ids[0].forEach((id, i) => {
-      paperIds.push(id);
-      const dist = paperRes.distances?.[0]?.[i];
-      if (dist != null) paperScores[id] = 1 - dist / 2;
-    });
-  }
-  if (searchVideos && videoRes.ids[0]?.length) {
-    videoRes.ids[0].forEach((id, i) => {
-      videoIds.push(id);
-      const dist = videoRes.distances?.[0]?.[i];
-      if (dist != null) videoScores[id] = 1 - dist / 2;
-    });
-  }
-  if (searchNasa && nasaRes.ids[0]?.length) {
-    nasaRes.ids[0].forEach((id, i) => {
-      nasaIds.push(id);
-      const dist = nasaRes.distances?.[0]?.[i];
-      if (dist != null) nasaScores[id] = 1 - dist / 2;
-    });
-  }
-
-  // Cross-language: when using zh-TW/zh-CN and query contains Latin text, also query English collection
   const hasLatin = /[a-zA-Z]{2,}/.test(trimmed);
-  let hasNoResults = paperIds.length === 0 && videoIds.length === 0 && nasaIds.length === 0;
-  if (locale !== "en" && (hasNoResults || hasLatin)) {
-    const [enPaperRes, enVideoRes, enNasaRes] = await Promise.all([
-      searchPapers ? collections.papers["en"].query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
-      searchVideos ? collections.videos["en"].query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
-      searchNasa ? collections.nasa["en"].query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
-    ]);
-    if (searchPapers && enPaperRes.ids[0]?.length) {
-      enPaperRes.ids[0].forEach((id, i) => {
-        if (!paperScores[id]) paperIds.push(id);
-        const dist = enPaperRes.distances?.[0]?.[i];
-        if (dist != null) {
-          const score = 1 - dist / 2;
-          paperScores[id] = Math.max(paperScores[id] ?? 0, score);
-        }
-      });
-    }
-    if (searchVideos && enVideoRes.ids[0]?.length) {
-      enVideoRes.ids[0].forEach((id, i) => {
-        if (!videoScores[id]) videoIds.push(id);
-        const dist = enVideoRes.distances?.[0]?.[i];
-        if (dist != null) {
-          const score = 1 - dist / 2;
-          videoScores[id] = Math.max(videoScores[id] ?? 0, score);
-        }
-      });
-    }
-    if (searchNasa && enNasaRes.ids[0]?.length) {
-      enNasaRes.ids[0].forEach((id, i) => {
-        if (!nasaScores[id]) nasaIds.push(id);
-        const dist = enNasaRes.distances?.[0]?.[i];
-        if (dist != null) {
-          const score = 1 - dist / 2;
-          nasaScores[id] = Math.max(nasaScores[id] ?? 0, score);
-        }
-      });
-    }
-  }
 
-  // Fallback 2: query legacy collections (pre-i18n) if still no results
-  hasNoResults = paperIds.length === 0 && videoIds.length === 0 && nasaIds.length === 0;
-  if (hasNoResults) {
-    const legacy = await initializeLegacyCollections_();
-    const [legacyPaperRes, legacyVideoRes, legacyNasaRes] = await Promise.all([
-      searchPapers ? legacy.papers.query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
-      searchVideos ? legacy.videos.query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
-      searchNasa ? legacy.nasa.query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
-    ]);
-    if (searchPapers && legacyPaperRes.ids[0]?.length) {
-      legacyPaperRes.ids[0].forEach((id, i) => {
-        paperIds.push(id);
-        const dist = legacyPaperRes.distances?.[0]?.[i];
-        if (dist != null) paperScores[id] = 1 - dist / 2;
-      });
-    }
-    if (searchVideos && legacyVideoRes.ids[0]?.length) {
-      legacyVideoRes.ids[0].forEach((id, i) => {
-        videoIds.push(id);
-        const dist = legacyVideoRes.distances?.[0]?.[i];
-        if (dist != null) videoScores[id] = 1 - dist / 2;
-      });
-    }
-    if (searchNasa && legacyNasaRes.ids[0]?.length) {
-      legacyNasaRes.ids[0].forEach((id, i) => {
-        nasaIds.push(id);
-        const dist = legacyNasaRes.distances?.[0]?.[i];
-        if (dist != null) nasaScores[id] = 1 - dist / 2;
-      });
+  // Vector search is best-effort: when ChromaDB is unreachable (host down,
+  // credentials rotated, collections missing) the keyword fallback below still
+  // answers the query off Turso. Before 2026-08-30 an unreachable ChromaDB threw
+  // straight out of searchLibrary, so /api/search returned 500 and the whole
+  // site search was down even though FTS/LIKE could have served every request.
+  // Set SEARCH_VECTOR_DISABLED=1 to skip this phase entirely and avoid paying
+  // the connection timeout on every request while ChromaDB is known to be gone.
+  if (!SEARCH_VECTOR_DISABLED) {
+    try {
+      const collections = await initializeCollections_();
+      const [paperRes, videoRes, nasaRes] = await Promise.all([
+        searchPapers
+          ? collections.papers[locale].query({ queryText: trimmed, nResults: n })
+          : Promise.resolve({ ids: [[]], distances: [[]] }),
+        searchVideos
+          ? collections.videos[locale].query({ queryText: trimmed, nResults: n })
+          : Promise.resolve({ ids: [[]], distances: [[]] }),
+        searchNasa
+          ? collections.nasa[locale].query({ queryText: trimmed, nResults: n })
+          : Promise.resolve({ ids: [[]], distances: [[]] }),
+      ]);
+
+      if (searchPapers && paperRes.ids[0]?.length) {
+        paperRes.ids[0].forEach((id, i) => {
+          paperIds.push(id);
+          const dist = paperRes.distances?.[0]?.[i];
+          if (dist != null) paperScores[id] = 1 - dist / 2;
+        });
+      }
+      if (searchVideos && videoRes.ids[0]?.length) {
+        videoRes.ids[0].forEach((id, i) => {
+          videoIds.push(id);
+          const dist = videoRes.distances?.[0]?.[i];
+          if (dist != null) videoScores[id] = 1 - dist / 2;
+        });
+      }
+      if (searchNasa && nasaRes.ids[0]?.length) {
+        nasaRes.ids[0].forEach((id, i) => {
+          nasaIds.push(id);
+          const dist = nasaRes.distances?.[0]?.[i];
+          if (dist != null) nasaScores[id] = 1 - dist / 2;
+        });
+      }
+
+      // Cross-language: when using zh-TW/zh-CN and query contains Latin text, also query English collection
+      let hasNoResults = paperIds.length === 0 && videoIds.length === 0 && nasaIds.length === 0;
+      if (locale !== "en" && (hasNoResults || hasLatin)) {
+        const [enPaperRes, enVideoRes, enNasaRes] = await Promise.all([
+          searchPapers ? collections.papers["en"].query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
+          searchVideos ? collections.videos["en"].query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
+          searchNasa ? collections.nasa["en"].query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
+        ]);
+        if (searchPapers && enPaperRes.ids[0]?.length) {
+          enPaperRes.ids[0].forEach((id, i) => {
+            if (!paperScores[id]) paperIds.push(id);
+            const dist = enPaperRes.distances?.[0]?.[i];
+            if (dist != null) {
+              const score = 1 - dist / 2;
+              paperScores[id] = Math.max(paperScores[id] ?? 0, score);
+            }
+          });
+        }
+        if (searchVideos && enVideoRes.ids[0]?.length) {
+          enVideoRes.ids[0].forEach((id, i) => {
+            if (!videoScores[id]) videoIds.push(id);
+            const dist = enVideoRes.distances?.[0]?.[i];
+            if (dist != null) {
+              const score = 1 - dist / 2;
+              videoScores[id] = Math.max(videoScores[id] ?? 0, score);
+            }
+          });
+        }
+        if (searchNasa && enNasaRes.ids[0]?.length) {
+          enNasaRes.ids[0].forEach((id, i) => {
+            if (!nasaScores[id]) nasaIds.push(id);
+            const dist = enNasaRes.distances?.[0]?.[i];
+            if (dist != null) {
+              const score = 1 - dist / 2;
+              nasaScores[id] = Math.max(nasaScores[id] ?? 0, score);
+            }
+          });
+        }
+      }
+
+      // Fallback 2: query legacy collections (pre-i18n) if still no results
+      hasNoResults = paperIds.length === 0 && videoIds.length === 0 && nasaIds.length === 0;
+      if (hasNoResults) {
+        const legacy = await initializeLegacyCollections_();
+        const [legacyPaperRes, legacyVideoRes, legacyNasaRes] = await Promise.all([
+          searchPapers ? legacy.papers.query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
+          searchVideos ? legacy.videos.query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
+          searchNasa ? legacy.nasa.query({ queryText: trimmed, nResults: n }) : Promise.resolve({ ids: [[]], distances: [[]] }),
+        ]);
+        if (searchPapers && legacyPaperRes.ids[0]?.length) {
+          legacyPaperRes.ids[0].forEach((id, i) => {
+            paperIds.push(id);
+            const dist = legacyPaperRes.distances?.[0]?.[i];
+            if (dist != null) paperScores[id] = 1 - dist / 2;
+          });
+        }
+        if (searchVideos && legacyVideoRes.ids[0]?.length) {
+          legacyVideoRes.ids[0].forEach((id, i) => {
+            videoIds.push(id);
+            const dist = legacyVideoRes.distances?.[0]?.[i];
+            if (dist != null) videoScores[id] = 1 - dist / 2;
+          });
+        }
+        if (searchNasa && legacyNasaRes.ids[0]?.length) {
+          legacyNasaRes.ids[0].forEach((id, i) => {
+            nasaIds.push(id);
+            const dist = legacyNasaRes.distances?.[0]?.[i];
+            if (dist != null) nasaScores[id] = 1 - dist / 2;
+          });
+        }
+      }
+    } catch (err) {
+      console.warn("Vector search unavailable, falling back to keyword search:", err);
     }
   }
 

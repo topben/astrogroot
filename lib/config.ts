@@ -2,6 +2,11 @@ import type { RateLimitConfig } from "./rate-limit.ts";
 
 export const INCLUDE_ERROR_DATA = Deno.env.get("ASTROGROOT_DEBUG") === "1";
 
+// Skip ChromaDB vector search entirely and serve search from Turso FTS/LIKE only.
+// Useful when the ChromaDB host is down or decommissioned — searchLibrary already
+// degrades on error, this just avoids the per-request connection timeout.
+export const SEARCH_VECTOR_DISABLED = Deno.env.get("SEARCH_VECTOR_DISABLED") === "1";
+
 // CORS origins for MCP endpoint - comma-separated list or "*" for all
 const mcpOriginsEnv = Deno.env.get("MCP_ALLOWED_ORIGINS");
 export const MCP_ALLOWED_ORIGINS: string | string[] = mcpOriginsEnv

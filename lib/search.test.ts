@@ -177,3 +177,40 @@ Deno.test("searchLibrary paginates combined results and returns pagination info"
   assertEquals(result.pagination?.hasPrev, true);
   assertEquals(result.pagination?.hasNext, false);
 });
+
+Deno.test("searchLibrary degrades to keyword search when ChromaDB is unavailable", async () => {
+  // 2026-08-30: astrogroot-chromadb was decommissioned and initializeCollections
+  // started throwing, which took /api/search down with a 500 even though the
+  // keyword fallback could answer every query from Turso. Vector failures must
+  // degrade, never propagate.
+  const chromaDown = (() =>
+    Promise.reject(
+      new Error("connection refused: astrogroot-chromadb"),
+    )) as unknown as typeof import("./vector.ts").initializeCollections;
+
+  const result = await searchLibrary(
+    { q: "galaxy", type: "papers", locale: "en" },
+    {
+      db: createDbMock({
+        papersFindMany: () =>
+          Promise.resolve([
+            {
+              id: "arxiv-1",
+              title: "A galaxy survey",
+              summary: "Galaxy clusters at high redshift",
+              abstract: "…",
+              url: "https://arxiv.org/abs/1",
+              publishedDate: "2026-08-03",
+            },
+          ]),
+      }) as unknown as typeof import("../db/client.ts").db,
+      initializeCollections: chromaDown,
+      initializeLegacyCollections:
+        chromaDown as unknown as typeof import("./vector.ts").initializeLegacyCollections,
+    },
+  );
+
+  assertEquals(result.papers.length, 1);
+  assertEquals(result.papers[0].id, "arxiv-1");
+  assertEquals(result.total, 1);
+});
