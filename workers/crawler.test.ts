@@ -492,3 +492,33 @@ Deno.test("runCrawler processes AI-robotics papers from collectAiPapers", async 
   assertEquals(stats.skippedOffTopic, 0);
   assertEquals(stats.errors.length, 0);
 });
+
+Deno.test("runCrawler still collects papers when the vector store is unavailable", async () => {
+  // 2026-08-25 the ChromaDB host was decommissioned. initializeCollections()
+  // throwing used to abort the whole cycle before a single paper was written,
+  // so a dead vector store meant a dead crawler. Vectors are optional: Turso +
+  // FTS are what site search reads.
+  const deps = {
+    db: createMockDb(),
+    initializeCollections: () => Promise.reject(new Error("connection refused: astrogroot-chromadb")),
+    processMultilingualContent: createMockProcessMultilingual(),
+    collectAstronomyPapers: () => Promise.resolve(onePaper),
+    collectRocketPapers: () => Promise.resolve(emptyRocketPapers),
+    collectRocketReports: () => Promise.resolve(emptyNtrs),
+    collectRoboticsPapers: () => Promise.resolve(emptyRoboticsPapers),
+    collectRoboticsReports: () => Promise.resolve(emptyNtrs),
+    collectAstronomyVideos: () => Promise.resolve(emptyVideoList),
+    fetchCompleteVideoData: () => Promise.reject(new Error("should not be called")),
+    collectNasaContent: () => Promise.resolve(emptyNasa),
+    collectSatellitePapers: () => Promise.resolve(emptyArxiv),
+    collectSatelliteReports: () => Promise.resolve(emptyNtrs),
+    collectSpaceTravelPapers: () => Promise.resolve(emptyArxiv),
+    collectSpaceTravelReports: () => Promise.resolve(emptyNtrs),
+    collectAiPapers: () => Promise.resolve(emptyArxiv),
+  } as unknown as CrawlerDeps;
+
+  const stats = await runCrawler(deps);
+
+  assertEquals(stats.papersCollected, 1);
+  assertEquals(stats.errors.length, 0);
+});

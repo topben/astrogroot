@@ -188,6 +188,26 @@ export interface CrawlerDeps {
 }
 
 // Main crawler function
+/**
+ * Stand-in collections used when ChromaDB is unreachable. The crawl still writes
+ * every item to Turso and the FTS tables (which is what site search reads since
+ * the 2026-08-25 ChromaDB teardown); vectors are simply not written. Once a
+ * ChromaDB is back, `syncMissingVectors` backfills everything on the next run.
+ */
+function createNoopCollections(): Awaited<ReturnType<typeof initializeCollections>> {
+  const store = {
+    add: () => Promise.resolve(),
+    get: () => Promise.resolve(null),
+    query: () => Promise.resolve({ ids: [[]], distances: [[]] }),
+    delete: () => Promise.resolve(),
+    deleteBatch: () => Promise.resolve(),
+  };
+  const byLocale = Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, store]));
+  return { papers: byLocale, videos: byLocale, nasa: byLocale } as unknown as Awaited<
+    ReturnType<typeof initializeCollections>
+  >;
+}
+
 export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
   const db_ = deps?.db ?? db;
   const initCollections_ = deps?.initializeCollections ?? initializeCollections;
@@ -226,8 +246,18 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
     return stats;
   }
 
-  // Initialize vector store collections
-  const collections = await initCollections_();
+  // Initialize vector store collections. ChromaDB is optional: if it is down or
+  // decommissioned the crawl must still run (Turso + FTS carry site search), so
+  // a failure here degrades to no-op collections instead of aborting the cycle.
+  let collections: Awaited<ReturnType<typeof initializeCollections>>;
+  let vectorStoreAvailable = true;
+  try {
+    collections = await initCollections_();
+  } catch (error) {
+    vectorStoreAvailable = false;
+    collections = createNoopCollections();
+    console.warn("\u26a0\ufe0f  Vector store unavailable (non-fatal) — crawling without vectors:", error);
+  }
 
   // Initialize FTS5 full-text search tables (non-fatal)
   try {
@@ -1388,7 +1418,9 @@ export async function runCrawler(deps?: CrawlerDeps): Promise<CrawlerStats> {
 
   // Sync missing vectors (ensures ChromaDB has all Turso data)
   // Skip if running with mocked dependencies (testing)
-  if (!deps) {
+  if (!deps && !vectorStoreAvailable) {
+    console.log("\n⏭️  Skipping vector sync — vector store unavailable.");
+  } else if (!deps) {
     try {
       console.log("\n🔄 Syncing missing vectors...");
       const syncStats = await syncMissingVectors(collections, db_);
