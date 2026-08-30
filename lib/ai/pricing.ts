@@ -11,7 +11,11 @@ const PRICING_PER_MTOK: { prefix: string; input: number; output: number }[] = [
 /** Fallback price if a model isn't in the table above (assume the expensive tier). */
 const FALLBACK_PRICING = { input: 5, output: 25 };
 
+/** Local models (recorded as `local:<model>`) cost nothing — no API is billed. */
+const LOCAL_MODEL_PREFIX = "local:";
+
 function getPricing(model: string): { input: number; output: number } {
+  if (model.startsWith(LOCAL_MODEL_PREFIX)) return { input: 0, output: 0 };
   const match = PRICING_PER_MTOK.find((p) => model.startsWith(p.prefix));
   return match ?? FALLBACK_PRICING;
 }

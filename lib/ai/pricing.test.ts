@@ -25,3 +25,10 @@ Deno.test("pricing: matches by prefix regardless of dated snapshot suffix", () =
   const alias = estimateCostUsd("claude-haiku-4-5", 1_000_000, 0);
   assertEquals(dated, alias);
 });
+
+Deno.test("local model calls are free and never consume the daily budget", () => {
+  // Recorded as `local:<model>`; without this they would hit FALLBACK_PRICING
+  // ($5/$25 per Mtok) and a local-only crawl would still trip AI_DAILY_BUDGET_USD.
+  assertEquals(estimateCostUsd("local:unsloth/gemma-4-26b-a4b-it", 1_000_000, 1_000_000), 0);
+  assertEquals(estimateCostUsd("local:gemma4-12b-ctx32k", 500_000, 250_000), 0);
+});
