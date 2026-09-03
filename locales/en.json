@@ -8,11 +8,6 @@
     "subtitle": "Research Library",
     "description": "Your astronomy, space science & robotics knowledge hub"
   },
-  "antiFraud": {
-    "label": "Fraud warning",
-    "message": "Any @gmail.com address claiming to represent Tokimi is not an official Tokimi contact channel. Do not pay or share verification codes. Verify through",
-    "officialSite": "Tokimi's official website"
-  },
   "stats": {
     "title": "Library Statistics",
     "papers": "Research Papers",

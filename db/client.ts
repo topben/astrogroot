@@ -30,17 +30,24 @@ function getDb(): LibSQLDatabase<typeof schema> {
   return _db;
 }
 
-// Use getters so the actual initialization is deferred
-export const client = new Proxy({} as Client, {
-  get(_, prop) {
-    return Reflect.get(getClient(), prop);
-  },
-});
+// Use getters so the actual initialization is deferred.
+// Methods must be bound to the real instance: an unbound method called as
+// `client.execute(...)` runs with `this` set to the Proxy, and @libsql/client
+// reads private fields (`#promiseLimitFunction`) off `this`, which throws
+// "Cannot read private member ... from an object whose class did not declare
+// it". Every FTS call site swallows that error, so the failure is silent.
+function bindingProxy<T extends object>(getTarget: () => T): T {
+  return new Proxy({} as T, {
+    get(_, prop) {
+      const target = getTarget();
+      const value = Reflect.get(target, prop, target);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
+}
 
-export const db = new Proxy({} as LibSQLDatabase<typeof schema>, {
-  get(_, prop) {
-    return Reflect.get(getDb(), prop);
-  },
-});
+export const client = bindingProxy<Client>(getClient);
+
+export const db = bindingProxy<LibSQLDatabase<typeof schema>>(getDb);
 
 export type Database = LibSQLDatabase<typeof schema>;

@@ -211,24 +211,6 @@ const UI_REFRESH_STYLES = `
     color: var(--cyan); border-color: var(--line-strong);
     background: rgba(94, 234, 212, 0.09); box-shadow: none;
   }
-  .identity-notice {
-    position: relative; z-index: 2;
-    width: min(calc(100% - 3rem), 1180px); margin: 0.85rem auto 0;
-    display: grid; grid-template-columns: auto 1fr; align-items: start; gap: 0.55rem 0.9rem;
-    padding: 0.72rem 0.9rem; border: 1px solid rgba(251, 191, 36, 0.28);
-    border-left: 3px solid var(--gold); border-radius: 10px;
-    background: rgba(28, 22, 14, 0.78); color: var(--text-soft);
-    font-size: 0.86rem; line-height: 1.55;
-  }
-  .identity-notice__label {
-    color: var(--gold); font-size: 0.74rem; font-weight: 800;
-    letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
-  }
-  .identity-notice p { margin: 0; }
-  .identity-notice a {
-    color: #fde68a; font-weight: 700; text-underline-offset: 0.18em;
-  }
-  .identity-notice a:hover { color: #fff7cc; }
   .navigation {
     position: sticky; top: 0.75rem; z-index: 30;
     width: max-content; max-width: calc(100% - 2rem); margin: 0.4rem auto 0;
@@ -409,10 +391,6 @@ const UI_REFRESH_STYLES = `
   @media (max-width: 640px) {
     .header { padding: 4.3rem 1rem 0.65rem; }
     .header-search { padding-top: 4.15rem; }
-    .identity-notice {
-      width: calc(100% - 1.5rem); grid-template-columns: 1fr;
-      gap: 0.28rem; margin-top: 0.65rem;
-    }
     .lang-switcher { top: 0.75rem; right: 0.75rem; }
     .logo-img { width: 104px; height: 104px; border-radius: 20px; }
     .header-search .logo-img { width: 70px; height: 70px; }
@@ -514,9 +492,6 @@ const LOCALE_LABELS: Record<Locale, string> = {
   "zh-CN": "簡中",
 };
 
-export const TOKIMI_OFFICIAL_SITE = "https://tokimi.space/";
-export const TOKIMI_OFFICIAL_EMAIL = "ben@tokimi.space";
-
 export const Layout: FC<LayoutProps> = (props) => {
   const {
     pageClass,
@@ -583,12 +558,6 @@ export const Layout: FC<LayoutProps> = (props) => {
     : currentLocale === "zh-CN"
     ? "语言"
     : "Language";
-  const antiFraud = dict?.antiFraud ?? {
-    label: "Fraud warning",
-    message:
-      "Any @gmail.com address claiming to represent Tokimi is not an official Tokimi contact channel. Do not pay or share verification codes. Verify through",
-    officialSite: "Tokimi's official website",
-  };
   const calendarMonthsStr = calendarMonths.join("\u001F");
   const fallbackOgImage = "/static/astrogroot-logo.png";
   const ogImageUrl = (() => {
@@ -697,14 +666,6 @@ export const Layout: FC<LayoutProps> = (props) => {
                 </nav>
               )
               : null}
-            <aside class="identity-notice" role="note" aria-label={antiFraud.label}>
-              <strong class="identity-notice__label">{antiFraud.label}</strong>
-              <p>
-                {antiFraud.message} <a href={TOKIMI_OFFICIAL_SITE}>{antiFraud.officialSite}</a> /
-                {" "}
-                <a href={`mailto:${TOKIMI_OFFICIAL_EMAIL}`}>{TOKIMI_OFFICIAL_EMAIL}</a>.
-              </p>
-            </aside>
             {children}
             {showFooter
               ? (

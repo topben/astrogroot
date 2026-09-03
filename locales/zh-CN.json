@@ -8,11 +8,6 @@
     "subtitle": "研究图书馆",
     "description": "您的天文、太空科学与机器人知识库"
   },
-  "antiFraud": {
-    "label": "防诈骗提醒",
-    "message": "任何以 @gmail.com 结尾、并自称 Tokimi 的帐号，都不是 Tokimi 官方联络渠道。请勿付款或提供验证码；请通过",
-    "officialSite": "Tokimi 官方网站"
-  },
   "stats": {
     "title": "图书馆统计",
     "papers": "研究论文",

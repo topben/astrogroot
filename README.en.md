@@ -18,9 +18,6 @@
 
 </div>
 
-> [!WARNING]
-> **Fraud warning: any `@gmail.com` address claiming to represent Tokimi is not an official Tokimi contact channel.** Do not pay or share verification codes. Verify identity only through the [Tokimi official website](https://tokimi.space/) or [ben@tokimi.space](mailto:ben@tokimi.space).
-
 AstroGroot is built with Deno, Hono, Turso, and ChromaDB. It includes collectors for arXiv, YouTube, NASA, and the NASA Technical Reports Server (NTRS), plus a trilingual website, search APIs, a knowledge map, and an MCP interface.
 
 > [!IMPORTANT]
