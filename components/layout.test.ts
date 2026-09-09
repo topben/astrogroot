@@ -51,3 +51,16 @@ Deno.test("locale switcher adds an explicit language to non-search URLs", () => 
 
   assertEquals(switchedUrl.searchParams.get("lang"), "zh-CN");
 });
+Deno.test("shared and standalone layouts omit the retired warning banner", async () => {
+  for (
+    const path of [
+      "./layout.tsx",
+      "../static/knowledge-map.html",
+      "../static/rocket-exam.html",
+    ]
+  ) {
+    const source = await Deno.readTextFile(new URL(path, import.meta.url));
+    assertEquals(source.includes("identity-notice"), false);
+    assertEquals(source.includes("@gmail.com"), false);
+  }
+});
