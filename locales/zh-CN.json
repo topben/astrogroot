@@ -70,15 +70,18 @@
     "source": "来源",
     "recommendedPapers": "推荐论文给知识库"
   },
-  "donate": {
-    "title": "为这座图书馆加油",
-    "intro": "AstroGroot 靠好奇心与咖啡运作。赞助一点 wei，让卫星持续运转。",
-    "copy": "复制",
-    "copied": "已复制！",
-    "viewOnEns": "ENS",
-    "viewOnEtherscan": "Etherscan",
-    "thanks": "感谢每一笔赞助。",
-    "ariaCopy": "复制 tokimi.eth 到剪贴板"
+  "agentTools": {
+    "title": "给 AI agent 的 IFF 工具",
+    "affiliation": "来自 AstroGroot 的开发团队：时见。",
+    "intro": "公开、只读的 MCP 工具，无须账号。",
+    "x402Title": "x402 证据查询",
+    "x402Description": "接入 x402 服务前，查询付款要求与端点证据。",
+    "apostilleTitle": "签名与封装验证",
+    "apostilleDescription": "查阅 Apostille 签名格式，验证已签名的产物封装。",
+    "developerLink": "探索 agent 工具",
+    "docsLink": "IFF 技术文档",
+    "productLink": "时见其他产品",
+    "footerAffiliation": "AstroGroot 与 IFF 均由时见开发。"
   },
   "seo": {
     "siteName": "AstroGroot",
@@ -102,8 +105,29 @@
     "returnButton": "返回仪表板"
   },
   "calendar": {
-    "weekdays": ["日", "一", "二", "三", "四", "五", "六"],
-    "months": ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+    "weekdays": [
+      "日",
+      "一",
+      "二",
+      "三",
+      "四",
+      "五",
+      "六"
+    ],
+    "months": [
+      "一月",
+      "二月",
+      "三月",
+      "四月",
+      "五月",
+      "六月",
+      "七月",
+      "八月",
+      "九月",
+      "十月",
+      "十一月",
+      "十二月"
+    ],
     "pickDate": "选择日期",
     "prevMonth": "上个月",
     "nextMonth": "下个月",

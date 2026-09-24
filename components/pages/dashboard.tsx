@@ -100,52 +100,44 @@ export const DashboardPage: FC<DashboardPageProps> = (props) => {
                 "All content is processed using Claude AI for summarization and semantic search via vector embeddings."}
             </p>
           </section>
-          <section class="donate-section" aria-labelledby="donate-title">
-            <div class="donate-header">
-              <span class="donate-icon" aria-hidden="true">✦</span>
-              <h2 id="donate-title" class="donate-title">
-                {d?.donate.title ?? "Fuel the Library"}
-              </h2>
-            </div>
-            <p class="donate-intro">
-              {d?.donate.intro ??
-                "AstroGroot runs on curiosity and coffee. Tip a few wei and keep the satellites humming."}
+          <section class="agent-tools-section" aria-labelledby="agent-tools-title">
+            <p class="agent-tools-affiliation">
+              {d?.agentTools.affiliation ?? "From Tokimi, the team behind AstroGroot."}
             </p>
-            <div class="donate-row">
-              <span class="ens-pill" aria-label="tokimi.eth">
-                <span class="ens-eth-glyph" aria-hidden="true">Ξ</span>
-                <span class="ens-text">TOKIMI.ETH</span>
-              </span>
-              <button
-                type="button"
-                class="donate-copy"
-                data-donate-copy=""
-                data-donate-address="tokimi.eth"
-                data-donate-copied={d?.donate.copied ?? "Copied!"}
-                aria-label={d?.donate.ariaCopy ?? "Copy tokimi.eth to clipboard"}
-              >
-                <span data-donate-copy-label="">{d?.donate.copy ?? "Copy"}</span>
-              </button>
-            </div>
-            <div class="donate-actions">
-              <a
-                class="donate-button"
-                href="https://app.ens.domains/tokimi.eth"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {d?.donate.viewOnEns ?? "ENS"} ↗
-              </a>
-              <a
-                class="donate-button"
-                href="https://etherscan.io/address/tokimi.eth"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {d?.donate.viewOnEtherscan ?? "Etherscan"} ↗
-              </a>
-            </div>
-            <p class="donate-thanks">{d?.donate.thanks ?? "Thank you — every wei helps."}</p>
+            <h2 id="agent-tools-title" class="agent-tools-title">
+              {d?.agentTools.title ?? "IFF tools for agents"}
+            </h2>
+            <p class="agent-tools-intro">
+              {d?.agentTools.intro ?? "Public, read-only MCP tools. No account required."}
+            </p>
+            <ul class="agent-tools-list">
+              <li>
+                <a href="https://ifandonlyif.io/sdk#mcp" class="agent-tools-link">
+                  {d?.agentTools.x402Title ?? "x402 evidence"} <span aria-hidden="true">↗</span>
+                </a>
+                <p>
+                  {d?.agentTools.x402Description ??
+                    "Inspect payment requirements and endpoint evidence before integrating an x402 service."}
+                </p>
+              </li>
+              <li>
+                <a href="https://ifandonlyif.io/apostille/docs#mcp" class="agent-tools-link">
+                  {d?.agentTools.apostilleTitle ?? "Signatures and bundles"}{" "}
+                  <span aria-hidden="true">↗</span>
+                </a>
+                <p>
+                  {d?.agentTools.apostilleDescription ??
+                    "Inspect Apostille signing formats and verify signed artifact bundles."}
+                </p>
+              </li>
+            </ul>
+            <a
+              href={`/developers?lang=${encodeURIComponent(locale)}`}
+              class="agent-tools-cta"
+            >
+              {d?.agentTools.developerLink ?? "Explore agent tools"}{" "}
+              <span aria-hidden="true">→</span>
+            </a>
           </section>
         </div>
 
@@ -176,51 +168,6 @@ export const DashboardPage: FC<DashboardPageProps> = (props) => {
           />
         )
         : null}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-(function(){
-  var btn = document.querySelector('[data-donate-copy]');
-  if (!btn) return;
-  var addr = btn.getAttribute('data-donate-address') || '';
-  var copiedText = btn.getAttribute('data-donate-copied') || 'Copied!';
-  var label = btn.querySelector('[data-donate-copy-label]');
-  var resetTimer = null;
-  function flash(){
-    btn.classList.add('copied');
-    if (label){
-      var prev = label.getAttribute('data-original') || label.textContent;
-      label.setAttribute('data-original', prev);
-      label.textContent = copiedText;
-    }
-    if (resetTimer) clearTimeout(resetTimer);
-    resetTimer = setTimeout(function(){
-      btn.classList.remove('copied');
-      if (label){
-        var prev = label.getAttribute('data-original');
-        if (prev != null) label.textContent = prev;
-      }
-    }, 1800);
-  }
-  function legacyCopy(){
-    var ta = document.createElement('textarea');
-    ta.value = addr; ta.setAttribute('readonly','');
-    ta.style.position = 'absolute'; ta.style.left = '-9999px';
-    document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); } catch (e) {}
-    document.body.removeChild(ta);
-  }
-  btn.addEventListener('click', function(){
-    if (navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(addr).then(flash).catch(function(){ legacyCopy(); flash(); });
-    } else {
-      legacyCopy(); flash();
-    }
-  });
-})();
-`,
-        }}
-      />
     </Layout>
   );
 };
