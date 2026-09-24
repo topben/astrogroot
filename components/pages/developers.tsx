@@ -10,7 +10,7 @@ const STYLES = `
   .developer-guide a:focus-visible { outline: 2px solid #78e4da; outline-offset: 5px; }
   .developer-guide-header { max-width: 820px; padding: 1rem 0 2.5rem; }
   .developer-guide-eyebrow { color: #9caec3; letter-spacing: .12em; font-size: .75rem; margin: 1.5rem 0 .75rem; }
-  .developer-guide h1 { font-size: clamp(2rem, 4vw, 3.1rem); line-height: 1.2; color: #f3f6ff; margin-bottom: 1.25rem; }
+  .developer-guide h1 { font-size: clamp(2rem, 4vw, 3.1rem); line-height: 1.2; color: #f3f6ff; margin-bottom: 1.25rem; text-wrap: balance; }
   .developer-guide p { color: #bbc8dc; line-height: 1.8; margin: .8rem 0; }
   .developer-guide-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
   .developer-guide-service { border-top: 2px solid #78e4da; padding-top: 1.25rem; min-width: 0; }
