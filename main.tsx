@@ -24,6 +24,7 @@ import { db } from "./db/client.ts";
 import { nasaContent, papers, translations, videos } from "./db/schema.ts";
 import { and, eq } from "drizzle-orm";
 import { DashboardPage } from "./components/pages/dashboard.tsx";
+import { DevelopersPage } from "./components/pages/developers.tsx";
 import { SearchPage } from "./components/pages/search.tsx";
 import { NotFoundPage } from "./components/pages/not-found.tsx";
 import { DetailPage } from "./components/pages/detail.tsx";
@@ -55,6 +56,8 @@ app.use("/", rateLimit(RATE_LIMITS.html));
 app.use("/search", rateLimit(RATE_LIMITS.html));
 app.use("/detail", rateLimit(RATE_LIMITS.html));
 app.use("/rocket-exam", rateLimit(RATE_LIMITS.html));
+app.use("/developers", rateLimit(RATE_LIMITS.html));
+app.use("/llms.txt", rateLimit(RATE_LIMITS.html));
 app.use("/api/health", rateLimit(RATE_LIMITS.health));
 app.use("/sitemap.xml", rateLimit(RATE_LIMITS.html));
 app.use("/api/search", rateLimit(RATE_LIMITS.api));
@@ -246,6 +249,27 @@ app.get("/robots.txt", (c) => {
   return c.text(body, 200);
 });
 
+app.get("/llms.txt", async (c) => {
+  const body = await Deno.readTextFile(new URL("./static/llms.txt", import.meta.url));
+  c.header("Cache-Control", HTML_CACHE_CONTROL);
+  c.header("Content-Language", "en");
+  return c.text(body);
+});
+
+app.get("/developers", async (c) => {
+  const locale = getLocaleFromRequest(c.req.query("lang"), c.req.header("Accept-Language"));
+  const dict = await loadDictionary(locale);
+  setHtmlHeaders(c, locale);
+  return c.html(
+    <DevelopersPage
+      locale={locale}
+      dict={dict}
+      canonicalUrl={buildCanonicalUrl(c.req.url)}
+      alternateUrls={buildAlternateUrls(c.req.url)}
+    />,
+  );
+});
+
 app.get("/sitemap.xml", async (c) => {
   const origin = new URL(c.req.url).origin;
   const urls: string[] = [];
@@ -278,6 +302,7 @@ app.get("/sitemap.xml", async (c) => {
 
   pushUrl(`${origin}/`, undefined, "daily", "1.0");
   pushUrl(`${origin}/search`, undefined, undefined, "0.5");
+  pushUrl(`${origin}/developers`, undefined, "monthly", "0.5");
 
   const paperRows = await db
     .select({ id: papers.id, publishedDate: papers.publishedDate, updatedDate: papers.updatedDate })

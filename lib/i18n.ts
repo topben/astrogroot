@@ -63,15 +63,18 @@ export interface LocaleDict {
     source: string;
     recommendedPapers: string;
   };
-  donate: {
+  agentTools: {
     title: string;
+    affiliation: string;
     intro: string;
-    copy: string;
-    copied: string;
-    viewOnEns: string;
-    viewOnEtherscan: string;
-    thanks: string;
-    ariaCopy: string;
+    x402Title: string;
+    x402Description: string;
+    apostilleTitle: string;
+    apostilleDescription: string;
+    developerLink: string;
+    docsLink: string;
+    productLink: string;
+    footerAffiliation: string;
   };
   seo: {
     siteName: string;
@@ -92,7 +95,20 @@ export interface LocaleDict {
   error404: { title: string; message: string; returnButton: string };
   calendar: {
     weekdays: [string, string, string, string, string, string, string];
-    months: [string, string, string, string, string, string, string, string, string, string, string, string];
+    months: [
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+      string,
+    ];
     pickDate: string;
     prevMonth: string;
     nextMonth: string;
@@ -121,7 +137,10 @@ function parseAcceptLanguage(header: string | undefined): Locale | null {
 }
 
 /** Resolve locale from query ?lang= or Accept-Language. */
-export function getLocaleFromRequest(queryLang: string | undefined, acceptLanguage: string | undefined): Locale {
+export function getLocaleFromRequest(
+  queryLang: string | undefined,
+  acceptLanguage: string | undefined,
+): Locale {
   const q = queryLang?.trim();
   if (q && (SUPPORTED_LOCALES as readonly string[]).includes(q)) return q as Locale;
   const fromHeader = parseAcceptLanguage(acceptLanguage);

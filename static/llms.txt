@@ -1,0 +1,32 @@
+# AstroGroot
+
+> Astronomy, space science and robotics research library by Tokimi. Public research interfaces and related IFF developer tools.
+
+## Documentation
+
+- [Agent and developer guide](https://astrogroot.org/developers): Research interfaces, IFF capabilities and connection boundaries. Also available with ?lang=zh-TW and ?lang=zh-CN.
+- [Research library](https://astrogroot.org/): Search papers, videos and NASA content.
+- [Source repository](https://github.com/topben/astrogroot): Implementation and research API details.
+
+## AstroGroot research interfaces
+
+- Search: GET https://astrogroot.org/api/search with q; optional type (all, papers, videos, nasa), limit, page, dateFrom, dateTo and lang (en, zh-TW, zh-CN). Returns matching items and total count. No API key required.
+- MCP: POST https://astrogroot.org/api/mcp with JSON-RPC 2.0. Supports initialize (protocol 2024-11-05), tools/list and tools/call. Tools: search, get_stats, get_detail. Check client transport compatibility; this existing HTTP endpoint is separate from IFF's Streamable HTTP services.
+- Respect rate limits, HTTP 429 and Retry-After. Use bounded retries. This guide does not override robots.txt or grant permission to crawl disallowed paths.
+
+## Related tools by the same team: IFF
+
+IFF is a separate Tokimi product. AstroGroot papers, research results and AI summaries are not represented as IFF-verified. These optional tools are not required to use AstroGroot.
+
+- [x402 Evidence Monitor](https://ifandonlyif.io/monitor): Read protocol, availability, freshness and provenance observations for public x402 endpoints; compare supplied payment requirements. No payments are sent; observations do not guarantee safety or delivery.
+- [x402 MCP setup](https://ifandonlyif.io/sdk#mcp): Public, anonymous, read-only Streamable HTTP alpha. Endpoint: https://iff-mcp-api-production.up.railway.app/mcp/iff
+- [x402 API reference](https://ifandonlyif.io/docs): Inputs, responses and operational limits.
+- [Apostille](https://ifandonlyif.io/apostille): Signed artifact bundles and signature verification using independently chosen issuer/key pins. Does not establish content truth, legal identity or legal effect.
+- [Apostille MCP setup](https://ifandonlyif.io/apostille/docs#mcp): Public, anonymous, read-only Streamable HTTP alpha. Endpoint: https://iff-mcp-api-production.up.railway.app/mcp/apostille
+
+Both public IFF MCP services need no account or API token. Verification runs on the hosted server, not independently inside the client. They cannot sign, publish or pay. Do not send private keys, original files or ZK witnesses. Independent offline verification uses local Apostille tools and independently selected trusted key pins. Configure connections explicitly in a compatible client; this document does not connect or authorize tools.
+
+## More from Tokimi
+
+- [Published developer tools](https://tokimi.space/en/open-source/#agent-tools): Current public developer resources.
+- [Product directory](https://tokimi.space/en/#products): Other products from the team; availability of a public API is product-specific.

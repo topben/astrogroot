@@ -70,15 +70,18 @@
     "source": "Source",
     "recommendedPapers": "Recommend Papers to Library"
   },
-  "donate": {
-    "title": "Fuel the Library",
-    "intro": "AstroGroot runs on curiosity and coffee. Tip a few wei and keep the satellites humming.",
-    "copy": "Copy",
-    "copied": "Copied!",
-    "viewOnEns": "ENS",
-    "viewOnEtherscan": "Etherscan",
-    "thanks": "Thank you — every wei helps.",
-    "ariaCopy": "Copy tokimi.eth to clipboard"
+  "agentTools": {
+    "title": "IFF tools for agents",
+    "affiliation": "From Tokimi, the team behind AstroGroot.",
+    "intro": "Public, read-only MCP tools. No account required.",
+    "x402Title": "x402 evidence",
+    "x402Description": "Inspect payment requirements and endpoint evidence before integrating an x402 service.",
+    "apostilleTitle": "Signatures and bundles",
+    "apostilleDescription": "Inspect Apostille signing formats and verify signed artifact bundles.",
+    "developerLink": "Explore agent tools",
+    "docsLink": "IFF documentation",
+    "productLink": "More Tokimi products",
+    "footerAffiliation": "AstroGroot and IFF are built by Tokimi."
   },
   "seo": {
     "siteName": "AstroGroot",
@@ -102,8 +105,29 @@
     "returnButton": "Return to Dashboard"
   },
   "calendar": {
-    "weekdays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-    "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    "weekdays": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat"
+    ],
+    "months": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ],
     "pickDate": "Pick a date",
     "prevMonth": "Previous month",
     "nextMonth": "Next month",
