@@ -71,7 +71,7 @@ Required secrets:
 | Secret | Purpose |
 |--------|---------|
 | `ANTHROPIC_API_KEY` | Claude AI summarization |
-| `ANTHROPIC_MODEL` | Model selection |
+| `ANTHROPIC_MODEL` | Model selection (default `claude-haiku-5-5`) |
 | `TURSO_DATABASE_URL` | SQLite (Turso) database |
 | `TURSO_AUTH_TOKEN` | Turso auth |
 | `CHROMA_HOST` | ChromaDB vector store URL |

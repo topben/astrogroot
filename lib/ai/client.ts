@@ -21,15 +21,165 @@ export const anthropic = new Proxy({} as Anthropic, {
   },
 });
 
-// Use ANTHROPIC_MODEL in .env to override. Defaults to Haiku 4.5 - cheap and
-// strong enough for the summarize/translate workload this app runs.
-export const DEFAULT_MODEL = Deno.env.get("ANTHROPIC_MODEL") || "claude-haiku-4-5-20251001";
+// Use ANTHROPIC_MODEL in .env to override. Defaults to the current Haiku
+// (5.5) - cheaper than Haiku 4.5 and strong enough for the summarize/translate
+// workload this app runs. ANTHROPIC_MODEL=claude-haiku-4-5-20251001 is the
+// rollback: `modelGeneration` below switches the request shape back to legacy.
+export const DEFAULT_MODEL = Deno.env.get("ANTHROPIC_MODEL") || "claude-haiku-5-5";
 export const MAX_TOKENS = 4096;
+
+/** Test seam: replace the Anthropic client (or pass `null` to drop it and the cached real one). */
+export function _setAnthropicClientForTest(client: Pick<Anthropic, "messages"> | null): void {
+  _anthropic = client as Anthropic | null;
+}
+
+/** Test seam: replace usage recording (default: write to the ai_usage table). */
+export function _setUsageRecorderForTest(fn: typeof recordUsage | null): void {
+  _recordUsage = fn ?? recordUsage;
+}
+let _recordUsage: typeof recordUsage = recordUsage;
 
 export type Message = {
   role: "user" | "assistant";
   content: string;
 };
+
+export type Effort = "low" | "medium" | "high" | "xhigh" | "max";
+
+/**
+ * "legacy": Haiku 4.5, Sonnet 4.x, Opus <= 4.6 and the old `claude-3-...` ids -
+ * they accept `temperature` and do not think by default.
+ * "current": everything newer (Opus 4.7+, Sonnet 5+, Haiku 5.5, `claude-fable-*`, ...)
+ * and any id we do not recognise - they reject non-default sampling parameters
+ * and think adaptively by default.
+ */
+export function modelGeneration(model: string): "legacy" | "current" {
+  const old = /^claude-(\d+)(?:[-.]|$)/.exec(model);
+  if (old) return Number(old[1]) < 4 ? "legacy" : "current";
+  // The minor is only 1-2 digits; a longer number is a date suffix
+  // (`claude-opus-4-20250514` is Opus 4, not "Opus 4.20250514").
+  const m = /^claude-(haiku|sonnet|opus)-(\d+)(?:-(\d{1,2})(?!\d))?/.exec(model);
+  if (!m) return "current";
+  const family = m[1];
+  const major = Number(m[2]);
+  const minor = m[3] === undefined ? 0 : Number(m[3]);
+  if (major < 4) return "legacy";
+  if (major === 4 && (family !== "opus" || minor <= 6)) return "legacy";
+  return "current";
+}
+
+/** Output tokens reserved for adaptive thinking, by effort. Thinking counts toward `max_tokens`. */
+const THINKING_HEADROOM: Record<Effort, number> = {
+  low: 1024,
+  medium: 4096,
+  high: 8192,
+  xhigh: 12000,
+  max: 12000,
+};
+
+/**
+ * Upper bound for `max_tokens` on current models. The SDK refuses non-streaming
+ * requests whose expected duration is too long (it throws above ~21k
+ * `max_tokens`), and sendMessage is non-streaming - so stay under it.
+ */
+const MAX_REQUEST_TOKENS = 20000;
+
+/** Effort the API applies when none is sent (Haiku 5.5 and Opus 5.5 default to medium). */
+function defaultEffort(model: string): Effort {
+  return /^claude-(haiku|opus)-5-5(?:-|$)/.test(model) ? "medium" : "high";
+}
+
+/** Request body fields. The pinned SDK (0.32) predates `output_config`, so it is added here. */
+export type ClaudeRequestBody = Anthropic.MessageCreateParamsNonStreaming & {
+  output_config?: { effort: Effort };
+};
+
+export interface ClaudeRequestParams {
+  messages: Message[];
+  maxTokens?: number;
+  temperature?: number;
+  effort?: Effort;
+  systemPrompt?: string;
+}
+
+/** Build the `messages.create` body for `model`. Pure, so it is unit-testable. */
+export function buildRequest(params: ClaudeRequestParams, model: string): ClaudeRequestBody {
+  const requested = params.maxTokens ?? MAX_TOKENS;
+  // Omit `system` entirely when absent rather than sending `system: undefined`.
+  const system = params.systemPrompt ? { system: params.systemPrompt } : {};
+
+  if (modelGeneration(model) === "legacy") {
+    return {
+      model,
+      max_tokens: requested,
+      // `??`, not `||`: an explicit 0 must stay 0.
+      temperature: params.temperature ?? 0.7,
+      ...system,
+      messages: params.messages,
+    };
+  }
+
+  // No temperature/top_p/top_k (400 on current models) and no `thinking` field
+  // (adaptive thinking is the default). Thinking shares the max_tokens budget
+  // with the answer, so add headroom to the caller's (answer-sized) cap.
+  const effort = params.effort ?? defaultEffort(model);
+  return {
+    model,
+    max_tokens: Math.min(
+      Math.max(requested, 1024) + THINKING_HEADROOM[effort],
+      MAX_REQUEST_TOKENS,
+    ),
+    ...(params.effort ? { output_config: { effort: params.effort } } : {}),
+    ...system,
+    messages: params.messages,
+  };
+}
+
+/** The model declined to answer (HTTP 200 with `stop_reason: "refusal"`). */
+export class ClaudeRefusalError extends Error {
+  readonly model: string;
+  readonly category: string | null;
+  readonly explanation: string | null;
+
+  constructor(model: string, category?: string | null, explanation?: string | null) {
+    super(
+      `Claude refused the request (model ${model}` +
+        `${category ? `, category ${category}` : ""})` +
+        `${explanation ? `: ${explanation}` : ""}`,
+    );
+    this.name = "ClaudeRefusalError";
+    this.model = model;
+    this.category = category ?? null;
+    this.explanation = explanation ?? null;
+  }
+}
+
+function refusalFrom(model: string, stopDetails: unknown): ClaudeRefusalError {
+  const details = stopDetails as { category?: unknown; explanation?: unknown } | null | undefined;
+  return new ClaudeRefusalError(
+    model,
+    typeof details?.category === "string" ? details.category : null,
+    typeof details?.explanation === "string" ? details.explanation : null,
+  );
+}
+
+function extractText(response: Anthropic.Message, model: string): string {
+  // The pinned SDK's StopReason union predates "refusal"; compare as a string.
+  if ((response.stop_reason as string | null) === "refusal") {
+    throw refusalFrom(model, (response as { stop_details?: unknown }).stop_details);
+  }
+  // Current models lead with a `thinking` block, so never read content[0].
+  const text = response.content
+    .filter((block): block is Anthropic.TextBlock => block.type === "text")
+    .map((block) => block.text)
+    .join("");
+  if (!text) {
+    throw new Error(
+      `Claude returned no text (model ${model}, stop_reason ${response.stop_reason})`,
+    );
+  }
+  return text;
+}
 
 // --- Local (OpenAI-compatible) backends -------------------------------------
 // Summarize + translate is the whole AI workload here, and it is the same shape
@@ -206,7 +356,10 @@ export async function sendMessage(params: {
   messages: Message[];
   model?: string;
   maxTokens?: number;
+  /** Sent on legacy models only; current models reject non-default sampling parameters. */
   temperature?: number;
+  /** Reasoning/output effort. Honored only on current models; ignored on legacy ones. */
+  effort?: Effort;
   systemPrompt?: string;
   purpose?: string;
 }): Promise<string> {
@@ -218,7 +371,7 @@ export async function sendMessage(params: {
       try {
         const local = await sendViaLocal(backend, params);
         recordLocalSuccess(backend);
-        await recordUsage({
+        await _recordUsage({
           model: `local:${backend.model}`,
           purpose: params.purpose ?? "unknown",
           inputTokens: local.inputTokens,
@@ -233,27 +386,16 @@ export async function sendMessage(params: {
   }
 
   try {
-    const response = await anthropic.messages.create({
-      model,
-      max_tokens: params.maxTokens || MAX_TOKENS,
-      temperature: params.temperature || 0.7,
-      system: params.systemPrompt,
-      messages: params.messages,
-    });
+    const response = await anthropic.messages.create(buildRequest(params, model));
 
-    await recordUsage({
+    await _recordUsage({
       model,
       purpose: params.purpose ?? "unknown",
       inputTokens: response.usage.input_tokens,
       outputTokens: response.usage.output_tokens,
     });
 
-    const content = response.content[0];
-    if (content.type === "text") {
-      return content.text;
-    }
-
-    throw new Error("Unexpected response type from Claude");
+    return extractText(response, model);
   } catch (error) {
     console.error("Error sending message to Claude:", error);
     throw error;
@@ -265,16 +407,14 @@ export async function streamMessage(params: {
   model?: string;
   maxTokens?: number;
   temperature?: number;
+  effort?: Effort;
   systemPrompt?: string;
   onChunk?: (text: string) => void;
 }): Promise<string> {
+  const model = params.model || DEFAULT_MODEL;
   try {
     const stream = await anthropic.messages.create({
-      model: params.model || DEFAULT_MODEL,
-      max_tokens: params.maxTokens || MAX_TOKENS,
-      temperature: params.temperature || 0.7,
-      system: params.systemPrompt,
-      messages: params.messages,
+      ...buildRequest(params, model),
       stream: true,
     });
 
@@ -290,6 +430,12 @@ export async function streamMessage(params: {
         if (params.onChunk) {
           params.onChunk(text);
         }
+      } else if (event.type === "message_delta") {
+        // The final stop reason arrives on message_delta; a refusal is a normal
+        // HTTP 200 stream, so surface it instead of returning partial text.
+        // (thinking_delta events are ignored: only text_delta is collected.)
+        const delta = event.delta as { stop_reason?: string | null; stop_details?: unknown };
+        if (delta.stop_reason === "refusal") throw refusalFrom(model, delta.stop_details);
       }
     }
 

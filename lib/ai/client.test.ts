@@ -1,5 +1,23 @@
-import { assertEquals, assertRejects, assertStringIncludes } from "jsr:@std/assert@1";
-import { resetLocalBackendCircuit, sendMessage, sendViaLocal } from "./client.ts";
+import {
+  assert,
+  assertEquals,
+  assertInstanceOf,
+  assertRejects,
+  assertStringIncludes,
+} from "jsr:@std/assert@1";
+import {
+  _setAnthropicClientForTest,
+  _setUsageRecorderForTest,
+  buildRequest,
+  ClaudeRefusalError,
+  DEFAULT_MODEL,
+  type Effort,
+  modelGeneration,
+  resetLocalBackendCircuit,
+  sendMessage,
+  sendViaLocal,
+  streamMessage,
+} from "./client.ts";
 
 /** Swap globalThis.fetch for the duration of one test. */
 async function withFetch(
@@ -299,4 +317,271 @@ Deno.test("resetLocalBackendCircuit clears failure counts between tests", async 
         ]);
       },
     ));
+});
+
+// --- Anthropic request shape (legacy vs current models) ----------------------
+
+const MSGS = [{ role: "user" as const, content: "hi" }];
+type Block = Record<string, unknown>;
+const textBlock = (t: string): Block => ({ type: "text", text: t });
+const thinkingBlock: Block = { type: "thinking", thinking: "hmm", signature: "sig" };
+const USAGE = { input_tokens: 11, output_tokens: 7 };
+
+Deno.test("DEFAULT_MODEL is claude-haiku-5-5 unless ANTHROPIC_MODEL overrides it", {
+  ignore: Boolean(Deno.env.get("ANTHROPIC_MODEL")),
+}, () => {
+  assertEquals(DEFAULT_MODEL, "claude-haiku-5-5");
+});
+
+Deno.test("modelGeneration: legacy ids", () => {
+  for (
+    const id of [
+      "claude-haiku-4-5-20251001",
+      "claude-haiku-4-5",
+      "claude-sonnet-4-6",
+      "claude-sonnet-4-20250514",
+      "claude-opus-4-6",
+      "claude-opus-4-20250514", // the 8-digit date is not a minor version
+      "claude-3-5-sonnet-20241022",
+      "claude-3-haiku-20240307",
+    ]
+  ) {
+    assertEquals(modelGeneration(id), "legacy", id);
+  }
+});
+
+Deno.test("modelGeneration: current and unknown ids", () => {
+  for (
+    const id of [
+      "claude-opus-4-7",
+      "claude-sonnet-5",
+      "claude-sonnet-5-5",
+      "claude-haiku-5-5",
+      "claude-opus-5-5",
+      "claude-fable-5-1",
+      "something-new",
+    ]
+  ) {
+    assertEquals(modelGeneration(id), "current", id);
+  }
+});
+
+Deno.test("buildRequest: legacy keeps temperature (default 0.7, explicit 0 stays 0)", () => {
+  const model = "claude-haiku-4-5-20251001";
+  assertEquals(buildRequest({ messages: MSGS }, model), {
+    model,
+    max_tokens: 4096,
+    temperature: 0.7,
+    messages: MSGS,
+  });
+  const zero = buildRequest(
+    { messages: MSGS, temperature: 0, maxTokens: 80, effort: "low", systemPrompt: "sys" },
+    model,
+  );
+  assertEquals(zero.temperature, 0);
+  assertEquals(zero.max_tokens, 80);
+  assertEquals(zero.system, "sys");
+  assert(!("output_config" in zero), "effort is ignored on legacy models");
+});
+
+Deno.test("buildRequest: current models send no sampling params; effort only when given", () => {
+  const body = buildRequest(
+    { messages: MSGS, temperature: 0.4, maxTokens: 100, effort: "medium" },
+    "claude-haiku-5-5",
+  ) as unknown as Record<string, unknown>;
+  for (const key of ["temperature", "top_p", "top_k", "thinking", "system"]) {
+    assert(!(key in body), `${key} must not be sent`);
+  }
+  assertEquals(body.output_config, { effort: "medium" });
+  assert(!("output_config" in buildRequest({ messages: MSGS }, "claude-haiku-5-5")));
+});
+
+Deno.test("buildRequest: current max_tokens follows the thinking-headroom formula", () => {
+  const cases: Array<[string, number | undefined, Effort | undefined, number]> = [
+    ["claude-haiku-5-5", 256, "low", 2048], // floor 1024 + 1024
+    ["claude-haiku-5-5", 1024, "medium", 5120],
+    ["claude-haiku-5-5", 4096, undefined, 8192], // Haiku 5.5 defaults to medium
+    ["claude-sonnet-5-5", 4096, undefined, 12288], // default effort high
+    ["claude-sonnet-5-5", 16384, "high", 20000], // capped
+  ];
+  for (const [model, maxTokens, effort, expected] of cases) {
+    assertEquals(
+      buildRequest({ messages: MSGS, maxTokens, effort }, model).max_tokens,
+      expected,
+      `${model} ${maxTokens} ${effort}`,
+    );
+  }
+});
+
+async function withStub<T>(
+  response: Record<string, unknown>,
+  fn: (calls: Array<Record<string, unknown>>, usage: Array<Record<string, unknown>>) => Promise<T>,
+): Promise<T> {
+  const calls: Array<Record<string, unknown>> = [];
+  const usage: Array<Record<string, unknown>> = [];
+  const client = {
+    messages: {
+      create: (body: Record<string, unknown>) => {
+        calls.push(body);
+        return Promise.resolve(response);
+      },
+    },
+  };
+  const origError = console.error;
+  const prevMode = Deno.env.get("AI_LOCAL_MODE");
+  console.error = () => {}; // sendMessage logs every failure
+  Deno.env.delete("AI_LOCAL_MODE");
+  // deno-lint-ignore no-explicit-any
+  _setAnthropicClientForTest(client as any);
+  _setUsageRecorderForTest((u) => {
+    usage.push(u);
+    return Promise.resolve();
+  });
+  try {
+    return await fn(calls, usage);
+  } finally {
+    _setAnthropicClientForTest(null);
+    _setUsageRecorderForTest(null);
+    console.error = origError;
+    if (prevMode !== undefined) Deno.env.set("AI_LOCAL_MODE", prevMode);
+  }
+}
+
+Deno.test("sendMessage (Anthropic): skips a leading thinking block, records usage, sends no temperature", async () => {
+  await withStub(
+    { content: [thinkingBlock, textBlock("answer")], stop_reason: "end_turn", usage: USAGE },
+    async (calls, usage) => {
+      const out = await sendMessage({
+        messages: MSGS,
+        model: "claude-haiku-5-5",
+        temperature: 0.3,
+        maxTokens: 256,
+        effort: "low",
+        purpose: "translate_title",
+      });
+      assertEquals(out, "answer");
+      assertEquals(calls[0].model, "claude-haiku-5-5");
+      assert(!("temperature" in calls[0]));
+      assertEquals(calls[0].max_tokens, 2048);
+      assertEquals(usage, [{
+        model: "claude-haiku-5-5",
+        purpose: "translate_title",
+        inputTokens: 11,
+        outputTokens: 7,
+      }]);
+    },
+  );
+});
+
+Deno.test("sendMessage (Anthropic): default model is DEFAULT_MODEL", {
+  ignore: Boolean(Deno.env.get("ANTHROPIC_MODEL")),
+}, async () => {
+  await withStub(
+    { content: [textBlock("ok")], stop_reason: "end_turn", usage: USAGE },
+    async (calls) => {
+      await sendMessage({ messages: MSGS });
+      assertEquals(calls[0].model, "claude-haiku-5-5");
+    },
+  );
+});
+
+Deno.test("sendMessage (Anthropic): refusal throws ClaudeRefusalError", async () => {
+  await withStub(
+    {
+      content: [],
+      stop_reason: "refusal",
+      stop_details: { type: "refusal", category: "cyber", explanation: "nope" },
+      usage: USAGE,
+    },
+    async () => {
+      const err = await assertRejects(
+        () => sendMessage({ messages: MSGS, model: "claude-haiku-5-5" }),
+        ClaudeRefusalError,
+      );
+      assertInstanceOf(err, ClaudeRefusalError);
+      assertEquals(err.category, "cyber");
+      assertEquals(err.explanation, "nope");
+      assertEquals(err.model, "claude-haiku-5-5");
+    },
+  );
+});
+
+Deno.test("sendMessage (Anthropic): thinking-only max_tokens response throws 'no text'", async () => {
+  await withStub(
+    { content: [thinkingBlock], stop_reason: "max_tokens", usage: USAGE },
+    async () => {
+      await assertRejects(
+        () => sendMessage({ messages: MSGS, model: "claude-haiku-5-5" }),
+        Error,
+        "Claude returned no text (model claude-haiku-5-5, stop_reason max_tokens)",
+      );
+    },
+  );
+});
+
+Deno.test("sendMessage (Anthropic): pinned legacy model keeps temperature, system, and no effort", async () => {
+  await withStub(
+    { content: [textBlock("ok")], stop_reason: "end_turn", usage: USAGE },
+    async (calls) => {
+      await sendMessage({
+        messages: MSGS,
+        model: "claude-haiku-4-5-20251001",
+        maxTokens: 80,
+        effort: "low",
+        systemPrompt: "sys",
+      });
+      assertEquals(calls[0], {
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 80,
+        temperature: 0.7,
+        system: "sys",
+        messages: MSGS,
+      });
+    },
+  );
+});
+
+Deno.test("streamMessage: collects text_delta only, sends no temperature, throws on refusal", async () => {
+  const events = (stop: string) => [
+    { type: "content_block_delta", delta: { type: "thinking_delta", thinking: "hm" } },
+    { type: "content_block_delta", delta: { type: "text_delta", text: "foo" } },
+    { type: "content_block_delta", delta: { type: "text_delta", text: "bar" } },
+    { type: "message_delta", delta: { stop_reason: stop, stop_details: null } },
+  ];
+  const run = async (stop: string) => {
+    const calls: Array<Record<string, unknown>> = [];
+    const client = {
+      messages: {
+        create: (body: Record<string, unknown>) => {
+          calls.push(body);
+          return Promise.resolve((async function* () {
+            yield* events(stop);
+          })());
+        },
+      },
+    };
+    // deno-lint-ignore no-explicit-any
+    _setAnthropicClientForTest(client as any);
+    const chunks: string[] = [];
+    const origError = console.error;
+    console.error = () => {};
+    try {
+      const out = await streamMessage({
+        messages: MSGS,
+        model: "claude-haiku-5-5",
+        temperature: 0.2,
+        onChunk: (c) => chunks.push(c),
+      });
+      return { out, chunks, calls };
+    } finally {
+      _setAnthropicClientForTest(null);
+      console.error = origError;
+    }
+  };
+  const ok = await run("end_turn");
+  assertEquals(ok.out, "foobar");
+  assertEquals(ok.chunks, ["foo", "bar"]);
+  assertEquals(ok.calls[0].stream, true);
+  assert(!("temperature" in ok.calls[0]));
+  await assertRejects(() => run("refusal"), ClaudeRefusalError);
 });
