@@ -134,6 +134,7 @@ Optimize for semantic search by including relevant technical keywords.`;
       systemPrompt: SUMMARIZE_SYSTEM_PROMPT,
       temperature: 0.7,
       maxTokens: 1024,
+      effort: "medium",
       purpose: "summarize",
     });
 
@@ -160,6 +161,7 @@ ${summary}`;
       systemPrompt: TRANSLATE_SYSTEM_PROMPT,
       temperature: 0.5,
       maxTokens: 1024,
+      effort: "low",
       purpose: "translate_summary",
     });
 
@@ -182,6 +184,7 @@ ${text}`;
       systemPrompt: TRANSLATE_SYSTEM_PROMPT,
       temperature: 0.3,
       maxTokens: 256,
+      effort: "low",
       purpose: "translate_title",
     });
 
@@ -211,6 +214,7 @@ Return only a numbered list of key terms/concepts, each 1-5 words, optimized for
       messages: [{ role: "user", content: prompt }],
       systemPrompt: SUMMARIZE_SYSTEM_PROMPT,
       temperature: 0.5,
+      effort: "medium",
       purpose: "extract_key_points",
     });
 
